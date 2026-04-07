@@ -1,0 +1,30 @@
+<div style="font-family:Arial,sans-serif;background:#f4f7fc;padding:18px;">
+  <div style="max-width:680px;margin:auto;background:#ffffff;border:1px solid #dbe4f3;border-radius:14px;padding:24px;">
+    <p style="margin:0 0 6px 0;color:#1f3a8a;font-size:12px;letter-spacing:.4px;text-transform:uppercase;font-weight:700;">Mentoría Estudiantil · Tec de Monterrey</p>
+    <h2 style="color:#1f3a8a;margin:0 0 14px 0;">Hola, <?= firstName ?></h2>
+    <p style="margin:0 0 14px 0;color:#1e293b;line-height:1.5;">Tu Brújula quedó registrada. Este es tu resumen breve para definir tu siguiente paso.</p>
+    <div style="background:#eef4ff;border:1px solid #c7daf7;border-radius:12px;padding:14px 16px;margin:0 0 14px 0;">
+      <p style="margin:0 0 6px 0;font-size:13px;color:#274472;font-weight:700;">Tarjeta de avance</p>
+      <p style="margin:0;color:#334155;line-height:1.5;"><strong>Puntaje:</strong> <?= scoreTotal ?>/100 · <strong>Perfil:</strong> <?= scenarioLabel ?> · <strong>Etapa:</strong> <?= stageLabel ?></p>
+    </div>
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px;margin:0 0 16px 0;">
+      <p style="margin:0 0 8px 0;color:#1e293b;font-weight:700;">Siguiente paso recomendado</p>
+      <ul style="margin:0;padding-left:18px;color:#334155;line-height:1.45;">
+        <li style="margin:0 0 8px 0;">Prioridad 1: <?= topic1Action ?>.</li>
+        <li style="margin:0;">Prioridad 2: definir una acción concreta para <?= topic2Action ?>.</li>
+      </ul>
+    </div>
+    <?!= legacyPrioritySection ?>
+    <div style="margin:0 0 10px 0;">
+      <p style="margin:0 0 8px 0;color:#1e293b;font-weight:700;">Elige cómo quieres avanzar esta semana:</p>
+      <p style="margin:0 0 8px 0;"><a style="display:inline-block;padding:11px 16px;background:#1f3a8a;color:#fff;text-decoration:none;border-radius:8px;font-weight:700;" href="<?= calendlyLink ?>">Agendar cita 1 a 1</a></p>
+    </div>
+    <div style="background:#ecfdf3;border:1px solid #99f6b8;border-radius:12px;padding:12px 14px;margin:0 0 8px 0;">
+      <p style="margin:0 0 6px 0;color:#166534;font-size:12px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;">Open Office · Haz ya tu sesión con tu mentora</p>
+      <p style="margin:0 0 10px 0;color:#166534;font-size:13px;line-height:1.45;"><?= openOfficeText ?></p>
+      <p style="margin:0;"><a style="display:inline-block;padding:9px 12px;background:#166534;color:#fff;text-decoration:none;border-radius:8px;font-weight:700;font-size:13px;" href="<?= whatsappLink ?>">Escribir por WhatsApp para Open Office</a></p>
+    </div>
+    <hr style="margin:18px 0;border:none;border-top:1px solid #e6edf8">
+    <p style="font-size:12px;color:#58657d;margin:0;">WhatsApp directo: <a href="<?= whatsappDirectLink ?>">+52 81 2861 2913</a>. Autonomía primero, mentoría como acelerador.</p>
+  </div>
+</div>

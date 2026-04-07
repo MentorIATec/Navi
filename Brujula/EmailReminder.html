@@ -1,0 +1,28 @@
+<div style="font-family:Arial,sans-serif;background:#f4f7fc;padding:18px;">
+  <div style="max-width:680px;margin:auto;background:#ffffff;border:1px solid #dbe4f3;border-radius:14px;padding:24px;">
+    <? if (headerImageUrl) { ?>
+      <img src="<?= headerImageUrl ?>" alt="Mentoría Estudiantil" style="width:100%;max-width:632px;border-radius:10px;margin:0 0 14px 0;">
+    <? } ?>
+    <p style="margin:0 0 6px 0;color:#1f3a8a;font-size:12px;letter-spacing:.4px;text-transform:uppercase;font-weight:700;">Mentoría Estudiantil · Tec de Monterrey</p>
+    <h2 style="color:#1f3a8a;margin:0 0 12px 0;">Hola, <?= firstName ?></h2>
+    <p style="margin:0 0 10px 0;color:#1e293b;line-height:1.5;">
+      Este es un recordatorio breve (#<?= reminderNumber ?>). Tu test sigue disponible.
+    </p>
+    <?!= profileBlock ?>
+    <p style="margin:0 0 10px 0;color:#1e293b;line-height:1.5;">
+      Como tu mentora, me ayuda saber cómo te sientes con tu avance actual para acompañarte mejor en tus decisiones académicas.
+    </p>
+    <p style="margin:0 0 14px 0;">
+      <a style="display:inline-block;padding:11px 16px;background:#1f3a8a;color:#fff;text-decoration:none;border-radius:8px;font-weight:700;" href="<?= testLink ?>">Contestar test y agendar cita</a>
+    </p>
+    <p style="margin:0 0 12px 0;color:#475569;font-size:12px;line-height:1.5;">
+      Si al abrir te aparece un aviso de Google Apps Script, es normal. Da clic en continuar para entrar al test.
+    </p>
+    <p style="margin:0 0 8px 0;color:#475569;line-height:1.45;">
+      ¿Cómo te sientes?, ¿hay algo que quieras conversar? Contesta el test y hacemos una cita.
+    </p>
+    <p style="margin:0 0 8px 0;color:#475569;font-size:13px;line-height:1.45;"><?= openOfficeText ?></p>
+    <hr style="margin:18px 0;border:none;border-top:1px solid #e6edf8">
+    <p style="font-size:12px;color:#58657d;margin:0;">WhatsApp directo: <a href="<?= whatsappLink ?>">+52 81 2861 2913</a>.</p>
+  </div>
+</div>
