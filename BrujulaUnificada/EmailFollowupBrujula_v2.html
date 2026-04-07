@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <!--[if gte mso 9]><xml>
+    <o:OfficeDocumentSettings>
+      <o:AllowPNG/>
+      <o:PixelsPerInch>96</o:PixelsPerInch>
+    </o:OfficeDocumentSettings>
+  </xml><![endif]-->
+  <title>Tu Brújula, {{firstName}}</title>
+  <style type="text/css">
+    /* ── Reset ── */
+    body, table, td, p, a {
+      -webkit-text-size-adjust: 100%;
+      -ms-text-size-adjust: 100%;
+    }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    img {
+      border: 0; outline: none; text-decoration: none;
+      -ms-interpolation-mode: bicubic; display: block;
+    }
+    /* ── Mobile overrides (Gmail App, Apple Mail, Samsung Mail) ── */
+    @media only screen and (max-width: 620px) {
+      .card  { width: 100% !important; }
+      .bp    { padding: 24px 16px 20px !important; }
+      .hp    { padding: 32px 20px 26px !important; }
+      .btn   { display: block !important; text-align: center !important; }
+      .strip { padding: 10px 16px !important; }
+    }
+  </style>
+</head>
+
+<body style="margin:0;padding:0;background-color:#EBF0F8;" bgcolor="#EBF0F8">
+
+  <!--
+  ╔══════════════════════════════════════════════════════╗
+  ║  EmailFollowupBrujula_v2.html                        ║
+  ║  Propuesta de rediseño — aislada, no reemplaza v1    ║
+  ║                                                      ║
+  ║  Placeholders disponibles:                           ║
+  ║    {{firstName}}       {{scenarioLabel}}             ║
+  ║    {{stageLabel}}      {{scoreTotal}}                ║
+  ║    {{goal1Title}}      {{goal1Step}}                 ║
+  ║    {{goal2Title}}      {{goal2Step}}                 ║
+  ║    {{goal3Title}}      {{goal3Step}}                 ║
+  ║    {{calendlyLink}}    {{whatsappLink}}              ║
+  ║    {{compassImageUrl}}                               ║
+  ╚══════════════════════════════════════════════════════╝
+  -->
+
+  <!-- ═══ PREVIEW TEXT (oculto en bandeja de entrada) ═══ -->
+  <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:#EBF0F8;">
+    {{firstName}}, tu Brújula reveló algo importante — aquí están tus 3 metas concretas para este semestre.
+    &zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;
+  </div>
+
+  <!-- ═══ WRAPPER EXTERIOR ═══ -->
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#EBF0F8">
+    <tr>
+      <td align="center" style="padding:28px 12px;">
+
+        <!-- ╔═══════════════ TARJETA PRINCIPAL 600px ═══════════════╗ -->
+        <table role="presentation" class="card" width="600" cellpadding="0" cellspacing="0" border="0"
+               style="max-width:600px;width:600px;background-color:#ffffff;border:1px solid #C9D8EE;"
+               bgcolor="#ffffff">
+
+
+          <!-- ──────────────────── HEADER ──────────────────── -->
+          <tr>
+            <td class="hp" align="center" bgcolor="#1B3A6B"
+                style="background-color:#1B3A6B;padding:40px 36px 32px;font-family:Arial,Helvetica,sans-serif;">
+
+              <!-- Ícono brújula en círculo blanco -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0"
+                     align="center" style="margin:0 auto 20px;">
+                <tr>
+                  <td align="center" bgcolor="#FFFFFF"
+                      style="background-color:#FFFFFF;border-radius:50%;width:80px;height:80px;padding:5px;line-height:0;">
+                    <img src="{{compassImageUrl}}" alt="Brújula de Enfoque"
+                         width="70" height="70"
+                         style="width:70px;height:70px;border-radius:50%;display:block;" border="0">
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Eyebrow -->
+              <p style="margin:0 0 10px 0;color:#8BAED6;font-size:11px;font-weight:700;
+                         letter-spacing:1.8px;text-transform:uppercase;
+                         font-family:Arial,Helvetica,sans-serif;">
+                Mentor&iacute;a Estudiantil&nbsp;&nbsp;&middot;&nbsp;&nbsp;Tec de Monterrey
+              </p>
+
+              <!-- Titular principal -->
+              <h1 style="margin:0 0 10px 0;color:#FFFFFF;font-size:23px;font-weight:800;
+                          line-height:1.3;font-family:Arial,Helvetica,sans-serif;">
+                &iexcl;Hola, {{firstName}}! Tu Br&uacute;jula tiene rumbo.
+              </h1>
+
+              <!-- Subtítulo -->
+              <p style="margin:0;color:#AFC8E2;font-size:14px;line-height:1.75;
+                         font-family:Arial,Helvetica,sans-serif;max-width:420px;">
+                Gracias por autoevaluarte.<br>
+                Ahora convirtamos tu resultado en acci&oacute;n concreta.
+              </p>
+
+            </td>
+          </tr>
+
+
+          <!-- ──────────────────── BANDA DE RESULTADO ──────────────────── -->
+          <tr>
+            <td class="strip" align="center" bgcolor="#14305A"
+                style="background-color:#14305A;padding:10px 28px;
+                       font-family:Arial,Helvetica,sans-serif;">
+              <p style="margin:0;color:#D0E2F6;font-size:13px;
+                         font-family:Arial,Helvetica,sans-serif;line-height:1.4;">
+                <strong style="color:#FFFFFF;">{{scoreTotal}}&thinsp;/&thinsp;100&nbsp;pts</strong>
+                &nbsp;&nbsp;&middot;&nbsp;&nbsp;
+                Perfil:&nbsp;<strong style="color:#FFFFFF;">{{scenarioLabel}}</strong>
+                &nbsp;&nbsp;&middot;&nbsp;&nbsp;
+                Etapa:&nbsp;<strong style="color:#FFFFFF;">{{stageLabel}}</strong>
+              </p>
+            </td>
+          </tr>
+
+
+          <!-- ──────────────────── CUERPO ──────────────────── -->
+          <tr>
+            <td class="bp"
+                style="padding:30px 32px 26px;background-color:#ffffff;
+                       font-family:Arial,Helvetica,sans-serif;"
+                bgcolor="#ffffff">
+
+              <!-- Intro -->
+              <p style="margin:0 0 24px 0;color:#334155;font-size:15px;line-height:1.8;
+                         font-family:Arial,Helvetica,sans-serif;">
+                No todos se detienen a preguntarse <em>hacia d&oacute;nde van</em>.
+                T&uacute; lo hiciste, y eso ya marca la diferencia.
+                Con base en lo que revel&oacute; tu Br&uacute;jula, prepar&eacute;
+                <strong>3 metas concretas</strong> para acompa&ntilde;arte este semestre.
+              </p>
+
+              <!-- Etiqueta de sección -->
+              <p style="margin:0 0 12px 0;color:#94A3B8;font-size:10px;font-weight:700;
+                         text-transform:uppercase;letter-spacing:1.2px;
+                         font-family:Arial,Helvetica,sans-serif;">
+                Tus 3 metas sugeridas
+              </p>
+
+
+              <!-- ┌─── META 1 — Azul marino ───┐ -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                     border="0" style="margin-bottom:10px;">
+                <tr>
+                  <td width="5" bgcolor="#1B3A6B"
+                      style="background-color:#1B3A6B;width:5px;font-size:1px;line-height:1px;">&nbsp;</td>
+                  <td bgcolor="#EEF3FF"
+                      style="background-color:#EEF3FF;padding:14px 18px;
+                             font-family:Arial,Helvetica,sans-serif;">
+                    <p style="margin:0 0 3px 0;color:#1B3A6B;font-size:10px;font-weight:700;
+                               text-transform:uppercase;letter-spacing:.7px;
+                               font-family:Arial,Helvetica,sans-serif;">Meta 1</p>
+                    <p style="margin:0 0 7px 0;color:#1E293B;font-weight:700;font-size:15px;
+                               line-height:1.4;font-family:Arial,Helvetica,sans-serif;">{{goal1Title}}</p>
+                    <p style="margin:0;color:#475569;font-size:13px;line-height:1.55;
+                               font-family:Arial,Helvetica,sans-serif;">
+                      <strong>Primer paso:</strong> {{goal1Step}}
+                    </p>
+                  </td>
+                </tr>
+              </table>
+              <!-- └──────────────────────────┘ -->
+
+
+              <!-- ┌─── META 2 — Violeta ───┐ -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                     border="0" style="margin-bottom:10px;">
+                <tr>
+                  <td width="5" bgcolor="#6D28D9"
+                      style="background-color:#6D28D9;width:5px;font-size:1px;line-height:1px;">&nbsp;</td>
+                  <td bgcolor="#F5F3FF"
+                      style="background-color:#F5F3FF;padding:14px 18px;
+                             font-family:Arial,Helvetica,sans-serif;">
+                    <p style="margin:0 0 3px 0;color:#6D28D9;font-size:10px;font-weight:700;
+                               text-transform:uppercase;letter-spacing:.7px;
+                               font-family:Arial,Helvetica,sans-serif;">Meta 2</p>
+                    <p style="margin:0 0 7px 0;color:#1E293B;font-weight:700;font-size:15px;
+                               line-height:1.4;font-family:Arial,Helvetica,sans-serif;">{{goal2Title}}</p>
+                    <p style="margin:0;color:#475569;font-size:13px;line-height:1.55;
+                               font-family:Arial,Helvetica,sans-serif;">
+                      <strong>Primer paso:</strong> {{goal2Step}}
+                    </p>
+                  </td>
+                </tr>
+              </table>
+              <!-- └──────────────────────┘ -->
+
+
+              <!-- ┌─── META 3 — Esmeralda ───┐ -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                     border="0" style="margin-bottom:30px;">
+                <tr>
+                  <td width="5" bgcolor="#059669"
+                      style="background-color:#059669;width:5px;font-size:1px;line-height:1px;">&nbsp;</td>
+                  <td bgcolor="#ECFDF5"
+                      style="background-color:#ECFDF5;padding:14px 18px;
+                             font-family:Arial,Helvetica,sans-serif;">
+                    <p style="margin:0 0 3px 0;color:#059669;font-size:10px;font-weight:700;
+                               text-transform:uppercase;letter-spacing:.7px;
+                               font-family:Arial,Helvetica,sans-serif;">Meta 3</p>
+                    <p style="margin:0 0 7px 0;color:#1E293B;font-weight:700;font-size:15px;
+                               line-height:1.4;font-family:Arial,Helvetica,sans-serif;">{{goal3Title}}</p>
+                    <p style="margin:0;color:#475569;font-size:13px;line-height:1.55;
+                               font-family:Arial,Helvetica,sans-serif;">
+                      <strong>Primer paso:</strong> {{goal3Step}}
+                    </p>
+                  </td>
+                </tr>
+              </table>
+              <!-- └────────────────────────┘ -->
+
+
+              <!-- Separador -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                     border="0" style="margin-bottom:22px;">
+                <tr>
+                  <td style="border-top:1px solid #E2E8F0;font-size:1px;line-height:1px;">&nbsp;</td>
+                </tr>
+              </table>
+
+              <!-- Invitación a acción -->
+              <p style="margin:0 0 6px 0;color:#1E293B;font-size:15px;font-weight:700;
+                         font-family:Arial,Helvetica,sans-serif;">
+                &iquest;Seguimos construyendo juntos?
+              </p>
+              <p style="margin:0 0 22px 0;color:#334155;font-size:14px;line-height:1.75;
+                         font-family:Arial,Helvetica,sans-serif;">
+                Si quieres profundizar en alguna de estas metas, definir plazos
+                o simplemente platicar tu situaci&oacute;n, aqu&iacute; estoy.
+                Elige la opci&oacute;n que te sea m&aacute;s c&oacute;moda:
+              </p>
+
+
+              <!-- ┌─────────────────────────────────────────────────────┐ -->
+              <!-- │  CTA PRIMARIO: Agendar cita 1 a 1 (VML + HTML)     │ -->
+              <!-- └─────────────────────────────────────────────────────┘ -->
+              <table role="presentation" cellpadding="0" cellspacing="0"
+                     border="0" style="margin-bottom:10px;">
+                <tr>
+                  <td>
+                    <!--[if mso]>
+                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml"
+                                 xmlns:w="urn:schemas-microsoft-com:office:word"
+                                 href="{{calendlyLink}}"
+                                 style="height:46px;v-text-anchor:middle;width:240px;"
+                                 arcsize="8%" stroke="f" fillcolor="#1B3A6B">
+                      <w:anchorlock/>
+                      <center style="color:#ffffff;font-family:Arial,Helvetica,sans-serif;
+                                     font-size:14px;font-weight:bold;">
+                        Agendar cita 1 a 1 &rsaquo;
+                      </center>
+                    </v:roundrect>
+                    <![endif]-->
+                    <!--[if !mso]><!-->
+                    <a href="{{calendlyLink}}" target="_blank" class="btn"
+                       style="display:inline-block;background-color:#1B3A6B;color:#ffffff;
+                              text-decoration:none;font-weight:700;font-size:14px;
+                              padding:13px 28px;border-radius:6px;white-space:nowrap;
+                              font-family:Arial,Helvetica,sans-serif;">
+                      &#128197;&nbsp; Agendar cita 1&nbsp;a&nbsp;1
+                    </a>
+                    <!--<![endif]-->
+                  </td>
+                </tr>
+              </table>
+
+
+              <!-- ┌─────────────────────────────────────────────────────┐ -->
+              <!-- │  CTA SECUNDARIO: WhatsApp (VML outline + HTML)      │ -->
+              <!-- └─────────────────────────────────────────────────────┘ -->
+              <table role="presentation" cellpadding="0" cellspacing="0"
+                     border="0" style="margin-bottom:28px;">
+                <tr>
+                  <td>
+                    <!--[if mso]>
+                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml"
+                                 xmlns:w="urn:schemas-microsoft-com:office:word"
+                                 href="{{whatsappLink}}"
+                                 style="height:46px;v-text-anchor:middle;width:240px;"
+                                 arcsize="8%" strokecolor="#16A34A" strokeweight="2pt"
+                                 fillcolor="#ffffff">
+                      <w:anchorlock/>
+                      <center style="color:#16A34A;font-family:Arial,Helvetica,sans-serif;
+                                     font-size:14px;font-weight:bold;">
+                        Escr&iacute;beme por WhatsApp
+                      </center>
+                    </v:roundrect>
+                    <![endif]-->
+                    <!--[if !mso]><!-->
+                    <a href="{{whatsappLink}}" target="_blank" class="btn"
+                       style="display:inline-block;background-color:#ffffff;color:#16A34A;
+                              text-decoration:none;font-weight:700;font-size:14px;
+                              padding:12px 28px;border-radius:6px;border:2px solid #16A34A;
+                              white-space:nowrap;font-family:Arial,Helvetica,sans-serif;">
+                      &#128172;&nbsp; Escr&iacute;beme por WhatsApp
+                    </a>
+                    <!--<![endif]-->
+                  </td>
+                </tr>
+              </table>
+
+            </td>
+          </tr>
+
+
+          <!-- ──────────────────── PIE DE PÁGINA ──────────────────── -->
+          <tr>
+            <td bgcolor="#F8FAFC"
+                style="background-color:#F8FAFC;padding:16px 32px 18px;
+                       border-top:1px solid #E2E8F0;
+                       font-family:Arial,Helvetica,sans-serif;">
+              <p style="margin:0;color:#94A3B8;font-size:12px;line-height:1.65;
+                         text-align:center;font-family:Arial,Helvetica,sans-serif;">
+                Parte de tu proceso de mentor&iacute;a en el Tec de Monterrey.<br>
+                Contacto directo:
+                <a href="{{whatsappLink}}"
+                   style="color:#1B3A6B;text-decoration:none;
+                          font-family:Arial,Helvetica,sans-serif;">+52 81 2861 2913</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+        <!-- ╚═══════════════ /TARJETA PRINCIPAL ═══════════════╝ -->
+
+      </td>
+    </tr>
+  </table>
+  <!-- ═══ /WRAPPER EXTERIOR ═══ -->
+
+</body>
+</html>

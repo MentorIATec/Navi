@@ -1,0 +1,31 @@
+# Plan de Vuelo de Especialización ✈️
+
+Este sistema es una herramienta de mentoría diseñada para ayudar a los estudiantes del Tecnológico de Monterrey que se encuentran entre el 5to y 6to semestre a **evaluar su preparación para la etapa de especialización**.
+
+A través de un cuestionario rápido de 5 preguntas, el sistema identifica las prioridades y áreas de oportunidad del estudiante en temas clave como:
+
+* **Servicio Social**: El plan para concluir las 480 horas.
+* **Semestre Tec**: La elección de intercambio, prácticas o concentración.
+* **Requisito de Idioma**: El avance en la certificación de inglés para intercambios.
+* **Prácticas Profesionales**: La preparación para la búsqueda y obtención de prácticas.
+* **Trayectoria y Logros**: La documentación de actividades para premios como el Premio LiFE.
+
+## 🚀 ¿Cómo funciona?
+
+1.  **Configuración Inicial**: Un mentor utiliza el menú `Plan de Vuelo ✈️` en Google Sheets para generar enlaces personalizados y enviar invitaciones por correo.
+2.  **Cuestionario Web**: El estudiante recibe un enlace único que lo lleva a una aplicación web donde responde las 5 preguntas.
+3.  **Procesamiento Automático**: Las respuestas se guardan en una hoja de cálculo y el sistema asigna un escenario al estudiante (`Consolidado`, `Desarrollo`, `Oportunidad`).
+4.  **Feedback Personalizado**: El estudiante recibe inmediatamente un correo electrónico con un resumen de sus resultados, identificando sus dos principales áreas de enfoque y una invitación a una sesión de mentoría para trazar los siguientes pasos.
+
+## 🛠️ Instrucciones de Instalación
+
+1.  **Crea una copia** de la Hoja de Cálculo de Google.
+2.  Abre el editor de scripts (`Extensiones > Apps Script`) y **pega el contenido** de los archivos `code.gs` e `index.html`.
+3.  **Configura el Script**: En `code.gs`, asegúrate de que la variable `SHEET_ID` corresponda al ID de tu Hoja de Cálculo.
+4.  **Implementa la App Web**:
+    * Haz clic en `Implementar > Nueva implementación`.
+    * Selecciona `Aplicación web` como el tipo.
+    * En "Quién tiene acceso", elige `Cualquier usuario`.
+    * Haz clic en `Implementar`.
+5.  **Actualiza la URL**: Copia la URL de la aplicación web que se generó y pégala en la variable `WEB_APP_URL` dentro de `code.gs`. Vuelve a implementar guardando una nueva versión.
+6.  **¡Listo!**: Refresca la hoja de cálculo y usa el menú `Plan de Vuelo ✈️` para comenzar.

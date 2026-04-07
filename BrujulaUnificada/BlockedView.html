@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Brújula de Mentoría</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Literata:opsz,wght@7..72,500&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'Sora', sans-serif;
+      background: #eef3fb;
+      color: #17223b;
+      padding: 20px;
+    }
+    .shell {
+      max-width: 960px;
+      margin: 0 auto;
+      background: #fff;
+      border: 1px solid #d8e2f1;
+      border-radius: 24px;
+      overflow: hidden;
+    }
+    .hero {
+      margin: 24px;
+      background: linear-gradient(132deg, #102645 0%, #173a63 60%, #24507f 100%);
+      color: #f4f8ff;
+      border-radius: 18px;
+      padding: 24px;
+    }
+    .eyebrow {
+      font-family: 'Literata', serif;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      opacity: .75;
+      margin: 0 0 8px;
+    }
+    .hero h1 {
+      margin: 0;
+      font-size: 38px;
+      line-height: 1.1;
+    }
+    .hero p {
+      margin: 10px 0 0;
+      color: #cfdff8;
+      font-size: 16px;
+      line-height: 1.5;
+    }
+    .card {
+      margin: 0 24px 24px;
+      border: 1px solid #d8e2f1;
+      border-radius: 20px;
+      padding: 28px 24px;
+      text-align: center;
+    }
+    .done-pill {
+      display: inline-block;
+      background: #e8f8f2;
+      color: #166534;
+      border: 1px solid #9fe3be;
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    h2 {
+      margin: 0 0 12px;
+      font-size: 34px;
+      line-height: 1.15;
+    }
+    .meta {
+      margin: 0 0 10px;
+      color: #4e5d7a;
+      font-size: 16px;
+    }
+    .ctas {
+      margin-top: 16px;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-block;
+      padding: 11px 18px;
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 15px;
+    }
+    .btn-primary { background: #1f3a8a; color: #fff; }
+    .btn-secondary { background: #eef4ff; color: #1f3a8a; border: 1px solid #b8d5f2; }
+    .office {
+      margin: 14px auto 0;
+      max-width: 620px;
+      background: #ecfdf3;
+      border: 1px solid #99f6b8;
+      border-radius: 12px;
+      padding: 10px 14px;
+      color: #166534;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.45;
+    }
+    @media (max-width: 768px) {
+      body { padding: 10px; }
+      .hero { margin: 14px; padding: 18px; }
+      .hero h1 { font-size: 30px; }
+      .card { margin: 0 14px 14px; padding: 22px 16px; }
+      h2 { font-size: 27px; }
+      .btn { width: 100%; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="eyebrow">Mentoría Estudiantil · Tec de Monterrey</p>
+      <h1>Brújula de avance estudiantil</h1>
+      <p>Hola, <?= name ?>. Esta brújula te ayuda a reflexionar sobre tu avance y definir tu siguiente paso con apoyo de tu mentora.</p>
+    </section>
+
+    <section class="card">
+      <p style="font-size:70px;line-height:1;margin:0 0 8px;">📌</p>
+      <p class="done-pill">✅ Ya completaste tu Brújula</p>
+      <h2>Ya tenemos tu punto de partida</h2>
+      <p id="result-meta" class="meta"></p>
+      <p class="meta">Tu mentora ya tiene tu perfil visible. El siguiente paso es conversar para definir acciones concretas.</p>
+      <div class="ctas">
+        <a class="btn btn-primary" href="<?= calendlyLink ?>" target="_blank" rel="noopener noreferrer">Agendar cita 1 a 1 →</a>
+        <a class="btn btn-secondary" href="<?= whatsappResultLink ?>" target="_blank" rel="noopener noreferrer">Contactar a mi mentora →</a>
+      </div>
+      <p class="office">O acude al Open Office: <?= openOfficeText ?></p>
+    </section>
+  </main>
+
+  <script>
+    const last = <?= lastResponseJson ?> || {};
+    const stage = last.stage_label || last.stage || '';
+    const score = (last.score_total != null && String(last.score_total).trim() !== '') ? `${last.score_total}/100` : '';
+    const scenarioMap = { Consolidado: 'Nivel avanzado', Desarrollo: 'En buen avance', Oportunidad: 'Con potencial claro' };
+    const scenario = last.profile_scenario ? (scenarioMap[last.profile_scenario] || last.profile_scenario) : '';
+    const parts = [];
+    if (stage) parts.push(`Etapa: ${stage}`);
+    if (scenario) parts.push(`Perfil: ${scenario}`);
+    if (score) parts.push(`Puntaje: ${score}`);
+    const meta = document.getElementById('result-meta');
+    meta.textContent = parts.length ? parts.join(' · ') : 'Tu respuesta ya fue registrada correctamente.';
+  </script>
+</body>
+</html>

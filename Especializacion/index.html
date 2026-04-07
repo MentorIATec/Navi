@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plan de Vuelo de Especialización</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f0f2f5; }
+        .option-btn { transition: all 0.2s; }
+        .option-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .option-btn.selected { background-color: #004d9b; color: white; border-color: #004183; }
+        .progress-bar-fill { transition: width 0.5s ease-out; }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <div id="app-container" class="w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-xl p-6 md:p-10">
+        
+        <div id="welcome-state">
+            <div class="text-center">
+                <div class="text-5xl mb-4">✈️</div>
+                <h1 class="text-3xl font-bold text-gray-800">Plan de Vuelo de Especialización</h1>
+                <p class="text-gray-600 mt-4">Hola, <strong class="text-blue-600"><?= name ?></strong>.</p>
+                <p class="text-gray-600 mt-2 mb-6">Este es un pulso rápido para alinear tus prioridades para tu etapa de especialización. ¡Te tomará menos de 2 minutos!</p>
+                <button id="start-btn" class="w-full md-w-auto bg-blue-700 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-800 transition-colors shadow-md">Comenzar</button>
+            </div>
+        </div>
+
+        <div id="quiz-state" class="hidden">
+            <div class="w-full bg-gray-200 rounded-full h-2.5 mb-6">
+                <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full progress-bar-fill" style="width: 0%"></div>
+            </div>
+            <div id="question-container"></div>
+            <div class="flex justify-between items-center mt-8">
+                <button id="prev-btn" class="text-gray-600 font-semibold py-2 px-4 rounded-lg hover:bg-gray-100">Anterior</button>
+                <button id="next-btn" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 disabled:bg-gray-300" disabled>Siguiente</button>
+            </div>
+        </div>
+        
+        <div id="final-state" class="hidden">
+             <div class="text-center">
+                <div class="text-5xl mb-4">🎉</div>
+                <h1 class="text-3xl font-bold text-gray-800">¡Plan de Vuelo Registrado!</h1>
+                <p class="text-gray-600 mt-2 mb-6">Hemos recibido tus respuestas. <strong>Revisa tu correo electrónico en los próximos minutos</strong> para ver tu resumen y recomendaciones.</p>
+                <div id="loading-spinner" class="hidden w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto my-4"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const studentData = { email: "<?= email ?>", name: "<?= name ?>" };
+        const questions = [
+            { 
+                key: 'servicio_social', 
+                title: '🤝 Antes de cursar tu Semestre Tec, necesitas haber completado tus 480 horas de Servicio Social. ¿Cuál es tu estatus actual?', 
+                options: [
+                    'No tengo claro cuándo lo terminaré, ni sé cuántas horas me faltan.', 
+                    'Tengo un plan, pero me preocupa no terminar antes de mi Semestre Tec.', 
+                    'Tengo pensado terminarlo en el próximo periodo intensivo (verano o invierno).', 
+                    'Estoy en mi último proyecto y tengo planeado terminarlo este semestre.', 
+                    '¡Misión cumplida! Ya cumplí mis 480 horas o más.'
+                ] 
+            },
+            { 
+                key: 'semestre_tec', 
+                title: '✈️ ¿Qué tan definida tienes tu elección para tu(s) Semestre(s) Tec (intercambio, prácticas, concentración)?', 
+                options: [
+                    'Tengo algunas ideas generales, pero realmente no sé por dónde empezar a decidir.',
+                    'Ya estoy investigando, pero aún no he definido una opción clara.',
+                    'Tengo solo 1 opción considerada; si no funciona, no sabría qué elegir.',
+                    'Tengo al menos 3 alternativas que me gustan y planeo reunirme con mi Director de Programa para validarlas.',
+                    'Ya tengo 5 opciones bien estudiadas, me siento informado/a y ya lo validé con mi Director/a de Programa.'
+                ] 
+            },
+            { 
+                key: 'idioma', 
+                title: '🌍 Si consideras un intercambio, ¿cuál es tu estatus con el examen de certificación de idioma (inglés, francés, alemán, etc.)?', 
+                options: [
+                    'No estoy considerando un intercambio / No estoy seguro/a de qué examen o puntaje necesito para los destinos que me interesan.',
+                    'Sé lo que necesito, pero no he comenzado a prepararme formalmente.',
+                    'Estoy preparándome para un idioma distinto al inglés (ej. francés, alemán) que es requisito.',
+                    'Me siento listo/a para presentar el examen, pero aún no he agendado una fecha.',
+                    '¡Listo! Ya tengo mi certificado vigente con el puntaje necesario para mis opciones de intercambio.'
+                ] 
+            },
+            { 
+                key: 'practicas', 
+                title: '💼 Si tuvieras que aplicar a tus prácticas profesionales soñadas hoy mismo, ¿qué tan preparado/a te sentirías?', 
+                options: [
+                    'No me sentiría preparado/a; no he comenzado a adaptar mi CV ni he explorado empresas.',
+                    'Tengo un CV básico, pero necesitaría mucho trabajo para adaptarlo y no he buscado activamente.',
+                    'Estoy en proceso de mejorar mi CV y tengo una lista de empresas que me interesan.',
+                    'Me siento seguro/a con mi CV y ya estoy aplicando a vacantes o preparándome para entrevistas.',
+                    'Totalmente preparado/a; ya estoy en procesos de entrevista, tengo una oferta o ya conseguí prácticas.'
+                ] 
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        const userAnswers = {};
+
+        const welcomeState = document.getElementById('welcome-state');
+        const quizState = document.getElementById('quiz-state');
+        const finalState = document.getElementById('final-state');
+        const startBtn = document.getElementById('start-btn');
+        const questionContainer = document.getElementById('question-container');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const progressBar = document.getElementById('progress-bar');
+        const loadingSpinner = document.getElementById('loading-spinner');
+
+        startBtn.addEventListener('click', () => {
+            welcomeState.classList.add('hidden');
+            quizState.classList.remove('hidden');
+            renderQuestion();
+        });
+
+        prevBtn.addEventListener('click', () => { if (currentQuestionIndex > 0) { currentQuestionIndex--; renderQuestion(); } });
+        nextBtn.addEventListener('click', () => { if (currentQuestionIndex < questions.length - 1) { currentQuestionIndex++; renderQuestion(); } else { submitAnswers(); } });
+
+        function renderQuestion() {
+            const question = questions[currentQuestionIndex];
+            let content = `<h2 class="text-2xl font-semibold text-gray-800 mb-6 text-center">${question.title}</h2><div class="grid grid-cols-1 gap-3">`;
+            question.options.forEach((option, index) => {
+                const isSelected = userAnswers[question.key] === (index + 1);
+                content += `<button data-value="${index + 1}" class="option-btn w-full text-left p-4 border-2 rounded-lg ${isSelected ? 'selected' : 'border-gray-300 bg-white'}">${option}</button>`;
+            });
+            content += '</div>';
+            questionContainer.innerHTML = content;
+            
+            document.querySelectorAll('.option-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    userAnswers[question.key] = parseInt(btn.dataset.value, 10);
+                    document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    nextBtn.disabled = false;
+                    setTimeout(() => nextBtn.click(), 300);
+                });
+            });
+            updateUI();
+        }
+
+        function updateUI() {
+            progressBar.style.width = `${((currentQuestionIndex + 1) / questions.length) * 100}%`;
+            prevBtn.style.visibility = currentQuestionIndex === 0 ? 'hidden' : 'visible';
+            nextBtn.textContent = currentQuestionIndex === questions.length - 1 ? 'Finalizar' : 'Siguiente';
+            nextBtn.disabled = !userAnswers[questions[currentQuestionIndex].key];
+        }
+
+        function submitAnswers() {
+            quizState.classList.add('hidden');
+            finalState.classList.remove('hidden');
+            loadingSpinner.classList.remove('hidden');
+
+            const payload = { student: studentData, answers: userAnswers };
+            
+            google.script.run
+                .withSuccessHandler(() => loadingSpinner.classList.add('hidden'))
+                .withFailureHandler(() => alert('Hubo un error al enviar tus respuestas. Por favor, intenta de nuevo.'))
+                .processWebAppSubmission(payload);
+        }
+    </script>
+</body>
+</html>
