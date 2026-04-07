@@ -34,6 +34,7 @@ function onOpen() {
   const ui = SpreadsheetApp.getUi();
   ui.createMenu('🚀 Navi Admin')
     .addItem('Inicializar Tablas', 'setup')
+    .addItem('Cargar Datos de Prueba de Comunidad', 'seedCommunityTestData')
     .addSeparator()
     .addItem('Limpiar Datos de Prueba', 'clearTestData')
     .addToUi();
@@ -218,6 +219,20 @@ function clearTestData() {
   SpreadsheetApp.getUi().alert('🧹 Datos de alumnos limpiados.');
 }
 
+function seedCommunityTestData() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  ensureCoreSheets_(ss);
+
+  const mentorsSheet = ss.getSheetByName('Mentors');
+  const studentsSheet = ss.getSheetByName('Students');
+
+  upsertRowByKey_(mentorsSheet, 4, 'JR', ['Krei', '#79858B', 'José Ricardo Flores Espinoza', 'JR', 'jr.flores@tec.mx']);
+  upsertRowByKey_(mentorsSheet, 4, 'Karen', ['Krei', '#79858B', 'Karen Ariadna Guzmán Vega', 'Karen', 'kareng@tec.mx']);
+  upsertRowByKey_(studentsSheet, 1, 'A00803848', ['A00803848', 'karen', 'kareng@tec.mx', 'Karen', 'KREI', 'Metas Seleccionadas', 'Si']);
+
+  SpreadsheetApp.getUi().alert('✅ Datos de prueba de comunidad cargados o actualizados sin duplicados.');
+}
+
 function getMetasData(ss) {
   const configSheet = ensureConfigSheet_(ss);
   const raw = getConfigValue_(configSheet, CONFIG_KEYS.goalsJson);
@@ -264,6 +279,23 @@ function ensureCoreSheets_(ss) {
     configSheet.appendRow([CONFIG_KEYS.version, '1.0', 'Versión del motor']);
     configSheet.appendRow([CONFIG_KEYS.lastSync, new Date().toISOString(), 'Última sincronización masiva']);
   }
+}
+
+function upsertRowByKey_(sheet, keyColumnIndex, keyValue, rowValues) {
+  const lastRow = sheet.getLastRow();
+  const normalizedKey = String(keyValue || '').trim().toUpperCase();
+
+  if (lastRow > 1) {
+    const values = sheet.getRange(2, keyColumnIndex, lastRow - 1, 1).getValues();
+    for (var i = 0; i < values.length; i++) {
+      if (String(values[i][0] || '').trim().toUpperCase() === normalizedKey) {
+        sheet.getRange(i + 2, 1, 1, rowValues.length).setValues([rowValues]);
+        return;
+      }
+    }
+  }
+
+  sheet.appendRow(rowValues);
 }
 
 function ensureGoalsConfig_(ss) {

@@ -38,6 +38,7 @@ export default function Welcome() {
       localStorage.setItem('navi_matricula', student.matricula || matricula.toUpperCase());
       localStorage.setItem('navi_user_name', student.nombre || student.name || '');
       localStorage.setItem('navi_student_email', student.email || '');
+      localStorage.setItem('navi_user_community', student.community || student.comunidad || '');
 
       if (mentor?.hex) {
         document.documentElement.style.setProperty('--theme-color', mentor.hex);

@@ -14,7 +14,7 @@ export default function CheckIn() {
 
   const isValidMatricula = /^A[0-9]{8}$/i.test(matricula.trim());
 
-  const registerPresence = async (student) => {
+  const registerPresence = async (student, mentor) => {
     const normalizedMatricula = matricula.toUpperCase();
     await apiClient.post('updateStudent', {
       matricula: normalizedMatricula,
@@ -27,6 +27,16 @@ export default function CheckIn() {
 
     if (student?.name) localStorage.setItem('navi_user_name', student.name);
     if (student?.mentor) localStorage.setItem('navi_user_mentor', student.mentor);
+    if (student?.community || student?.comunidad) {
+      localStorage.setItem('navi_user_community', student.community || student.comunidad);
+    }
+    if (mentor?.hex) {
+      document.documentElement.style.setProperty('--theme-color', mentor.hex);
+      localStorage.setItem('navi_community_color', mentor.hex);
+    }
+    if (mentor?.nombre || mentor?.name) {
+      localStorage.setItem('navi_mentor_name', mentor.nombre || mentor.name);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -40,11 +50,11 @@ export default function CheckIn() {
     setErrorMessage('');
 
     try {
-      const { student } = await apiClient.post('findStudent', {
+      const { student, mentor } = await apiClient.post('findStudent', {
         matricula: matricula.toUpperCase(),
       });
 
-      await registerPresence(student);
+      await registerPresence(student, mentor);
 
       if (student?.status === 'Test Completado' || student?.status === 'Metas Seleccionadas') {
         localStorage.removeItem('navi_missing_remote_test');

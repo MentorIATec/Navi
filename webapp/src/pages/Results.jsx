@@ -55,12 +55,24 @@ function getBookingConfig() {
   }
 }
 
+function getMicroPre() {
+  try {
+    const raw = localStorage.getItem('micro_pre');
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch (error) {
+    console.error('No se pudo leer el micro check-in de sesión:', error);
+    return null;
+  }
+}
+
 export default function Results() {
   const navigate = useNavigate();
   const scoreData = getScoreData();
   const isSessionMode = localStorage.getItem('navi_session_mode') === 'presencial';
   const isMissingRemoteTest = localStorage.getItem('navi_missing_remote_test') === 'true';
   const bookingConfig = getBookingConfig();
+  const microPre = getMicroPre();
   const priorityAreas = getPriorityAreas(scoreData);
   const priorityCount = priorityAreas.length;
 
@@ -106,13 +118,25 @@ export default function Results() {
           <Card className="overflow-hidden">
             <CardContent className="p-10 sm:p-12">
               <p className={isSessionMode ? 'navi-eyebrow' : 'text-center text-sm font-semibold tracking-[0.02em] text-[var(--ink-600)]'}>
-                {isSessionMode ? 'Lectura para la Sesión' : 'Tu diagnóstico de trayectoria'}
+                {isSessionMode ? 'Tu sesión de hoy' : 'Tu diagnóstico de trayectoria'}
               </p>
               <div className={`mt-5 ${isSessionMode ? 'max-w-2xl' : 'mx-auto max-w-3xl text-center'}`}>
                 {isSessionMode ? (
-                  <p className="text-lg leading-8 text-[var(--ink-700)]">
-                    Esta lectura ya está lista para ayudarte a convertir la sesión en metas concretas y sostenibles.
-                  </p>
+                  <div className="space-y-4">
+                    {microPre?.summary ? (
+                      <div className="rounded-[22px] border border-[rgba(15,76,129,0.10)] bg-[rgba(249,252,255,0.78)] px-5 py-5">
+                        <p className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--coral-500)]">
+                          Cómo llegas hoy
+                        </p>
+                        <p className="mt-3 text-base leading-7 text-[var(--ink-700)]">
+                          Hoy llegas con la sensación de que {microPre.summary.arrival} y {microPre.summary.agency}. Tengámoslo en cuenta mientras revisamos tu diagnóstico.
+                        </p>
+                      </div>
+                    ) : null}
+                    <p className="text-lg leading-8 text-[var(--ink-700)]">
+                      Esto es lo que tu diagnóstico muestra hoy sobre tu trayectoria.
+                    </p>
+                  </div>
                 ) : (
                   <>
                     <div className="font-display text-[96px] font-bold leading-none tracking-[-0.08em] text-[var(--navy-700)] sm:text-[120px]">

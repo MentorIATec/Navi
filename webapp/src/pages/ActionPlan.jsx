@@ -2,21 +2,107 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { ExternalLink, Check, Download, CheckCircle2, ArrowLeft, Compass, Sparkle } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
+import { apiClient } from '../api/client';
 import html2canvas from 'html2canvas';
+
+function titleCaseName(name) {
+  return String(name || '')
+    .toLowerCase()
+    .split(' ')
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
+function getCommunityTheme(community, color) {
+  const normalized = String(community || '').trim().toLowerCase();
+  const themes = {
+    pasio: {
+      label: 'PASIO',
+      accent: '#C76A5C',
+      slogan: 'Descubre y vive tu pasión.',
+    },
+    revo: {
+      label: 'REVO',
+      accent: '#7C8CA9',
+      slogan: 'Somos luz que guía para forjar los sueños.',
+    },
+    kresko: {
+      label: 'KRESKO',
+      accent: '#7A6D90',
+      slogan: 'Crecimiento integral que entrelaza ideas, pensamientos y actitudes.',
+    },
+    krei: {
+      label: 'KREI',
+      accent: '#79858B',
+      slogan: 'Grandes ideas.',
+    },
+    forta: {
+      label: 'FORTA',
+      accent: '#7D6B5E',
+      slogan: 'Fortaleza que hace que las acciones perduren, como el carácter fuerte para llegar lejos.',
+    },
+    spirita: {
+      label: 'SPIRITA',
+      accent: '#6B7FA5',
+      slogan: 'Espíritu que inspira y genera cambio.',
+    },
+    reflekto: {
+      label: 'REFLEKTO',
+      accent: '#7C7AA8',
+      slogan: 'Creatividad que fluye y se refleja.',
+    },
+    energio: {
+      label: 'ENERGIO',
+      accent: '#C77C52',
+      slogan: 'Energía en constante movimiento, que impulsa y transforma.',
+    },
+    ekvilibro: {
+      label: 'EKVILIBRO',
+      accent: '#6E8C86',
+      slogan: 'Simetría y balance en la vida.',
+    },
+    talenta: {
+      label: 'TALENTA',
+      accent: '#8C6E8E',
+      slogan: 'Alcanzar el éxito con los talentos que tenemos.',
+    },
+  };
+
+  const fallback = {
+    label: community || 'Tec',
+    accent: color || 'var(--coral-500)',
+    slogan: 'Ruta guiada para transformar esta sesión en un compromiso concreto.',
+  };
+
+  if (themes[normalized]) {
+    return {
+      ...themes[normalized],
+      accent: color || themes[normalized].accent,
+    };
+  }
+
+  return fallback;
+}
 
 export default function ActionPlan() {
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
   const [showClosureLine, setShowClosureLine] = useState(false);
+  const [resolvedCommunity, setResolvedCommunity] = useState(localStorage.getItem('navi_user_community') || '');
+  const [resolvedCommunityColor, setResolvedCommunityColor] = useState(localStorage.getItem('navi_community_color') || '');
   const badgeRef = useRef(null);
 
   const metaPrioritaria = localStorage.getItem('meta_prioritaria') || 'No seleccionada';
   const metaComplementaria = localStorage.getItem('meta_complementaria') || 'No seleccionada';
   const metaTiempo = localStorage.getItem('meta_tiempo') || 'Flexible';
-  const metaPlan = localStorage.getItem('meta_plan') || '';
-  const metaObstaculo = localStorage.getItem('meta_obstaculo') || '';
-  const studentName = localStorage.getItem('navi_user_name') || localStorage.getItem('navi_matricula') || 'Estudiante';
+  const matricula = localStorage.getItem('navi_matricula') || '';
+  const studentName = titleCaseName(localStorage.getItem('navi_user_name') || localStorage.getItem('navi_matricula') || 'Estudiante');
+  const communityTheme = getCommunityTheme(
+    resolvedCommunity,
+    resolvedCommunityColor
+  );
   const currentSemester = `Periodo ${new Date().getFullYear()}`;
 
   useEffect(() => {
@@ -24,7 +110,41 @@ export default function ActionPlan() {
     return () => clearTimeout(timer);
   }, []);
 
+  useEffect(() => {
+    async function hydrateCommunityContext() {
+      if (!matricula || (resolvedCommunity && resolvedCommunityColor)) return;
+
+      try {
+        const { student, mentor } = await apiClient.post('findStudent', { matricula });
+        const nextCommunity = student?.community || student?.comunidad || '';
+        const nextColor = mentor?.hex || '';
+
+        if (nextCommunity) {
+          localStorage.setItem('navi_user_community', nextCommunity);
+          setResolvedCommunity(nextCommunity);
+        }
+
+        if (nextColor) {
+          localStorage.setItem('navi_community_color', nextColor);
+          document.documentElement.style.setProperty('--theme-color', nextColor);
+          setResolvedCommunityColor(nextColor);
+        }
+
+        if (mentor?.nombre || mentor?.name) {
+          localStorage.setItem('navi_mentor_name', mentor.nombre || mentor.name);
+        }
+
+      } catch (error) {
+        console.error('[ActionPlan] could not hydrate community context:', error);
+      }
+    }
+
+    hydrateCommunityContext();
+  }, [matricula, resolvedCommunity, resolvedCommunityColor]);
+
   const formatGoalsForClipboard = () => {
+    const metaPlan = localStorage.getItem('meta_plan') || '';
+    const metaObstaculo = localStorage.getItem('meta_obstaculo') || '';
     return `PLAN DE MENTORÍA\n\nMETA PRIORITARIA:\n${metaPrioritaria}\n\nMETA COMPLEMENTARIA:\n${metaComplementaria}\n\nVENTANA DE TIEMPO:\n${metaTiempo}\n\nOBSTÁCULO PRINCIPAL:\n${metaObstaculo}\n\nESTRATEGIA SI-ENTONCES:\n${metaPlan}`;
   };
 
@@ -59,16 +179,13 @@ export default function ActionPlan() {
             Tu plan ya tiene forma
           </h2>
           <p className="navi-prose mt-4 text-sm sm:text-base">
-            Cerraste el recorrido de mentoría con metas concretas y una estrategia clara para sostenerlas en el tiempo.
+            Cerraste el recorrido con dos compromisos concretos y una estrategia para cuando el semestre se complique.
           </p>
           <div className="mt-8 flex items-start gap-4 rounded-[22px] border border-[rgba(210,106,92,0.16)] bg-[rgba(249,236,232,0.5)] px-5 py-5">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[rgba(210,106,92,0.14)] text-[var(--coral-500)]">
-              <Compass className="h-6 w-6" />
-            </div>
             <div>
-              <p className="font-display text-xl font-semibold text-[var(--ink-900)]">Compromiso definido</p>
+              <p className="font-display text-xl font-semibold text-[var(--ink-900)]">Ya sabes hacia dónde vas</p>
               <p className="mt-2 text-sm text-[var(--ink-700)]">
-                Guarda este plan, compártelo con tu mentor y úsalo como referencia de seguimiento durante el semestre.
+                Descarga este plan, compártelo con tu mentor o mentora y vuelve a él cuando necesites orientarte.
               </p>
             </div>
           </div>
@@ -78,87 +195,74 @@ export default function ActionPlan() {
           <div className="absolute inset-x-8 top-6 h-24 rounded-full bg-[rgba(210,106,92,0.12)] blur-3xl" />
           <div
             ref={badgeRef}
-            className="relative overflow-hidden rounded-[32px] border border-[rgba(255,255,255,0.16)] bg-[linear-gradient(180deg,var(--navy-700)_0%,var(--navy-600)_100%)] p-8 text-white shadow-[0_30px_70px_rgba(16,28,48,0.28)] transition-all duration-700 ease-out"
+            className="relative overflow-hidden rounded-[32px] border border-[rgba(255,255,255,0.16)] p-8 text-white shadow-[0_30px_70px_rgba(16,28,48,0.28)] transition-all duration-700 ease-out"
             style={{
+              background: `radial-gradient(circle at 18% 16%, color-mix(in srgb, ${communityTheme.accent} 32%, transparent) 0%, transparent 36%), linear-gradient(180deg, color-mix(in srgb, ${communityTheme.accent} 18%, var(--navy-700)) 0%, color-mix(in srgb, ${communityTheme.accent} 28%, var(--navy-600)) 100%)`,
               transform: showClosureLine ? 'translateY(0) scale(1)' : 'translateY(18px) scale(0.97)',
               opacity: showClosureLine ? 1 : 0.8,
             }}
           >
             <div className="absolute right-0 top-0 h-48 w-48 translate-x-1/3 -translate-y-1/3 rounded-full bg-[rgba(255,255,255,0.08)] blur-3xl" />
             <div className="absolute bottom-0 left-0 h-40 w-40 -translate-x-1/3 translate-y-1/3 rounded-full bg-[rgba(210,106,92,0.16)] blur-3xl" />
+            <div
+              className="absolute inset-x-0 top-0 h-3"
+              style={{ background: `linear-gradient(90deg, ${communityTheme.accent} 0%, rgba(255,255,255,0.22) 100%)` }}
+            />
+            <div
+              className="absolute bottom-0 left-0 top-0 w-[6px]"
+              style={{ background: `linear-gradient(180deg, ${communityTheme.accent} 0%, rgba(255,255,255,0.08) 100%)` }}
+            />
+            <div
+              className="absolute left-8 top-10 h-28 w-28 rounded-full blur-3xl"
+              style={{ background: communityTheme.accent, opacity: 0.12 }}
+            />
 
             <div className="relative z-10">
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                  <p className="font-display text-xs font-semibold uppercase tracking-[0.24em] text-[rgba(255,255,255,0.68)]">
-                    Brújula de Mentoría · Tecnológico de Monterrey · {currentSemester}
-                  </p>
-                  <h3 className="mt-4 font-display text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-                    {studentName}
-                  </h3>
-                </div>
-                <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(255,255,255,0.14)] bg-[rgba(255,255,255,0.08)] px-4 py-2 text-sm text-[rgba(255,255,255,0.82)]">
-                  <CheckCircle2 className="h-4 w-4" />
-                  Plan completado
-                </div>
+              <p
+                className="font-display text-base font-semibold uppercase tracking-[0.26em]"
+                style={{ color: communityTheme.accent }}
+              >
+                COMUNIDAD {communityTheme.label}
+              </p>
+              <p className="mt-2 max-w-2xl font-editorial text-lg italic text-[rgba(255,255,255,0.88)]">
+                {communityTheme.slogan}
+              </p>
+              <p className="mt-3 font-display text-xs font-semibold uppercase tracking-[0.22em] text-[rgba(255,255,255,0.62)]">
+                Mentoría estudiantil · {currentSemester}
+              </p>
+              <h3 className="mt-5 font-display text-4xl font-semibold tracking-tight text-white sm:text-5xl">
+                {studentName}
+              </h3>
+
+              <div className="mt-10">
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[rgba(255,255,255,0.58)]">
+                  Mi meta para este periodo
+                </p>
+                <p className="mt-4 max-w-3xl font-editorial text-[2rem] leading-[1.22] text-white sm:text-[2.35rem]">
+                  {metaPrioritaria}
+                </p>
               </div>
 
-              <div className="mt-8 grid gap-4">
-                <div className="rounded-[24px] border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.07)] p-5">
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[rgba(255,255,255,0.62)]">
-                    Meta prioritaria
+              <div className="mt-10 grid gap-6 border-t border-[rgba(255,255,255,0.12)] pt-7 sm:grid-cols-[1fr_auto] sm:items-end">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[rgba(255,255,255,0.58)]">
+                    También quiero sostener
                   </p>
-                  <p className="mt-3 font-editorial text-xl leading-relaxed text-white">
-                    {metaPrioritaria}
-                  </p>
-                </div>
-
-                <div className="rounded-[24px] border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.07)] p-5">
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[rgba(255,255,255,0.62)]">
-                    Meta complementaria
-                  </p>
-                  <p className="mt-3 font-editorial text-xl leading-relaxed text-white">
+                  <p className="mt-3 max-w-2xl text-lg leading-relaxed text-[rgba(255,255,255,0.88)]">
                     {metaComplementaria}
                   </p>
                 </div>
-
-                {metaPlan ? (
-                  <div className="rounded-[24px] border border-[rgba(255,255,255,0.12)] bg-[rgba(6,18,34,0.22)] p-5">
-                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[rgba(255,255,255,0.62)]">
-                      Estrategia si-entonces
-                    </p>
-                    <p className="mt-3 font-editorial text-lg italic leading-relaxed text-[rgba(255,255,255,0.92)]">
-                      {metaPlan}
-                    </p>
-                  </div>
-                ) : null}
-              </div>
-
-              <div className="mt-8 grid gap-4 border-t border-[rgba(255,255,255,0.12)] pt-6 sm:grid-cols-[0.9fr_1.1fr]">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[rgba(255,255,255,0.62)]">
-                    Ventana de tiempo
+                <div className="sm:text-right">
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[rgba(255,255,255,0.58)]">
+                    Por los próximos
                   </p>
-                  <p className="mt-2 text-lg font-semibold text-white">{metaTiempo}</p>
+                  <p className="mt-3 text-2xl font-semibold text-white">{metaTiempo}</p>
                 </div>
-                {metaObstaculo ? (
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[rgba(255,255,255,0.62)]">
-                      Obstáculo principal
-                    </p>
-                    <p className="mt-2 text-sm leading-relaxed text-[rgba(255,255,255,0.84)]">
-                      {metaObstaculo}
-                    </p>
-                  </div>
-                ) : null}
               </div>
 
-              <div className="mt-8 flex items-center justify-between gap-4 text-sm text-[rgba(255,255,255,0.72)]">
-                <span>KREI · {new Date().toLocaleDateString('es-MX')}</span>
-                <span className="inline-flex items-center gap-2">
-                  <Sparkle className="h-4 w-4 text-[var(--coral-500)]" />
-                  Mentoría concluida
-                </span>
+              <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-[rgba(255,255,255,0.12)] pt-6 text-sm text-[rgba(255,255,255,0.74)]">
+                <span>{new Date().toLocaleDateString('es-MX')}</span>
+                <span>Mentoría completada</span>
               </div>
             </div>
           </div>
@@ -172,7 +276,6 @@ export default function ActionPlan() {
 
           <div className="mt-5 flex justify-center">
             <Button variant="ghost" className="text-[var(--navy-500)] hover:text-[var(--navy-700)]" onClick={downloadBadge}>
-              <Download className="mr-2 h-4 w-4" />
               Descargar mi plan
             </Button>
           </div>
@@ -182,13 +285,13 @@ export default function ActionPlan() {
         <CardContent className="p-8 sm:p-10">
           <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
             <div>
-              <p className="navi-eyebrow">Siguiente acción</p>
+              <p className="navi-eyebrow">El siguiente paso</p>
               <h3 className="mt-3 font-display text-3xl font-semibold text-[var(--ink-900)]">
-                Llévalo a tu registro institucional
+                Registra este plan en MiVidaTec
               </h3>
               <p className="mt-4 text-sm leading-relaxed text-[var(--ink-700)] sm:text-base">
-                Copiaremos tu plan automáticamente para que lo pegues en <strong>MiVidaTec &gt; Metas de Plan de Vida</strong>.
-                Así dejas trazado este compromiso también dentro de tu seguimiento institucional.
+                Vamos a copiar tu plan para que lo pegues en <strong>MiVidaTec &gt; Metas de Plan de Vida</strong>.
+                Así queda trazado en tu historial del Tec, no solo aquí.
               </p>
             </div>
 
@@ -198,8 +301,7 @@ export default function ActionPlan() {
                 className="w-full"
                 onClick={handleCopyAndMiTec}
               >
-                {copied ? <Check className="mr-2 h-5 w-5" /> : <ExternalLink className="mr-2 h-5 w-5" />}
-                {copied ? 'Copiado. Abriendo MiVidaTec...' : 'Guardar en MiVidaTec'}
+                {copied ? 'Copiado. Abriendo MiVidaTec...' : 'Abrir MiVidaTec y copiar mi plan'}
               </Button>
               <Button
                 variant="outline"

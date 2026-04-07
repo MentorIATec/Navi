@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { Check, Star, BookOpen, Loader2, ArrowRight, ArrowLeft, Compass, Target } from 'lucide-react';
+import { Check, Loader2, ArrowRight, ArrowLeft } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { apiClient } from '../api/client';
 import { ProgressBar } from '../components/ui/ProgressBar';
@@ -99,35 +99,35 @@ export default function GoalSelection() {
     }
   };
 
-  const GoalCard = ({ goal, isSelected, onSelect, icon }) => {
-    const GoalIcon = icon;
-
+  const GoalCard = ({ goal, isSelected, onSelect }) => {
     return (
-    <Card 
-      onClick={() => onSelect(goal)}
-      className={cn(
-        "cursor-pointer hover:border-brand-300 hover:shadow-lg transition-all border-2",
-        isSelected ? "border-brand-600 bg-brand-50 ring-2 ring-brand-600 ring-offset-2" : "border-transparent"
-      )}
-    >
-      <div className="flex p-5">
-        <div className={cn(
-          "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl mr-4 transition-colors",
-          isSelected ? "bg-brand-600 text-white" : "bg-gray-100 text-gray-500"
-        )}>
-          <GoalIcon className="h-6 w-6" />
-        </div>
-        <div className="flex-1">
-          <div className="flex justify-between items-start">
-            <h4 className="font-semibold text-gray-900 text-lg mb-1">{goal.text}</h4>
-            {isSelected && <Check className="h-6 w-6 text-brand-600 shrink-0 ml-2" />}
+      <Card
+        onClick={() => onSelect(goal)}
+        className={cn(
+          'cursor-pointer border transition-all',
+          isSelected
+            ? 'border-[rgba(15,76,129,0.26)] bg-[linear-gradient(180deg,rgba(242,247,253,0.98)_0%,rgba(231,239,249,0.94)_100%)] shadow-[0_16px_34px_rgba(17,36,66,0.10)]'
+            : 'border-[rgba(15,76,129,0.08)] bg-white/72 hover:border-[rgba(15,76,129,0.18)] hover:bg-white hover:shadow-[0_14px_34px_rgba(17,36,66,0.10)]'
+        )}
+      >
+        <div className="p-6">
+          <div className="flex items-start justify-between gap-4">
+            <h4
+              className={cn(
+                'font-display text-[1.75rem] leading-tight tracking-tight text-[var(--ink-900)]',
+                isSelected ? 'font-semibold' : 'font-medium'
+              )}
+            >
+              {goal.text}
+            </h4>
+            {isSelected ? (
+              <span className="shrink-0 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--navy-500)]">
+                Elegida
+              </span>
+            ) : null}
           </div>
-          <span className="inline-block px-3 py-1 rounded-full text-xs font-medium uppercase tracking-wider bg-white border border-gray-200 text-gray-600">
-            {goal.dimension}
-          </span>
         </div>
-      </div>
-    </Card>
+      </Card>
     );
   };
 
@@ -136,31 +136,26 @@ export default function GoalSelection() {
     {
       title: 'Meta prioritaria',
       description: 'Selecciona una meta enfocada en tu avance académico o profesional.',
-      icon: BookOpen,
       ready: Boolean(selectedPrioritaria),
     },
     {
       title: 'Meta complementaria',
       description: 'Elige una meta que fortalezca tu bienestar y desarrollo integral.',
-      icon: Star,
       ready: Boolean(selectedComplementaria),
     },
     {
-      title: 'Ventana de tiempo',
+      title: 'Tu horizonte de tiempo',
       description: 'Define el horizonte en el que te comprometes a trabajar estas metas.',
-      icon: Compass,
       ready: Boolean(selectedTiempo),
     },
     {
       title: 'Obstáculo principal',
       description: 'Anticipa qué podría dificultar tu avance para no improvisar después.',
-      icon: Target,
       ready: obstaculo.trim().length > 3,
     },
     {
-      title: 'Estrategia si-entonces',
-      description: 'Formula una respuesta concreta para actuar cuando aparezca el obstáculo.',
-      icon: Check,
+      title: 'Mi respuesta al obstáculo',
+      description: 'Define qué harás cuando aparezca ese obstáculo para no improvisar después.',
       ready: plan.trim().length > 5,
     },
   ];
@@ -194,14 +189,13 @@ export default function GoalSelection() {
             Construyamos tu plan
           </h2>
           <p className="navi-prose mt-4 text-sm sm:text-base">
-            Este recorrido traduce la conversación con tu mentor en compromisos claros y una estrategia accionable.
+            Lo que conversaste con tu mentor o mentora hoy se convierte en compromisos que puedes sostener.
           </p>
           <div className="mt-8">
             <ProgressBar current={currentStep + 1} total={stepDefinitions.length} />
           </div>
           <div className="mt-8 space-y-3">
             {stepDefinitions.map((step, index) => {
-              const StepIcon = step.icon;
               const isActive = index === currentStep;
               const isCompleted = index < currentStep || step.ready;
 
@@ -223,12 +217,12 @@ export default function GoalSelection() {
                   )}
                 >
                   <div className={cn(
-                    'flex h-11 w-11 shrink-0 items-center justify-center rounded-full',
+                    'flex h-11 w-11 shrink-0 items-center justify-center rounded-full font-display text-lg font-semibold',
                     isCompleted
                       ? 'bg-[rgba(210,106,92,0.14)] text-[var(--coral-500)]'
                       : 'bg-[rgba(15,76,129,0.08)] text-[var(--ink-700)]'
                   )}>
-                    <StepIcon className="h-5 w-5" />
+                    {index + 1}
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between gap-3">
@@ -280,7 +274,6 @@ export default function GoalSelection() {
                         goal={goal}
                         isSelected={selectedPrioritaria?.id === goal.id}
                         onSelect={setSelectedPrioritaria}
-                        icon={BookOpen}
                       />
                     ))}
                   </div>
@@ -294,7 +287,6 @@ export default function GoalSelection() {
                         goal={goal}
                         isSelected={selectedComplementaria?.id === goal.id}
                         onSelect={setSelectedComplementaria}
-                        icon={Star}
                       />
                     ))}
                   </div>
@@ -346,10 +338,10 @@ export default function GoalSelection() {
                 {currentStep === 4 ? (
                   <div className="rounded-[24px] border border-[rgba(15,76,129,0.08)] bg-[rgba(249,252,255,0.92)] p-6">
                     <label className="block text-sm font-semibold text-[var(--ink-900)]">
-                      Estrategia si-entonces
+                      ¿Cómo vas a responder cuando aparezca ese obstáculo?
                     </label>
                     <p className="mt-2 text-sm text-[var(--ink-700)]">
-                      Formula una respuesta específica para cuando aparezca el obstáculo. La clave es que sea inmediata y concreta.
+                      Cuando aparezca ese obstáculo, ¿qué harás exactamente? Escríbelo antes de que pase.
                     </p>
                     <div className="mt-4 overflow-hidden rounded-[20px] border border-[rgba(15,76,129,0.12)] bg-white/88 shadow-sm transition-all focus-within:border-[rgba(210,106,92,0.35)] focus-within:ring-4 focus-within:ring-[rgba(210,106,92,0.10)]">
                       <div className="border-b border-[rgba(15,76,129,0.08)] bg-[rgba(249,236,232,0.45)] px-5 py-3 text-sm font-semibold text-[var(--coral-500)]">
@@ -369,7 +361,9 @@ export default function GoalSelection() {
                 <div className="mt-8 flex flex-col gap-3 border-t border-[rgba(15,76,129,0.08)] pt-6 sm:flex-row sm:items-center sm:justify-between">
                   <div className="text-sm text-[var(--ink-700)]">
                     {isCurrentStepReady
-                      ? 'Paso completo. Puedes continuar.'
+                      ? currentStep === stepDefinitions.length - 1
+                        ? 'Listo. Tu plan ya tiene lo que necesita.'
+                        : 'Paso completo. Puedes continuar.'
                       : 'Completa este paso para avanzar al siguiente.'}
                   </div>
                   <div className="flex flex-col gap-3 sm:flex-row">
@@ -388,7 +382,7 @@ export default function GoalSelection() {
                       isLoading={isSaving}
                       onClick={handleNext}
                     >
-                      {currentStep === stepDefinitions.length - 1 ? 'Ver plan de acción' : 'Siguiente'}
+                      {currentStep === stepDefinitions.length - 1 ? 'Ver mi plan' : 'Siguiente'}
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   </div>
