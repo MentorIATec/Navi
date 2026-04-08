@@ -8,6 +8,7 @@ import { apiClient } from '../api/client';
 export default function CheckIn() {
   const navigate = useNavigate();
   const [matricula, setMatricula] = useState(localStorage.getItem('navi_matricula') || '');
+  const [preferredName, setPreferredName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [missingRemoteTest, setMissingRemoteTest] = useState(null);
@@ -16,17 +17,32 @@ export default function CheckIn() {
 
   const registerPresence = async (student, mentor) => {
     const normalizedMatricula = matricula.toUpperCase();
-    await apiClient.post('updateStudent', {
+    const storedPreferredName =
+      preferredName.trim() ||
+      student?.nombrepreferido ||
+      student?.preferredName ||
+      '';
+    const resolvedDisplayName =
+      storedPreferredName ||
+      student?.nombre ||
+      student?.name ||
+      '';
+
+    const updatePayload = {
       matricula: normalizedMatricula,
       checkIn: 'Si',
-    });
+    };
+    if (storedPreferredName) {
+      updatePayload.preferredName = storedPreferredName;
+    }
+    await apiClient.post('updateStudent', updatePayload);
 
     localStorage.setItem('navi_matricula', normalizedMatricula);
     localStorage.setItem('navi_checked_in', 'true');
     localStorage.setItem('navi_session_mode', 'presencial');
 
-    if (student?.name) localStorage.setItem('navi_user_name', student.name);
-    if (student?.mentor) localStorage.setItem('navi_user_mentor', student.mentor);
+    if (resolvedDisplayName) localStorage.setItem('navi_user_name', resolvedDisplayName);
+    if (student?.mentor || student?.nicknamementor) localStorage.setItem('navi_user_mentor', student.mentor || student.nicknamementor);
     if (student?.community || student?.comunidad) {
       localStorage.setItem('navi_user_community', student.community || student.comunidad);
     }
@@ -37,6 +53,8 @@ export default function CheckIn() {
     if (mentor?.nombre || mentor?.name) {
       localStorage.setItem('navi_mentor_name', mentor.nombre || mentor.name);
     }
+
+    return resolvedDisplayName;
   };
 
   const handleSubmit = async (e) => {
@@ -54,7 +72,7 @@ export default function CheckIn() {
         matricula: matricula.toUpperCase(),
       });
 
-      await registerPresence(student, mentor);
+      const resolvedDisplayName = await registerPresence(student, mentor);
 
       if (student?.status === 'Test Completado' || student?.status === 'Metas Seleccionadas') {
         localStorage.removeItem('navi_missing_remote_test');
@@ -64,7 +82,7 @@ export default function CheckIn() {
 
       localStorage.setItem('navi_missing_remote_test', 'true');
       setMissingRemoteTest({
-        name: student?.name || '',
+        name: resolvedDisplayName,
         status: student?.status || 'Pendiente',
       });
     } catch (error) {
@@ -149,6 +167,23 @@ export default function CheckIn() {
                   La usaremos para ubicar tu registro y continuar con este momento de la sesión.
                 </p>
               ) : null}
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="preferredName" className="text-sm font-semibold text-[var(--ink-700)]">
+                ¿Cómo deseas que te llamen?
+              </label>
+              <input
+                type="text"
+                id="preferredName"
+                placeholder="Nombre de pila o nombre preferido"
+                className="block w-full rounded-[20px] border border-[rgba(15,76,129,0.12)] bg-white/80 p-4 text-[var(--ink-900)] focus:border-[rgba(210,106,92,0.45)] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[rgba(210,106,92,0.12)] transition-all"
+                value={preferredName}
+                onChange={(e) => setPreferredName(e.target.value)}
+              />
+              <p className="text-sm text-[var(--ink-700)]">
+                Opcional. Así podremos dirigirnos a ti de la forma que prefieras.
+              </p>
             </div>
 
             <Button

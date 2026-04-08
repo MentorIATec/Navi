@@ -4,7 +4,7 @@ import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { ArrowLeft } from 'lucide-react';
 import { apiClient } from '../api/client';
-import html2canvas from 'html2canvas';
+import { toPng } from 'html-to-image';
 
 function titleCaseName(name) {
   return String(name || '')
@@ -89,6 +89,8 @@ function getCommunityTheme(community, color) {
 export default function ActionPlan() {
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadMessage, setDownloadMessage] = useState('');
   const [showClosureLine, setShowClosureLine] = useState(false);
   const [resolvedCommunity, setResolvedCommunity] = useState(localStorage.getItem('navi_user_community') || '');
   const [resolvedCommunityColor, setResolvedCommunityColor] = useState(localStorage.getItem('navi_community_color') || '');
@@ -103,7 +105,10 @@ export default function ActionPlan() {
     resolvedCommunity,
     resolvedCommunityColor
   );
-  const currentSemester = `Periodo ${new Date().getFullYear()}`;
+  const currentSessionLabel = new Date().toLocaleDateString('es-MX', {
+    month: 'long',
+    year: 'numeric',
+  });
 
   useEffect(() => {
     const timer = setTimeout(() => setShowClosureLine(true), 450);
@@ -133,6 +138,12 @@ export default function ActionPlan() {
         if (mentor?.nombre || mentor?.name) {
           localStorage.setItem('navi_mentor_name', mentor.nombre || mentor.name);
         }
+        if (student?.nombrepreferido || student?.preferredName || student?.nombre || student?.name) {
+          localStorage.setItem(
+            'navi_user_name',
+            student?.nombrepreferido || student?.preferredName || student?.nombre || student?.name
+          );
+        }
 
       } catch (error) {
         console.error('[ActionPlan] could not hydrate community context:', error);
@@ -158,15 +169,45 @@ export default function ActionPlan() {
 
   const downloadBadge = async () => {
     if (!badgeRef.current) return;
+
+    const isSafari = /Safari/i.test(navigator.userAgent) && !/Chrome|Chromium|Android/i.test(navigator.userAgent);
+    const fileName = `Mis_Metas_Navi_${new Date().toLocaleDateString().replace(/\//g, '-')}.png`;
+    const safariWindow = isSafari ? window.open('', '_blank', 'noopener,noreferrer') : null;
+
+    setIsDownloading(true);
+    setDownloadMessage('');
+
     try {
-      const canvas = await html2canvas(badgeRef.current, { scale: 2, backgroundColor: null });
-      const image = canvas.toDataURL("image/png");
-      const link = document.createElement("a");
-      link.href = image;
-      link.download = `Mis_Metas_Navi_${new Date().toLocaleDateString().replace(/\//g, '-')}.png`;
-      link.click();
+      if (document.fonts?.ready) {
+        await document.fonts.ready;
+      }
+
+      const imageUrl = await toPng(badgeRef.current, {
+        cacheBust: true,
+        pixelRatio: 2,
+        backgroundColor: 'transparent',
+      });
+      if (!imageUrl) throw new Error('No se pudo generar la imagen del plan.');
+
+      if (isSafari && safariWindow) {
+        safariWindow.location.href = imageUrl;
+        setDownloadMessage('Safari abrió la imagen en otra pestaña para que puedas guardarla.');
+      } else {
+        const link = document.createElement('a');
+        link.href = imageUrl;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      }
     } catch (err) {
-      console.error("Error al generar imagen", err);
+      if (safariWindow && !safariWindow.closed) {
+        safariWindow.close();
+      }
+      console.error('Error al generar imagen', err);
+      setDownloadMessage('No pudimos descargar la tarjeta en este intento. Intenta de nuevo.');
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -197,7 +238,7 @@ export default function ActionPlan() {
             ref={badgeRef}
             className="relative overflow-hidden rounded-[32px] border border-[rgba(255,255,255,0.16)] p-8 text-white shadow-[0_30px_70px_rgba(16,28,48,0.28)] transition-all duration-700 ease-out"
             style={{
-              background: `radial-gradient(circle at 18% 16%, color-mix(in srgb, ${communityTheme.accent} 32%, transparent) 0%, transparent 36%), linear-gradient(180deg, color-mix(in srgb, ${communityTheme.accent} 18%, var(--navy-700)) 0%, color-mix(in srgb, ${communityTheme.accent} 28%, var(--navy-600)) 100%)`,
+              background: `radial-gradient(circle at 52% 42%, color-mix(in srgb, ${communityTheme.accent} 26%, transparent) 0%, transparent 42%), radial-gradient(circle at 18% 14%, color-mix(in srgb, ${communityTheme.accent} 18%, transparent) 0%, transparent 28%), linear-gradient(180deg, color-mix(in srgb, ${communityTheme.accent} 16%, var(--navy-700)) 0%, color-mix(in srgb, ${communityTheme.accent} 24%, var(--navy-600)) 100%)`,
               transform: showClosureLine ? 'translateY(0) scale(1)' : 'translateY(18px) scale(0.97)',
               opacity: showClosureLine ? 1 : 0.8,
             }}
@@ -205,36 +246,42 @@ export default function ActionPlan() {
             <div className="absolute right-0 top-0 h-48 w-48 translate-x-1/3 -translate-y-1/3 rounded-full bg-[rgba(255,255,255,0.08)] blur-3xl" />
             <div className="absolute bottom-0 left-0 h-40 w-40 -translate-x-1/3 translate-y-1/3 rounded-full bg-[rgba(210,106,92,0.16)] blur-3xl" />
             <div
-              className="absolute inset-x-0 top-0 h-3"
-              style={{ background: `linear-gradient(90deg, ${communityTheme.accent} 0%, rgba(255,255,255,0.22) 100%)` }}
+              className="absolute left-1/2 top-[46%] h-[24rem] w-[24rem] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[110px]"
+              style={{ background: communityTheme.accent, opacity: 0.14 }}
             />
             <div
-              className="absolute bottom-0 left-0 top-0 w-[6px]"
-              style={{ background: `linear-gradient(180deg, ${communityTheme.accent} 0%, rgba(255,255,255,0.08) 100%)` }}
+              className="absolute left-[54%] top-[52%] h-[16rem] w-[16rem] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[90px]"
+              style={{ background: communityTheme.accent, opacity: 0.1 }}
             />
             <div
-              className="absolute left-8 top-10 h-28 w-28 rounded-full blur-3xl"
-              style={{ background: communityTheme.accent, opacity: 0.12 }}
+              className="absolute inset-x-0 top-0 h-24 border-b"
+              style={{
+                background: `linear-gradient(135deg, color-mix(in srgb, ${communityTheme.accent} 82%, white 4%) 0%, color-mix(in srgb, ${communityTheme.accent} 56%, var(--navy-600)) 100%)`,
+                borderColor: 'rgba(255,255,255,0.14)',
+              }}
             />
 
             <div className="relative z-10">
-              <p
-                className="font-display text-base font-semibold uppercase tracking-[0.26em]"
-                style={{ color: communityTheme.accent }}
+              <div
+                className="-mx-8 -mt-8 mb-7 px-8 py-5"
               >
-                COMUNIDAD {communityTheme.label}
+                <p
+                  className="font-display text-base font-semibold uppercase tracking-[0.26em] text-white"
+                >
+                  COMUNIDAD {communityTheme.label}
+                </p>
+                <p className="mt-1.5 max-w-2xl font-editorial text-lg italic text-[rgba(255,255,255,0.94)]">
+                  {communityTheme.slogan}
+                </p>
+              </div>
+              <p className="font-display text-xs font-semibold uppercase tracking-[0.22em] text-[rgba(255,255,255,0.62)]">
+                Mi sesión de mentoría · {currentSessionLabel}
               </p>
-              <p className="mt-2 max-w-2xl font-editorial text-lg italic text-[rgba(255,255,255,0.88)]">
-                {communityTheme.slogan}
-              </p>
-              <p className="mt-3 font-display text-xs font-semibold uppercase tracking-[0.22em] text-[rgba(255,255,255,0.62)]">
-                Mentoría estudiantil · {currentSemester}
-              </p>
-              <h3 className="mt-5 font-display text-4xl font-semibold tracking-tight text-white sm:text-5xl">
+              <h3 className="mt-4 font-display text-4xl font-semibold tracking-tight text-white sm:text-5xl">
                 {studentName}
               </h3>
 
-              <div className="mt-10">
+              <div className="mt-8">
                 <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[rgba(255,255,255,0.58)]">
                   Mi meta para este periodo
                 </p>
@@ -243,25 +290,22 @@ export default function ActionPlan() {
                 </p>
               </div>
 
-              <div className="mt-10 grid gap-6 border-t border-[rgba(255,255,255,0.12)] pt-7 sm:grid-cols-[1fr_auto] sm:items-end">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[rgba(255,255,255,0.58)]">
-                    También quiero sostener
-                  </p>
-                  <p className="mt-3 max-w-2xl text-lg leading-relaxed text-[rgba(255,255,255,0.88)]">
-                    {metaComplementaria}
-                  </p>
-                </div>
-                <div className="sm:text-right">
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[rgba(255,255,255,0.58)]">
-                    Por los próximos
-                  </p>
-                  <p className="mt-3 text-2xl font-semibold text-white">{metaTiempo}</p>
+              <div className="mt-10 border-t border-[rgba(255,255,255,0.12)] pt-7">
+                <div className="grid gap-8 sm:grid-cols-[1.15fr_0.85fr] sm:items-end">
+                  <div>
+                    <p className="max-w-2xl text-lg leading-relaxed text-[rgba(255,255,255,0.88)]">
+                      {metaComplementaria}
+                    </p>
+                  </div>
+                  <div className="sm:text-right">
+                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[rgba(255,255,255,0.66)]">
+                      Por los próximos <span className="ml-2 text-2xl tracking-normal text-white">{metaTiempo}</span>
+                    </p>
+                  </div>
                 </div>
               </div>
 
-              <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-[rgba(255,255,255,0.12)] pt-6 text-sm text-[rgba(255,255,255,0.74)]">
-                <span>{new Date().toLocaleDateString('es-MX')}</span>
+              <div className="mt-10 border-t border-[rgba(255,255,255,0.12)] pt-6 text-center text-sm text-[rgba(255,255,255,0.76)]">
                 <span>Mentoría completada</span>
               </div>
             </div>
@@ -275,10 +319,20 @@ export default function ActionPlan() {
           </div>
 
           <div className="mt-5 flex justify-center">
-            <Button variant="ghost" className="text-[var(--navy-500)] hover:text-[var(--navy-700)]" onClick={downloadBadge}>
+            <Button
+              variant="ghost"
+              className="text-[var(--navy-500)] hover:text-[var(--navy-700)]"
+              onClick={downloadBadge}
+              isLoading={isDownloading}
+            >
               Descargar mi plan
             </Button>
           </div>
+          {downloadMessage ? (
+            <p className="mt-2 text-center text-sm text-[var(--ink-700)]">
+              {downloadMessage}
+            </p>
+          ) : null}
         </section>
       </div>
       <Card className="border-[rgba(15,76,129,0.12)]">

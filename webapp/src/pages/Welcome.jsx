@@ -8,6 +8,7 @@ import { apiClient } from '../api/client';
 export default function Welcome() {
   const navigate = useNavigate();
   const [matricula, setMatricula] = useState('');
+  const [preferredName, setPreferredName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -33,10 +34,21 @@ export default function Welcome() {
         return;
       }
 
+      const storedPreferredName =
+        preferredName.trim() ||
+        student.nombrepreferido ||
+        student.preferredName ||
+        '';
+      const resolvedDisplayName =
+        storedPreferredName ||
+        student.nombre ||
+        student.name ||
+        '';
+
       localStorage.removeItem('navi_session_mode');
       localStorage.removeItem('navi_checked_in');
       localStorage.setItem('navi_matricula', student.matricula || matricula.toUpperCase());
-      localStorage.setItem('navi_user_name', student.nombre || student.name || '');
+      localStorage.setItem('navi_user_name', resolvedDisplayName);
       localStorage.setItem('navi_student_email', student.email || '');
       localStorage.setItem('navi_user_community', student.community || student.comunidad || '');
 
@@ -44,6 +56,13 @@ export default function Welcome() {
         document.documentElement.style.setProperty('--theme-color', mentor.hex);
         localStorage.setItem('navi_community_color', mentor.hex);
         localStorage.setItem('navi_mentor_name', mentor.nombre || mentor.name || '');
+      }
+
+      if (preferredName.trim() && preferredName.trim() !== (student.nombrepreferido || student.preferredName || '')) {
+        await apiClient.post('updateStudent', {
+          matricula: student.matricula || matricula.toUpperCase(),
+          preferredName: preferredName.trim(),
+        });
       }
 
       navigate('/test');
@@ -120,6 +139,23 @@ export default function Welcome() {
                   Formato esperado: A seguido de 8 dígitos
                 </p>
               )}
+            </div>
+
+            <div className="space-y-3">
+              <label htmlFor="preferredName" className="text-sm font-semibold text-[var(--ink-900)]">
+                ¿Cómo deseas que te llamen?
+              </label>
+              <input
+                type="text"
+                id="preferredName"
+                placeholder="Nombre de pila o nombre preferido"
+                className="block w-full rounded-[20px] border border-[rgba(15,76,129,0.16)] bg-white/88 p-4 text-lg font-medium text-[var(--ink-900)] shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] outline-none transition-all placeholder:text-[var(--ink-700)] focus:border-[var(--theme-color)] focus:bg-white focus:shadow-[0_0_0_4px_rgba(15,76,129,0.08)]"
+                value={preferredName}
+                onChange={(e) => setPreferredName(e.target.value)}
+              />
+              <p className="text-xs font-medium uppercase tracking-[0.12em] text-[var(--ink-700)]">
+                Opcional. Lo usaremos para personalizar tu experiencia en Navi.
+              </p>
             </div>
 
             <Button

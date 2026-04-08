@@ -26,17 +26,42 @@ const DEFAULT_MENTORS = [
 ];
 
 const DEFAULT_STUDENTS = [
-  { id: 1, name: 'Juan Pérez', matricula: 'A01234567', email: 'A01234567@tec.mx', status: 'Test Completado', checkIn: 'No', mentor: 'JR', community: 'Krei' },
-  { id: 2, name: 'Ana Sofía Garza', matricula: 'A01998877', email: 'A01998877@tec.mx', status: 'Metas Seleccionadas', checkIn: 'Si', mentor: 'Karen', community: 'Krei' },
-  { id: 3, name: 'Luis Martínez', matricula: 'A01776655', email: 'A01776655@tec.mx', status: 'Pendiente', checkIn: 'No', mentor: 'Karla', community: 'Krei' },
-  { id: 4, name: 'María Rodríguez', matricula: 'A01554433', email: 'A01554433@tec.mx', status: 'Pendiente', checkIn: 'No', mentor: 'JR', community: 'Krei' },
+  { id: 1, name: 'Juan Pérez', preferredName: 'Juan', matricula: 'A01234567', email: 'A01234567@tec.mx', status: 'Test Completado', checkIn: 'No', mentor: 'JR', community: 'Krei' },
+  { id: 2, name: 'Ana Sofía Garza', preferredName: 'Ana Sofía', matricula: 'A01998877', email: 'A01998877@tec.mx', status: 'Metas Seleccionadas', checkIn: 'Si', mentor: 'Karen', community: 'Krei' },
+  { id: 3, name: 'Luis Martínez', preferredName: 'Luis', matricula: 'A01776655', email: 'A01776655@tec.mx', status: 'Pendiente', checkIn: 'No', mentor: 'Karla', community: 'Krei' },
+  { id: 4, name: 'María Rodríguez', preferredName: 'María', matricula: 'A01554433', email: 'A01554433@tec.mx', status: 'Pendiente', checkIn: 'No', mentor: 'JR', community: 'Krei' },
 ];
+
+function normalizeStudent(raw, fallbackIndex = 0) {
+  return {
+    id: raw.id || raw.matricula || `student-${fallbackIndex}`,
+    matricula: raw.matricula || '',
+    name: raw.name || raw.nombre || '',
+    preferredName: raw.preferredName || raw.nombrepreferido || raw.nombrePreferido || '',
+    email: raw.email || '',
+    mentor: raw.mentor || raw.nicknamementor || '',
+    community: raw.community || raw.comunidad || '',
+    status: raw.status || 'Pendiente',
+    checkIn: raw.checkIn || raw.checkin || 'No',
+  };
+}
+
+function normalizeMentor(raw) {
+  return {
+    community: raw.community || raw.comunidad || 'Sin Comunidad',
+    hex: raw.hex || raw['#hex'] || '#0033A0',
+    name: raw.name || raw.nombre || 'Sin Nombre',
+    nickname: raw.nickname || raw.apodo || raw.name || raw.nombre || 'Sin Nombre',
+    email: raw.email || 'sin@correo.com',
+  };
+}
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [students, setStudents] = useState(() => {
     const saved = localStorage.getItem('navi_students');
-    return saved ? JSON.parse(saved) : DEFAULT_STUDENTS;
+    const parsed = saved ? JSON.parse(saved) : DEFAULT_STUDENTS;
+    return parsed.map((student, index) => normalizeStudent(student, index));
   });
   const [isDemoMode, setIsDemoMode] = useState(() => {
     return localStorage.getItem('navi_demo_mode') === 'true';
@@ -46,7 +71,8 @@ export default function AdminDashboard() {
   });
   const [mentors, setMentors] = useState(() => {
     const saved = localStorage.getItem('navi_mentors');
-    return saved ? JSON.parse(saved) : DEFAULT_MENTORS;
+    const parsed = saved ? JSON.parse(saved) : DEFAULT_MENTORS;
+    return parsed.map(normalizeMentor);
   });
 
   // Tab 1: Dashboard
@@ -137,6 +163,7 @@ export default function AdminDashboard() {
   const filteredStudents = stats.scopeStudents.filter(s => 
     s.matricula.toLowerCase().includes(searchTerm.toLowerCase()) || 
     s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (s.preferredName && s.preferredName.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (s.email && s.email.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
@@ -232,15 +259,19 @@ export default function AdminDashboard() {
     const lines = uploadText.split('\n').filter(line => line.trim());
     const newStudents = lines.map((line, idx) => {
       const parts = line.split(/[\t,]/).map(p => p.trim());
-      // Expecting: Matricula, Nombre, Correo, NicknameMentor (Opcional)
-      const mentorNick = parts[3];
+      // Expected: Matricula, Nombre, NombrePreferido (opcional), Correo, NicknameMentor (opcional)
+      const hasPreferredName = parts.length >= 5;
+      const preferredName = hasPreferredName ? parts[2] : '';
+      const email = hasPreferredName ? parts[3] : parts[2];
+      const mentorNick = hasPreferredName ? parts[4] : parts[3];
       const mentor = mentors.find(m => m.nickname === mentorNick || m.name === mentorNick);
       
       return {
         id: Date.now() + idx,
         matricula: parts[0] || `DESC-${idx}`,
         name: parts[1] || 'Sin Nombre',
-        email: parts[2] || 'sin@correo.com',
+        preferredName,
+        email: email || 'sin@correo.com',
         mentor: mentorNick || 'Sin Asignar',
         community: mentor?.community || 'N/A',
         status: 'Pendiente',
@@ -259,8 +290,8 @@ export default function AdminDashboard() {
     setIsSyncing(true);
     try {
       const data = await apiClient.get();
-      if (data.students) setStudents(data.students);
-      if (data.mentors) setMentors(data.mentors);
+      if (data.students) setStudents(data.students.map((student, index) => normalizeStudent(student, index)));
+      if (data.mentors) setMentors(data.mentors.map(normalizeMentor));
       alert("¡Sincronización completada desde Google Sheets!");
     } catch (err) {
       alert("Error al sincronizar: " + err.message);
@@ -504,7 +535,7 @@ export default function AdminDashboard() {
                 <thead className="bg-white border-b border-gray-100 text-gray-500 uppercase text-xs tracking-wider">
                   <tr>
                     <th className="px-6 py-4 font-medium">Matrícula</th>
-                    <th className="px-6 py-4 font-medium">Nombre Completo</th>
+                    <th className="px-6 py-4 font-medium">Nombre</th>
                     <th className="px-6 py-4 font-medium">Check-in (On-Site)</th>
                     <th className="px-6 py-4 font-medium">Status Actual</th>
                   </tr>
@@ -514,7 +545,16 @@ export default function AdminDashboard() {
                     filteredStudents.map((student) => (
                       <tr key={student.id} className="hover:bg-gray-50/50 transition-colors">
                         <td className="px-6 py-4 font-medium text-gray-900">{student.matricula}</td>
-                        <td className="px-6 py-4">{student.name}</td>
+                        <td className="px-6 py-4">
+                          <div className="flex flex-col">
+                            <span className="font-medium text-gray-900">
+                              {student.preferredName || student.name}
+                            </span>
+                            {student.preferredName && student.preferredName !== student.name ? (
+                              <span className="text-xs text-gray-500">{student.name}</span>
+                            ) : null}
+                          </div>
+                        </td>
                         <td className="px-6 py-4">
                           <span className={cn(
                             "px-2 py-0.5 rounded text-xs font-bold",
@@ -553,7 +593,7 @@ export default function AdminDashboard() {
                   <h2 className="text-xl font-bold text-gray-900">Carga Masiva de Estudiantes</h2>
                   <p className="text-gray-500 text-sm mt-1">
                     Copia y pega los datos de tu Excel. El sistema identificará los campos si están separados por tabulaciones o comas. <br/>
-                    **Orden esperado:** <code>Matrícula</code> | <code>Nombre</code> | <code>Correo</code>
+                    **Orden esperado:** <code>Matrícula</code> | <code>Nombre</code> | <code>NombrePreferido (opcional)</code> | <code>Correo</code> | <code>NicknameMentor (opcional)</code>
                   </p>
                 </div>
               </div>
@@ -561,7 +601,7 @@ export default function AdminDashboard() {
               <textarea
                 className="w-full rounded-xl border border-gray-300 p-4 text-sm font-mono text-gray-700 shadow-inner focus:border-brand-500 focus:ring-brand-500 transition-all resize-none mb-4"
                 rows="10"
-                placeholder={`A01234567\tJuan Pérez\tA01234567@tec.mx\nA01998877\tAna Sofía Garza\tA01998877@tec.mx`}
+                placeholder={`A01234567\tJuan Pérez\tJuan\tA01234567@tec.mx\tJR\nA01998877\tAna Sofía Garza\tAna Sofía\tA01998877@tec.mx\tKaren`}
                 value={uploadText}
                 onChange={(e) => setUploadText(e.target.value)}
               />
