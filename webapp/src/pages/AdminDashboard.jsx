@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { Mail, Search, Users, Activity, CheckCircle, Upload, Settings, LayoutDashboard, ShieldAlert, FileText, Trash2, Send, Tags, Beaker } from 'lucide-react';
+import { Mail, Search, Users, Activity, CheckCircle, Upload, Settings, ShieldAlert, FileText, Trash2, Send, Tags, Beaker, CalendarDays } from 'lucide-react';
 import { cn } from '../utils/cn';
 import GoalManager from '../components/admin/GoalManager';
 import { apiClient } from '../api/client';
@@ -346,42 +346,41 @@ export default function AdminDashboard() {
     }
   };
 
-  const currentTabStyle = "border-brand-500 text-brand-600 font-bold";
-  const defaultTabStyle = "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium";
+  const currentTabStyle = "border-[var(--coral-500)] text-[var(--navy-600)] font-semibold";
+  const defaultTabStyle = "border-transparent text-[var(--ink-700)] hover:text-[var(--ink-900)] hover:border-[rgba(15,76,129,0.18)] font-medium";
 
   return (
     <div className="mx-auto max-w-6xl py-6 animate-in fade-in duration-500">
       <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight flex items-center">
-            Panel Administrativo
+          <h1 className="font-display text-4xl font-bold tracking-tight text-[var(--ink-900)] flex items-center">
+            Operación de Navi
             {isDemoMode && (
               <span className="ml-4 inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-800 border border-orange-200">
                 <Beaker className="w-3 h-3 mr-1"/> MODO DEMO ACTIVO
               </span>
             )}
           </h1>
-          <p className="text-gray-500 mt-1">Gestión de cohortes, correos y visualización de la lista de estudiantes.</p>
+          <p className="mt-2 text-[var(--ink-700)]">Gestiona cohortes, mensajes y sincronización con Sheets sin salir de Navi.</p>
         </div>
         <div className="flex gap-2">
            <Button variant="outline" size="sm" onClick={handleFetchFromSheets} isLoading={isSyncing}>
-              <Activity className="w-4 h-4 mr-2" /> Bajar de Sheets
+              <Activity className="w-4 h-4 mr-2" /> Traer de Sheets
            </Button>
            <Button size="sm" onClick={handlePushToSheets} isLoading={isSyncing}>
-              <Upload className="w-4 h-4 mr-2" /> Subir a Sheets
+              <Upload className="w-4 h-4 mr-2" /> Guardar en Sheets
            </Button>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200 mb-8">
+      <div className="border-b border-[rgba(15,76,129,0.12)] mb-8">
         <nav className="-mb-px flex space-x-8 overflow-x-auto" aria-label="Tabs">
           <button
             onClick={() => setActiveTab('dashboard')}
             className={cn("whitespace-nowrap flex items-center py-4 px-1 border-b-2 text-sm transition-colors", activeTab === 'dashboard' ? currentTabStyle : defaultTabStyle)}
           >
-            <LayoutDashboard className="mr-2 h-4 w-4" />
-            Tablero de Progreso
+            Vista general
           </button>
           
           
@@ -391,14 +390,12 @@ export default function AdminDashboard() {
                 onClick={() => setActiveTab('upload')}
                 className={cn("whitespace-nowrap flex items-center py-4 px-1 border-b-2 text-sm transition-colors", activeTab === 'upload' ? currentTabStyle : defaultTabStyle)}
               >
-                <Upload className="mr-2 h-4 w-4" />
-                Carga de Estudiantes
+                Carga de estudiantes
               </button>
               <button
                 onClick={() => setActiveTab('goals')}
                 className={cn("whitespace-nowrap flex items-center py-4 px-1 border-b-2 text-sm transition-colors", activeTab === 'goals' ? currentTabStyle : defaultTabStyle)}
               >
-                <Tags className="mr-2 h-4 w-4" />
                 Banco de Metas
               </button>
             </>
@@ -408,8 +405,7 @@ export default function AdminDashboard() {
             onClick={() => setActiveTab('settings')}
             className={cn("whitespace-nowrap flex items-center py-4 px-1 border-b-2 text-sm transition-colors", activeTab === 'settings' ? currentTabStyle : defaultTabStyle)}
           >
-            <Settings className="mr-2 h-4 w-4" />
-            Simulador de Roles
+            Ajustes y simulación
           </button>
         </nav>
       </div>
@@ -425,7 +421,7 @@ export default function AdminDashboard() {
                 <h3 className="font-bold text-blue-900">
                   Vista de Mentor: <span className="text-brand-600">{mentors.find(m => m.email === userRole.split(':')[1])?.name}</span>
                 </h3>
-                <p className="text-sm text-blue-700">Tu comunidad: <span className="font-bold">{mentors.find(m => m.email === userRole.split(':')[1])?.community}</span>. Solo ves a tus alumnos asignados.</p>
+                <p className="text-sm text-blue-700">Tu comunidad: <span className="font-bold">{mentors.find(m => m.email === userRole.split(':')[1])?.community}</span>. Aquí ves únicamente a tus estudiantes asignados.</p>
               </div>
             </div>
           )}
@@ -433,7 +429,7 @@ export default function AdminDashboard() {
           {userRole === 'admin' && (
             <>
               <div className="grid gap-4 md:grid-cols-3 mb-8">
-                <Card className="bg-gradient-to-br from-indigo-50 to-white border-indigo-100 shadow-sm relative overflow-hidden">
+                <Card className="border-[rgba(15,76,129,0.10)] shadow-sm relative overflow-hidden">
                   <CardContent className="p-6">
                     <h3 className="font-bold text-indigo-900 mb-2 flex items-center"><Mail className="mr-2 h-5 w-5"/> Fase 1: Test Brújula</h3>
                     <p className="text-sm text-indigo-700/80 mb-4 h-10">Invitación masiva al diagnóstico inicial remoto.</p>
@@ -447,7 +443,7 @@ export default function AdminDashboard() {
                   </CardContent>
                 </Card>
 
-                <Card className="bg-gradient-to-br from-purple-50 to-white border-purple-100 shadow-sm">
+                <Card className="border-[rgba(15,76,129,0.10)] shadow-sm">
                   <CardContent className="p-6">
                     <h3 className="font-bold text-purple-900 mb-2 flex items-center"><CheckCircle className="mr-2 h-5 w-5"/> Fase 2: Mentoría</h3>
                     <p className="text-sm text-purple-700/80 mb-4 h-10">Agenda sesión presencial para Check-in y Metas.</p>
@@ -460,7 +456,7 @@ export default function AdminDashboard() {
                   </CardContent>
                 </Card>
 
-                <Card className="bg-gradient-to-br from-orange-50 to-white border-orange-100 shadow-sm">
+                <Card className="border-[rgba(15,76,129,0.10)] shadow-sm">
                   <CardContent className="p-6">
                     <h3 className="font-bold text-orange-900 mb-2 flex items-center"><Send className="mr-2 h-5 w-5"/> Fase 3: No-Shows</h3>
                     <p className="text-sm text-orange-700/80 mb-4 h-10">Recuperación de Post-test para alumnos que faltaron a la sesión.</p>
@@ -480,7 +476,7 @@ export default function AdminDashboard() {
                   <CardContent className="p-6 flex items-center">
                     <div className="p-3 bg-indigo-100 rounded-lg text-indigo-600 mr-4"><Users className="h-6 w-6"/></div>
                     <div>
-                      <p className="text-sm font-medium text-gray-500">Total Alumnos</p>
+                      <p className="text-sm font-medium text-gray-500">Estudiantes</p>
                       <h4 className="text-2xl font-bold text-gray-900">{stats.total}</h4>
                     </div>
                   </CardContent>
@@ -489,7 +485,7 @@ export default function AdminDashboard() {
                   <CardContent className="p-6 flex items-center">
                     <div className="p-3 bg-orange-100 rounded-lg text-orange-600 mr-4"><ShieldAlert className="h-6 w-6"/></div>
                     <div>
-                      <p className="text-sm font-medium text-gray-500">No-Shows</p>
+                      <p className="text-sm font-medium text-gray-500">No-shows</p>
                       <h4 className="text-2xl font-bold text-gray-900">{stats.noShows}</h4>
                     </div>
                   </CardContent>
@@ -498,7 +494,7 @@ export default function AdminDashboard() {
                   <CardContent className="p-6 flex items-center">
                     <div className="p-3 bg-blue-100 rounded-lg text-blue-600 mr-4"><Activity className="h-6 w-6"/></div>
                     <div>
-                      <p className="text-sm font-medium text-gray-500">Test Hecho</p>
+                      <p className="text-sm font-medium text-gray-500">Test realizado</p>
                       <h4 className="text-2xl font-bold text-gray-900">{stats.testRate}%</h4>
                     </div>
                   </CardContent>
@@ -507,7 +503,7 @@ export default function AdminDashboard() {
                   <CardContent className="p-6 flex items-center">
                     <div className="p-3 bg-green-100 rounded-lg text-green-600 mr-4"><CheckCircle className="h-6 w-6"/></div>
                     <div>
-                      <p className="text-sm font-medium text-gray-500">Con Metas</p>
+                      <p className="text-sm font-medium text-gray-500">Metas definidas</p>
                       <h4 className="text-2xl font-bold text-gray-900">{stats.metasRate}%</h4>
                     </div>
                   </CardContent>
@@ -518,12 +514,12 @@ export default function AdminDashboard() {
 
           <Card className="shadow-sm overflow-hidden border-gray-200">
             <div className="p-4 border-b border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row justify-between items-center gap-4">
-              <h3 className="font-bold text-gray-800">Directorio de Progreso</h3>
+              <h3 className="font-bold text-gray-800">Directorio de progreso</h3>
               <div className="relative w-full sm:w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <input 
                   type="text" 
-                  placeholder="Buscar alumno..." 
+                  placeholder="Buscar por matrícula, nombre o correo..." 
                   className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 bg-white"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -590,9 +586,9 @@ export default function AdminDashboard() {
                   <FileText className="h-6 w-6"/>
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">Carga Masiva de Estudiantes</h2>
+                  <h2 className="text-xl font-bold text-gray-900">Carga masiva de estudiantes</h2>
                   <p className="text-gray-500 text-sm mt-1">
-                    Copia y pega los datos de tu Excel. El sistema identificará los campos si están separados por tabulaciones o comas. <br/>
+                    Copia y pega los datos de tu Excel. El sistema reconoce tabulaciones o comas. <br/>
                     **Orden esperado:** <code>Matrícula</code> | <code>Nombre</code> | <code>NombrePreferido (opcional)</code> | <code>Correo</code> | <code>NicknameMentor (opcional)</code>
                   </p>
                 </div>
@@ -608,7 +604,7 @@ export default function AdminDashboard() {
 
               <div className="flex justify-between items-center border-t border-gray-100 pt-6">
                 <Button variant="outline" className="text-red-600 hover:text-red-700 hover:bg-red-50" onClick={handleClearStudents}>
-                  <Trash2 className="w-4 h-4 mr-2"/> Borrar Directorio Actual
+                  <Trash2 className="w-4 h-4 mr-2"/> Borrar directorio actual
                 </Button>
                 <Button onClick={handleParseUpload} disabled={!uploadText.trim()}>
                   <Upload className="w-4 h-4 mr-2"/> Importar {uploadText.trim() ? uploadText.split('\n').filter(Boolean).length : 0} Registros
@@ -637,9 +633,9 @@ export default function AdminDashboard() {
                   <Users className="h-6 w-6"/>
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">Simulador de Roles (RBAC)</h2>
+                  <h2 className="text-xl font-bold text-gray-900">Simulación de roles</h2>
                   <p className="text-gray-600 text-sm mt-1">
-                    Cambia el rol activo para previsualizar cómo experimentarán este panel los Mentores. En producción este rol vendrá directo de la cuenta institucional (@tec.mx).
+                    Cambia el rol activo para revisar cómo se ve el panel para administración o mentoría. En producción, este acceso vendrá de la cuenta institucional.
                   </p>
                 </div>
               </div>
@@ -680,7 +676,7 @@ export default function AdminDashboard() {
                 <div>
                   <h2 className="text-xl font-bold text-gray-900">Sincronización de Mentores (Ruta C)</h2>
                   <p className="text-gray-600 text-sm mt-1">
-                    Pega tu lista de mentores para habilitar la asociación automática y el cambio de colores por comunidad. <br/>
+                    Pega tu lista de mentores para habilitar la asociación automática y los colores por comunidad. <br/>
                     **Formato:** <code>Comunidad</code> | <code>HexColor</code> | <code>Nombre</code> | <code>Nickname</code> | <code>Email</code>
                   </p>
                 </div>
@@ -706,9 +702,9 @@ export default function AdminDashboard() {
                   <ShieldAlert className="h-6 w-6"/>
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">Modo Demo / Simulador</h2>
+                  <h2 className="text-xl font-bold text-gray-900">Modo demo</h2>
                   <p className="text-gray-600 text-sm mt-1">
-                    Al activar el Modo Demo, las campañas enviadas desde el Tablero no dispararán correos reales en el servidor (útil para capacitar mentores o hacer presentaciones).
+                    Al activar el modo demo, las campañas del tablero no dispararán correos reales. Úsalo para capacitación o presentaciones.
                   </p>
                 </div>
               </div>
@@ -716,7 +712,7 @@ export default function AdminDashboard() {
               <div className="bg-white p-4 rounded-xl border border-orange-200 flex items-center justify-between">
                 <div>
                   <h4 className="font-bold text-gray-900">Estado del Modo Demo</h4>
-                  <p className="text-sm text-gray-500">{isDemoMode ? "Activado. Entorno seguro para demostraciones." : "Desactivado. Operación de producción real."}</p>
+                  <p className="text-sm text-gray-500">{isDemoMode ? "Activado. Entorno seguro para demostraciones." : "Desactivado. Operación real."}</p>
                 </div>
                 <Button 
                   variant={isDemoMode ? "default" : "outline"}
@@ -731,9 +727,9 @@ export default function AdminDashboard() {
 
           <Card className="shadow-sm border-gray-200">
             <CardContent className="p-6 md:p-8">
-              <h2 className="text-xl font-bold text-gray-900 mb-2">Envío de Correo de Prueba</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-2">Envío de correo de prueba</h2>
               <p className="text-gray-500 text-sm mb-6">
-                Envía un correo de la Campaña Fase 1 a ti mismo para que los directivos y mentores puedan ver exactamente cómo luce la interfaz en su bandeja de entrada.
+                Envía un correo de prueba para revisar cómo luce la invitación en una bandeja real.
               </p>
 
               <div className="flex gap-3">
@@ -764,7 +760,7 @@ export default function AdminDashboard() {
                   <LayoutDashboard className="h-6 w-6"/>
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">Conectividad Google Sheets</h2>
+                  <h2 className="text-xl font-bold text-gray-900">Conectividad con Google Sheets</h2>
                   <p className="text-gray-600 text-sm mt-1">
                     Configura la URL de tu Web App de Google Apps Script para habilitar la sincronización en tiempo real.
                   </p>
@@ -796,7 +792,7 @@ export default function AdminDashboard() {
                   <CalendarDays className="h-6 w-6"/>
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">Configuración de Agenda</h2>
+                  <h2 className="text-xl font-bold text-gray-900">Configuración de agenda</h2>
                   <p className="text-gray-600 text-sm mt-1">
                     Define si los resultados deben dirigir a una sesión individual o a un registro grupal por bloques.
                   </p>
