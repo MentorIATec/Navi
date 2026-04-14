@@ -31,3 +31,28 @@ npm run build
 - El frontend usa `BrowserRouter`.
 - Si despliegas en Vercel con raíz en `webapp/`, el archivo `vercel.json` ya incluye el rewrite necesario para servir `index.html` en todas las rutas.
 - Si despliegas en otra plataforma, debes configurar el equivalente para evitar `404` en rutas como `/admin` o `/seleccion-metas`.
+
+## Estado beta
+
+- Dominio beta activo: `https://ruta-mentoria.vercel.app`
+- Proyecto Vercel enlazado al repositorio `MentorIATec/Navi` con raíz en `webapp/`
+- Commit base de la beta: `2dbb7f9`
+- `VITE_API_URL` configurada en Vercel apuntando al Apps Script activo
+
+### Smoke test post-deploy
+
+Rutas verificadas con `200`:
+
+- `/`
+- `/resultados`
+- `/check-in`
+- `/seleccion-metas`
+- `/plan-accion`
+- `/admin`
+
+### Pendientes de la siguiente fase
+
+- Autenticación institucional real para mentoría y administración
+- Permisos resueltos del lado servidor, no solo en cliente
+- Check-in con contexto de sesión/mentor mediante token opaco
+- Reducir duplicación de lógica entre frontend y Apps Script
