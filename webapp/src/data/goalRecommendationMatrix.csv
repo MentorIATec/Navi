@@ -1,0 +1,49 @@
+CategoryKey,Stage,PriorityRank,GoalId,SlotType,Active,Notes
+claridad_carrera,exploracion,1,CAR001,primary,Si,Conversación directa con opciones académicas o profesionales.
+claridad_carrera,exploracion,2,CAR002,primary,Si,Ayuda a reducir ambigüedad de interés.
+claridad_carrera,exploracion,3,SEED097,secondary,Si,Ruta de decisión más estructurada para exploración temprana.
+claridad_carrera,exploracion,4,CAR004,multietapa,Si,Desarrollo de habilidad transferible alineada a carrera.
+claridad_carrera,enfoque,1,SEED089,primary,Si,Construcción de evidencia profesional cercana.
+claridad_carrera,enfoque,2,SEED090,primary,Si,Claridad orientada a reclutamiento real.
+claridad_carrera,enfoque,3,CAR006,secondary,Si,Investigación de empresas para decidir con más criterio.
+claridad_carrera,enfoque,4,SEED096,secondary,Si,Experiencia aplicada para validar dirección profesional.
+desempeno_academico,exploracion,1,ACA002,primary,Si,Hábito concreto y accionable para mejorar rendimiento.
+desempeno_academico,exploracion,2,ACA003,primary,Si,Orden y cumplimiento con efecto inmediato.
+desempeno_academico,exploracion,3,ACA006,secondary,Si,Mejora base de organización del estudio.
+desempeno_academico,exploracion,4,SEED098,multietapa,Si,Sistema semanal sostenido para el semestre.
+desempeno_academico,enfoque,1,ACA001,primary,Si,Meta académica con resultado visible en una materia crítica.
+desempeno_academico,enfoque,2,ACA002,primary,Si,Método concreto para clases de mayor exigencia.
+desempeno_academico,enfoque,3,ACA005,secondary,Si,Optimización del tiempo de estudio en cargas más altas.
+desempeno_academico,enfoque,4,SEED098,multietapa,Si,Sostiene seguimiento académico continuo.
+plan_practicas,exploracion,1,PRA001,primary,Si,Activación inicial de perfil profesional.
+plan_practicas,exploracion,2,PRA003,primary,Si,Desarrollo de habilidad con valor para prácticas futuras.
+plan_practicas,exploracion,3,CAR003,secondary,Si,Portafolio básico temprano para empezar a mostrar trabajo.
+plan_practicas,exploracion,4,SEED056,multietapa,Si,Optimización gradual de presencia profesional.
+plan_practicas,enfoque,1,PRA002,primary,Si,Acción directa sobre postulaciones.
+plan_practicas,enfoque,2,PRA004,primary,Si,Preparación para entrevistas reales.
+plan_practicas,enfoque,3,SEED060,secondary,Si,Exposición intensiva a oportunidades del mercado.
+plan_practicas,enfoque,4,SEED099,multietapa,Si,Corredor integral de búsqueda antes del cierre del semestre.
+servicio_social,exploracion,1,SER001,primary,Si,Activación inicial del servicio social.
+servicio_social,exploracion,2,SER004,primary,Si,Integración y anclaje con el equipo del proyecto.
+servicio_social,exploracion,3,SER002,secondary,Si,Profundiza compromiso dentro del proyecto ya asignado.
+servicio_social,exploracion,4,SEED100,multietapa,Si,Seguimiento sostenido del avance de servicio social.
+servicio_social,enfoque,1,SEED052,primary,Si,Empuja avance fuerte de horas ya en marcha.
+servicio_social,enfoque,2,SER001,primary,Si,Permite activar o retomar cumplimiento de servicio social.
+servicio_social,enfoque,3,SER002,secondary,Si,Mejora la calidad de la experiencia dentro del proyecto.
+servicio_social,enfoque,4,SEED100,multietapa,Si,Seguimiento mensual hasta completar horas requeridas.
+decision_semestre_tec,exploracion,1,CAR001,primary,Si,Explora opciones mediante conversación con actores clave.
+decision_semestre_tec,exploracion,2,CAR002,primary,Si,Reduce ambigüedad antes de decisiones más complejas.
+decision_semestre_tec,exploracion,3,SEED085,secondary,Si,Aprendizaje vicario con estudiantes que ya recorrieron opciones.
+decision_semestre_tec,exploracion,4,SEED097,multietapa,Si,Ruta de decisión amplia antes del cierre del año académico.
+decision_semestre_tec,enfoque,1,SEED101,primary,Si,Decisión operativa con plan A y plan B.
+decision_semestre_tec,enfoque,2,SEED084,primary,Si,Matriz concreta para comparar alternativas.
+decision_semestre_tec,enfoque,3,SEED092,secondary,Si,Contingencia con fechas límite para ejecución.
+decision_semestre_tec,enfoque,4,SEED085,secondary,Si,Contraste con experiencias de otros estudiantes.
+certificacion_idioma,exploracion,1,INT004,primary,Si,Entrada ligera a práctica y aprendizaje transferible.
+certificacion_idioma,exploracion,2,CAR004,primary,Si,Habilidad complementaria útil mientras se aclara ruta de idioma.
+certificacion_idioma,exploracion,3,SEED062,secondary,Si,Expansión intelectual temprana sin depender del requisito.
+certificacion_idioma,exploracion,4,SEED098,multietapa,Si,Sostener disciplina semanal antes de una preparación formal.
+certificacion_idioma,enfoque,1,SEED102,primary,Si,Preparación sostenida explícitamente orientada al requisito.
+certificacion_idioma,enfoque,2,SEED091,primary,Si,Meta directa hacia TOEFL/IELTS para intercambio.
+certificacion_idioma,enfoque,3,SEED094,secondary,Si,Ruta alternativa de idioma para intercambio europeo.
+certificacion_idioma,enfoque,4,SEED063,secondary,Si,Certificación explícita como requisito cercano.

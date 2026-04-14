@@ -94,6 +94,7 @@ export default function ActionPlan() {
   const [showClosureLine, setShowClosureLine] = useState(false);
   const [resolvedCommunity, setResolvedCommunity] = useState(localStorage.getItem('navi_user_community') || '');
   const [resolvedCommunityColor, setResolvedCommunityColor] = useState(localStorage.getItem('navi_community_color') || '');
+  const [syncWarning, setSyncWarning] = useState(localStorage.getItem('navi_goal_selection_warning') || '');
   const badgeRef = useRef(null);
 
   const metaPrioritaria = localStorage.getItem('meta_prioritaria') || 'No seleccionada';
@@ -113,6 +114,11 @@ export default function ActionPlan() {
   useEffect(() => {
     const timer = setTimeout(() => setShowClosureLine(true), 450);
     return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    const warning = localStorage.getItem('navi_goal_selection_warning') || '';
+    setSyncWarning(warning);
   }, []);
 
   useEffect(() => {
@@ -213,6 +219,11 @@ export default function ActionPlan() {
 
   return (
     <div className="mx-auto max-w-5xl py-8 sm:py-12">
+      {syncWarning ? (
+        <div className="mb-6 rounded-[20px] border border-[rgba(210,106,92,0.18)] bg-[rgba(249,236,232,0.7)] px-4 py-3 text-sm font-medium text-[var(--ink-900)]">
+          {syncWarning}
+        </div>
+      ) : null}
       <div className="mb-10 grid gap-8 lg:grid-cols-[0.8fr_1.2fr]">
         <section className="shell-panel rounded-[30px] border border-[rgba(15,76,129,0.12)] px-7 py-8 sm:px-8 sm:py-10">
           <p className="navi-eyebrow" style={{ color: 'var(--coral-500)' }}>Cierre de ciclo</p>
@@ -228,6 +239,24 @@ export default function ActionPlan() {
               <p className="mt-2 text-sm text-[var(--ink-700)]">
                 Descarga este plan, compártelo con tu mentor o mentora y vuelve a él cuando necesites orientarte.
               </p>
+            </div>
+          </div>
+
+          <div className="mt-6 rounded-[22px] border border-[rgba(15,76,129,0.1)] bg-white/70 px-5 py-5">
+            <p className="navi-eyebrow text-[var(--navy-500)]">Lo que ya cerraste hoy</p>
+            <div className="mt-4 space-y-3 text-sm text-[var(--ink-700)]">
+              <div className="flex items-start gap-3">
+                <span className="mt-1 h-2.5 w-2.5 rounded-full bg-[var(--coral-500)]" />
+                <p>Una meta prioritaria concreta para avanzar en tu semestre.</p>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="mt-1 h-2.5 w-2.5 rounded-full bg-[var(--coral-500)]" />
+                <p>Una meta complementaria para sostener tu bienestar.</p>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="mt-1 h-2.5 w-2.5 rounded-full bg-[var(--coral-500)]" />
+                <p>Una respuesta pensada para cuando aparezca el obstáculo.</p>
+              </div>
             </div>
           </div>
         </section>
@@ -283,7 +312,7 @@ export default function ActionPlan() {
 
               <div className="mt-8">
                 <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[rgba(255,255,255,0.58)]">
-                  Mi meta para este periodo
+                  Me comprometí a
                 </p>
                 <p className="mt-4 max-w-3xl font-editorial text-[2rem] leading-[1.22] text-white sm:text-[2.35rem]">
                   {metaPrioritaria}
@@ -311,22 +340,26 @@ export default function ActionPlan() {
             </div>
           </div>
 
-          <div className="mt-5 overflow-hidden px-4">
-            <div
-              className="h-[3px] rounded-full bg-[linear-gradient(90deg,var(--coral-500)_0%,rgba(210,106,92,0.16)_100%)] transition-transform duration-[900ms] ease-out"
-              style={{ transform: showClosureLine ? 'scaleX(1)' : 'scaleX(0)', transformOrigin: 'left center' }}
-            />
-          </div>
-
-          <div className="mt-5 flex justify-center">
-            <Button
-              variant="ghost"
-              className="text-[var(--navy-500)] hover:text-[var(--navy-700)]"
-              onClick={downloadBadge}
-              isLoading={isDownloading}
-            >
-              Descargar mi plan
-            </Button>
+          <div className="mt-5 rounded-[22px] border border-[rgba(15,76,129,0.1)] bg-white/70 px-5 py-4 text-center shadow-[0_14px_30px_rgba(15,76,129,0.08)]">
+            <p className="text-sm text-[var(--ink-700)]">
+              Guarda esta versión para consultarla después o compartirla con tu mentor o mentora.
+            </p>
+            <div className="mt-3 overflow-hidden">
+              <div
+                className="mx-auto h-[3px] max-w-[14rem] rounded-full bg-[linear-gradient(90deg,var(--coral-500)_0%,rgba(210,106,92,0.16)_100%)] transition-transform duration-[900ms] ease-out"
+                style={{ transform: showClosureLine ? 'scaleX(1)' : 'scaleX(0)', transformOrigin: 'left center' }}
+              />
+            </div>
+            <div className="mt-3 flex justify-center">
+              <Button
+                variant="ghost"
+                className="text-[var(--navy-500)] hover:text-[var(--navy-700)]"
+                onClick={downloadBadge}
+                isLoading={isDownloading}
+              >
+                Descargar mi plan
+              </Button>
+            </div>
           </div>
           {downloadMessage ? (
             <p className="mt-2 text-center text-sm text-[var(--ink-700)]">
@@ -344,8 +377,8 @@ export default function ActionPlan() {
                 Registra este plan en MiVidaTec
               </h3>
               <p className="mt-4 text-sm leading-relaxed text-[var(--ink-700)] sm:text-base">
-                Vamos a copiar tu plan para que lo pegues en <strong>MiVidaTec &gt; Metas de Plan de Vida</strong>.
-                Así queda trazado en tu historial del Tec, no solo aquí.
+                Copia este plan y pégalo en <strong>MiVidaTec &gt; Metas de Plan de Vida</strong>.
+                Así tu compromiso queda registrado también en tu ruta institucional.
               </p>
             </div>
 

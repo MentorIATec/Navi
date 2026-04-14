@@ -1,12 +1,13 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { Mail, Search, Users, Activity, CheckCircle, Upload, Settings, ShieldAlert, FileText, Trash2, Send, Tags, Beaker, CalendarDays } from 'lucide-react';
+import { Mail, Search, Users, Activity, CheckCircle, Upload, ShieldAlert, FileText, Trash2, Send, Beaker, CalendarDays, LayoutDashboard } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import { cn } from '../utils/cn';
 import GoalManager from '../components/admin/GoalManager';
 import { apiClient } from '../api/client';
 
-const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbySV0558WApICc3gFJGeOkdtfBjrPnDWgWHwC5IiNaOT7Gxt-d-knzvM0oXClH_b4jtZw/exec';
+const DEFAULT_API_URL = String(import.meta.env.VITE_API_URL || '').trim();
 const DEFAULT_BOOKING_CONFIG = {
   mode: 'individual',
   url: 'https://outlook.office.com/book/RecalculandoRutaMentoraparaevaluartutrayectoria@tecmx.onmicrosoft.com/?ismsaljsauthenabled',
@@ -17,13 +18,7 @@ const BOOKING_URLS = {
   grupal: 'https://forms.cloud.microsoft/Pages/ResponsePage.aspx?id=pj5axnwPC0CJNFptwXBWRcrMCtkST0lIvPsUKFV_0rVUQk1MRkJWQUJUOURBS1VIS1JNWEM3RDIxSy4u',
 };
 
-const DEFAULT_MENTORS = [
-  { community: 'Krei', hex: '#79858B', name: 'José Ricardo Flores Espinoza', nickname: 'JR', email: 'jr.flores@tec.mx' },
-  { community: 'Krei', hex: '#79858B', name: 'Karen Ariadna Guzmán Vega', nickname: 'Karen', email: 'kareng@tec.mx' },
-  { community: 'Krei', hex: '#79858B', name: 'Karla Lorena Villarreal Aldape', nickname: 'Karla', email: 'kvillarreal@tec.mx' },
-  { community: 'Krei', hex: '#79858B', name: 'Angélica Yolanda Zúñiga Montemayor', nickname: 'Angie', email: 'azuniga@tec.mx' },
-  { community: 'Krei', hex: '#79858B', name: 'Juan José Franklin Uraga', nickname: 'Franklin', email: 'jjfranklin@tec.mx' },
-];
+const DEFAULT_MENTORS = [];
 
 const DEFAULT_STUDENTS = [
   { id: 1, name: 'Juan Pérez', preferredName: 'Juan', matricula: 'A01234567', email: 'A01234567@tec.mx', status: 'Test Completado', checkIn: 'No', mentor: 'JR', community: 'Krei' },
@@ -56,7 +51,25 @@ function normalizeMentor(raw) {
   };
 }
 
+function normalizeUser(raw) {
+  return {
+    email: String(raw.email || '').trim().toLowerCase(),
+    name: raw.name || raw.nombre || 'Sin Nombre',
+    role: String(raw.role || raw.rol || 'mentor').trim().toLowerCase(),
+    community: raw.community || raw.comunidad || '',
+    hex: raw.hex || raw['#hex'] || '#0033A0',
+    slogan: raw.slogan || '',
+    active: String(raw.active || raw.activo || 'Si').trim().toLowerCase() !== 'no',
+  };
+}
+
 export default function AdminDashboard() {
+  const [accessEmail, setAccessEmail] = useState(() => localStorage.getItem('navi_admin_email') || '');
+  const [authUser, setAuthUser] = useState(() => {
+    const saved = localStorage.getItem('navi_admin_user');
+    return saved ? normalizeUser(JSON.parse(saved)) : null;
+  });
+  const [isResolvingUser, setIsResolvingUser] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [students, setStudents] = useState(() => {
     const saved = localStorage.getItem('navi_students');
@@ -67,7 +80,7 @@ export default function AdminDashboard() {
     return localStorage.getItem('navi_demo_mode') === 'true';
   });
   const [userRole, setUserRole] = useState(() => {
-    return localStorage.getItem('navi_user_role') || 'admin';
+    return localStorage.getItem('navi_user_role') || '';
   });
   const [mentors, setMentors] = useState(() => {
     const saved = localStorage.getItem('navi_mentors');
@@ -87,13 +100,25 @@ export default function AdminDashboard() {
   const [isSendingTest, setIsSendingTest] = useState(false);
   const [mentorSyncText, setMentorSyncText] = useState('');
   const [apiUrl, setApiUrl] = useState(() => {
-    return localStorage.getItem('navi_api_url') || DEFAULT_API_URL;
+    const savedUrl = localStorage.getItem('navi_api_url');
+    if (savedUrl) {
+      return savedUrl;
+    }
+    if (DEFAULT_API_URL) {
+      localStorage.setItem('navi_api_url', DEFAULT_API_URL);
+      return DEFAULT_API_URL;
+    }
+    return '';
   });
+  const [adminSecret, setAdminSecret] = useState(() => localStorage.getItem('navi_admin_secret') || '');
   const [isSyncing, setIsSyncing] = useState(false);
   const [bookingConfig, setBookingConfig] = useState(() => {
     const saved = localStorage.getItem('navi_booking_config');
     return saved ? JSON.parse(saved) : DEFAULT_BOOKING_CONFIG;
   });
+  const [feedback, setFeedback] = useState(null);
+  const [confirmation, setConfirmation] = useState(null);
+  const [showCheckInQr, setShowCheckInQr] = useState(false);
 
   // Campaign Modal
   const [isCampaignModalOpen, setIsCampaignModalOpen] = useState(false);
@@ -114,8 +139,23 @@ export default function AdminDashboard() {
   }, [isDemoMode]);
 
   useEffect(() => {
-    localStorage.setItem('navi_user_role', userRole);
-    
+    if (authUser) {
+      localStorage.setItem('navi_admin_user', JSON.stringify(authUser));
+      localStorage.setItem('navi_admin_email', authUser.email);
+      const resolvedRole = authUser.role === 'admin' ? 'admin' : `mentor:${authUser.email}`;
+      localStorage.setItem('navi_user_role', resolvedRole);
+      if (userRole !== resolvedRole) {
+        setUserRole(resolvedRole);
+        return;
+      }
+    } else {
+      localStorage.removeItem('navi_admin_user');
+      localStorage.removeItem('navi_admin_email');
+      localStorage.removeItem('navi_user_role');
+    }
+  }, [authUser, userRole]);
+
+  useEffect(() => {
     // Dynamic Theme Update
     if (userRole === 'admin') {
       document.documentElement.style.setProperty('--theme-color', '#0033A0'); // Azul Tec
@@ -136,9 +176,36 @@ export default function AdminDashboard() {
     localStorage.setItem('navi_booking_config', JSON.stringify(bookingConfig));
   }, [bookingConfig]);
 
+  const isAdmin = userRole === 'admin';
+  const isMentorView = userRole.startsWith('mentor:');
+  const currentMentorEmail = isMentorView ? userRole.split(':')[1] : null;
+  const currentMentor = currentMentorEmail ? mentors.find((mentor) => mentor.email === currentMentorEmail) : null;
+  const checkInLink = typeof window !== 'undefined'
+    ? `${window.location.origin}/check-in`
+    : '/check-in';
+  const permissions = isAdmin
+    ? {
+        tabs: ['dashboard', 'upload', 'goals', 'settings'],
+        canPullSheets: true,
+        canPushSheets: true,
+        canRunCampaigns: true,
+      }
+    : {
+        tabs: ['dashboard'],
+        canPullSheets: true,
+        canPushSheets: false,
+        canRunCampaigns: false,
+      };
+
+  useEffect(() => {
+    if (!permissions.tabs.includes(activeTab)) {
+      setActiveTab('dashboard');
+    }
+  }, [activeTab, permissions.tabs]);
+
   const stats = useMemo(() => {
     // Filter students by current mentor if applicable
-    const scopeStudents = userRole === 'admin' 
+    const scopeStudents = isAdmin
       ? students 
       : students.filter(s => {
           const mentorEmail = userRole.split(':')[1];
@@ -147,18 +214,20 @@ export default function AdminDashboard() {
         });
 
     const total = scopeStudents.length;
+    const sessionReady = scopeStudents.filter(s => s.status === 'Test Completado').length;
     const testCompletado = scopeStudents.filter(s => s.status === 'Test Completado' || s.status === 'Metas Seleccionadas').length;
     const metasSeleccionadas = scopeStudents.filter(s => s.status === 'Metas Seleccionadas').length;
     const noShows = scopeStudents.filter(s => s.status === 'Test Completado' && s.checkIn === 'No').length;
     return {
       total,
+      sessionReady,
       testRate: Math.round((testCompletado / total) * 100) || 0,
       metasRate: Math.round((metasSeleccionadas / total) * 100) || 0,
       noShows,
       pendientes: total - testCompletado,
       scopeStudents // include for the table
     };
-  }, [students, userRole, mentors]);
+  }, [students, userRole, mentors, isAdmin]);
 
   const filteredStudents = stats.scopeStudents.filter(s => 
     s.matricula.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -174,7 +243,7 @@ export default function AdminDashboard() {
     if (status === 'Test Completado' && checkIn === 'No') {
       return (
         <span className="px-2.5 py-1 rounded-full text-xs font-bold border bg-orange-100 text-orange-800 border-orange-200 flex items-center w-fit">
-          <ShieldAlert className="w-3 h-3 mr-1" /> ⚠ No-Show (Post-Test Pendiente)
+          <ShieldAlert className="w-3 h-3 mr-1" /> Sin sesión · plan pendiente
         </span>
       );
     }
@@ -184,19 +253,30 @@ export default function AdminDashboard() {
       'Test Completado': 'bg-blue-100 text-blue-800 border-blue-200',
       'Metas Seleccionadas': 'bg-green-100 text-green-800 border-green-200',
     };
+    const labels = {
+      'Pendiente': 'Pendiente',
+      'Test Completado': 'Diagnóstico completo',
+      'Metas Seleccionadas': 'Plan definido',
+    };
 
     return (
       <span className={cn('px-2.5 py-1 rounded-full text-xs font-medium border', styles[status] || styles['Pendiente'])}>
-        {status}
+        {labels[status] || labels['Pendiente']}
       </span>
     );
+  };
+
+  const campaignLabels = {
+    invitation: 'Invitación al diagnóstico',
+    session: 'Convocatoria a sesión',
+    noshow: 'Seguimiento a ausencias',
   };
 
   const handleOpenCampaignConfig = (type) => {
     setCampaignType(type);
     let defaults = {
       invitation: { 
-        subject: 'Fase 1: Invitación a Diagnóstico Brújula', 
+        subject: 'Tu diagnóstico de trayectoria te espera', 
         body: '<div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 12px;">' +
               '<h2 style="color: #0033A0;">Hola {{nombre}}!</h2>' +
               '<p>Soy <b>{{mentor}}</b> de la comunidad <b>{{comunidad}}</b>.</p>' +
@@ -205,7 +285,7 @@ export default function AdminDashboard() {
               '</div>' 
       },
       session: { 
-        subject: 'Fase 2: Agenda tu sesión 1-a-1', 
+        subject: 'Es momento de agendar tu sesión de mentoría', 
         body: '<div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 12px;">' +
               '<h2 style="color: #6366f1;">Sesión de Metas</h2>' +
               '<p>Hola {{nombre}}, ya hiciste tu test. Ahora es momento de vernos presencialmente para definir tus metas.</p>' +
@@ -213,7 +293,7 @@ export default function AdminDashboard() {
               '</div>' 
       },
       noshow: { 
-        subject: 'Fase 3: Recopilación Post-Sesión', 
+        subject: 'Aún puedes retomar tu plan de mentoría', 
         body: '<div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 12px;">' +
               '<h2 style="color: #f97316;">¡Te extrañamos en la sesión!</h2>' +
               '<p>{{nombre}}, notamos que no pudiste asistir a la sesión presencial con <b>{{mentor}}</b>.</p>' +
@@ -246,7 +326,10 @@ export default function AdminDashboard() {
 
     setIsSendingInitial(true); // Reutilizar loader genérico
     setTimeout(() => {
-      alert(`[CAMPANHA ${campaignType.toUpperCase()}] Enviada con éxito a ${targetStudentsCount} alumnos de las comunidades seleccionadas.`);
+      setFeedback({
+        tone: 'success',
+        message: `${campaignLabels[campaignType]} enviada a ${targetStudentsCount} estudiantes de las comunidades seleccionadas.`,
+      });
       setIsCampaignModalOpen(false);
       setIsSendingInitial(false);
     }, 1500);
@@ -281,43 +364,75 @@ export default function AdminDashboard() {
 
     setStudents(prev => [...prev, ...newStudents]);
     setUploadText('');
-    alert(`Se han cargado ${newStudents.length} estudiantes exitosamente.`);
+    setFeedback({
+      tone: 'success',
+      message: `Se cargaron ${newStudents.length} estudiantes al directorio.`,
+    });
     setActiveTab('dashboard');
   };
 
   const handleFetchFromSheets = async () => {
-    if (!apiUrl) return alert("Por favor configura la URL de la Web App en Ajustes");
+    if (!apiUrl) {
+      setFeedback({ tone: 'error', message: 'Configura primero la URL de Google Sheets en Configuración.' });
+      return;
+    }
     setIsSyncing(true);
     try {
       const data = await apiClient.get();
       if (data.students) setStudents(data.students.map((student, index) => normalizeStudent(student, index)));
       if (data.mentors) setMentors(data.mentors.map(normalizeMentor));
-      alert("¡Sincronización completada desde Google Sheets!");
+      setFeedback({ tone: 'success', message: 'Datos actualizados desde Google Sheets.' });
     } catch (err) {
-      alert("Error al sincronizar: " + err.message);
+      setFeedback({ tone: 'error', message: `No fue posible sincronizar: ${err.message}` });
     } finally {
       setIsSyncing(false);
     }
   };
 
-  const handlePushToSheets = async () => {
-    if (!apiUrl) return alert("Por favor configura la URL de la Web App en Ajustes");
-    if (!window.confirm("¿Deseas sobreescribir los datos en Google Sheets con tu lista actual?")) return;
+  const executePushToSheets = async () => {
+    if (!apiUrl) {
+      setFeedback({ tone: 'error', message: 'Configura primero la URL de Google Sheets en Configuración.' });
+      return;
+    }
     
     setIsSyncing(true);
     try {
-      await apiClient.post('syncBulk', { students, mentors });
-      alert("¡Datos subidos exitosamente a Google Sheets!");
+      await apiClient.post('syncBulk', {
+        students,
+        mentors,
+        studentCount: students.length,
+        mentorCount: mentors.length,
+        confirmOverwrite: true,
+      });
+      setFeedback({ tone: 'success', message: 'Datos guardados en Google Sheets.' });
     } catch (err) {
-      alert("Error al subir datos: " + err.message);
+      setFeedback({ tone: 'error', message: `No fue posible guardar los datos: ${err.message}` });
     } finally {
       setIsSyncing(false);
     }
   };
 
+  const handlePushToSheets = () => {
+    if (!apiUrl) {
+      setFeedback({ tone: 'error', message: 'Configura primero la URL de Google Sheets en Configuración.' });
+      return;
+    }
+    setConfirmation({
+      type: 'pushSheets',
+      title: 'Guardar cambios en Google Sheets',
+      message: 'Esto sobrescribirá la información actual del origen compartido con la lista visible en Navi.',
+    });
+  };
+
   const handleSaveApiUrl = () => {
-    localStorage.setItem('navi_api_url', apiUrl);
-    alert("URL de API guardada correctamente.");
+    localStorage.setItem('navi_api_url', apiUrl.trim());
+    const trimmedSecret = adminSecret.trim();
+    if (trimmedSecret) {
+      localStorage.setItem('navi_admin_secret', trimmedSecret);
+    } else {
+      localStorage.removeItem('navi_admin_secret');
+    }
+    setFeedback({ tone: 'success', message: 'La configuración de conexión quedó guardada.' });
     window.location.reload(); // Reload to refresh client.js instance
   };
 
@@ -337,43 +452,181 @@ export default function AdminDashboard() {
     });
     setMentors(newMentors);
     setMentorSyncText('');
-    alert(`Se han actualizado ${newMentors.length} mentores.`);
+    setFeedback({ tone: 'success', message: `Se actualizaron ${newMentors.length} mentores y comunidades.` });
+  };
+
+  const handleCopyCheckInLink = async () => {
+    try {
+      await navigator.clipboard.writeText(checkInLink);
+      setFeedback({ tone: 'success', message: 'El enlace de check-in se copió al portapapeles.' });
+    } catch {
+      setFeedback({ tone: 'error', message: 'No fue posible copiar el enlace. Intenta copiarlo manualmente.' });
+    }
   };
 
   const handleClearStudents = () => {
-    if (window.confirm("¿Estás seguro de que deseas borrar toda la base de estudiantes?")) {
-      setStudents([]);
+    setConfirmation({
+      type: 'clearStudents',
+      title: 'Borrar el directorio actual',
+      message: 'Esta acción vaciará el directorio visible en Navi hasta que vuelvas a importar o sincronizar estudiantes.',
+    });
+  };
+
+  const handleConfirmAction = async () => {
+    if (!confirmation) return;
+    if (confirmation.type === 'pushSheets') {
+      setConfirmation(null);
+      await executePushToSheets();
+      return;
     }
+    if (confirmation.type === 'clearStudents') {
+      setStudents([]);
+      setFeedback({ tone: 'success', message: 'El directorio quedó vacío.' });
+      setConfirmation(null);
+    }
+  };
+
+  const handleResolveInstitutionalUser = async () => {
+    const email = accessEmail.trim().toLowerCase();
+    if (!email.endsWith('@tec.mx')) {
+      setFeedback({ tone: 'error', message: 'Ingresa un correo institucional del Tec.' });
+      return;
+    }
+    setIsResolvingUser(true);
+    try {
+      const response = await apiClient.post('resolveUserByEmail', { email });
+      const normalized = normalizeUser(response.user || response);
+      setAuthUser(normalized);
+      setFeedback({ tone: 'success', message: `Acceso habilitado para ${normalized.name}.` });
+    } catch (error) {
+      setFeedback({ tone: 'error', message: error.message });
+    } finally {
+      setIsResolvingUser(false);
+    }
+  };
+
+  const handleLogout = () => {
+    setAuthUser(null);
+    setAccessEmail('');
+    setUserRole('');
+    setActiveTab('dashboard');
+    setFeedback(null);
+    setConfirmation(null);
   };
 
   const currentTabStyle = "border-[var(--coral-500)] text-[var(--navy-600)] font-semibold";
   const defaultTabStyle = "border-transparent text-[var(--ink-700)] hover:text-[var(--ink-900)] hover:border-[rgba(15,76,129,0.18)] font-medium";
+
+  if (!authUser) {
+    return (
+      <div className="mx-auto max-w-3xl py-10 animate-in fade-in duration-500">
+        <Card className="shadow-sm border-[rgba(15,76,129,0.12)]">
+          <CardContent className="p-8 md:p-10">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--navy-600)]">Acceso institucional</p>
+            <h1 className="mt-3 font-display text-4xl font-bold tracking-tight text-[var(--ink-900)]">Ingresa con tu correo del Tec</h1>
+            <p className="mt-3 max-w-2xl text-[var(--ink-700)]">
+              Usaremos tu correo institucional para determinar si accedes como administración o mentoría dentro de Navi.
+            </p>
+            {feedback ? (
+              <div className={cn(
+                "mt-6 rounded-2xl border px-4 py-3 text-sm",
+                feedback.tone === 'success'
+                  ? "border-[rgba(15,76,129,0.14)] bg-[rgba(15,76,129,0.06)] text-[var(--navy-700)]"
+                  : "border-[rgba(210,106,92,0.16)] bg-[rgba(210,106,92,0.08)] text-[var(--ink-900)]"
+              )}>
+                {feedback.message}
+              </div>
+            ) : null}
+            <div className="mt-8 grid gap-4 md:grid-cols-[1fr_auto]">
+              <input
+                type="email"
+                placeholder="tu.correo@tec.mx"
+                className="w-full rounded-2xl border border-[rgba(15,76,129,0.12)] px-4 py-3 text-base focus:border-[var(--navy-500)] focus:outline-none focus:ring-2 focus:ring-[rgba(15,76,129,0.12)]"
+                value={accessEmail}
+                onChange={(e) => setAccessEmail(e.target.value)}
+              />
+              <Button onClick={handleResolveInstitutionalUser} isLoading={isResolvingUser} className="px-8">
+                Continuar
+              </Button>
+            </div>
+            <p className="mt-4 text-sm text-[var(--ink-700)]">
+              Si tu correo todavía no tiene permisos, agrégalo en la hoja <span className="font-semibold">Users</span>.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-6xl py-6 animate-in fade-in duration-500">
       <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="font-display text-4xl font-bold tracking-tight text-[var(--ink-900)] flex items-center">
-            Operación de Navi
+            {isAdmin ? 'Panel de mentoría' : 'Mis estudiantes'}
             {isDemoMode && (
               <span className="ml-4 inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-800 border border-orange-200">
                 <Beaker className="w-3 h-3 mr-1"/> MODO DEMO ACTIVO
               </span>
             )}
           </h1>
-          <p className="mt-2 text-[var(--ink-700)]">Gestiona cohortes, mensajes y sincronización con Sheets sin salir de Navi.</p>
+          <p className="mt-2 text-[var(--ink-700)]">
+            {isAdmin
+              ? 'Seguimiento de cohorte, gestión de campañas y catálogo de metas.'
+              : `Seguimiento de ${currentMentor?.community || 'tu comunidad'} y estado de tus estudiantes.`}
+          </p>
         </div>
         <div className="flex gap-2">
-           <Button variant="outline" size="sm" onClick={handleFetchFromSheets} isLoading={isSyncing}>
+           <Button variant="outline" size="sm" onClick={handleFetchFromSheets} isLoading={isSyncing} disabled={!permissions.canPullSheets}>
               <Activity className="w-4 h-4 mr-2" /> Traer de Sheets
            </Button>
+           {permissions.canPushSheets ? (
            <Button size="sm" onClick={handlePushToSheets} isLoading={isSyncing}>
               <Upload className="w-4 h-4 mr-2" /> Guardar en Sheets
+           </Button>
+           ) : null}
+           <Button variant="outline" size="sm" onClick={handleLogout}>
+              Cerrar sesión
            </Button>
         </div>
       </div>
 
+      {feedback ? (
+        <div className={cn(
+          "mb-6 rounded-2xl border px-4 py-3 text-sm",
+          feedback.tone === 'success'
+            ? "border-[rgba(15,76,129,0.14)] bg-[rgba(15,76,129,0.06)] text-[var(--navy-700)]"
+            : "border-[rgba(210,106,92,0.16)] bg-[rgba(210,106,92,0.08)] text-[var(--ink-900)]"
+        )}>
+          <div className="flex items-start justify-between gap-4">
+            <p>{feedback.message}</p>
+            <button
+              onClick={() => setFeedback(null)}
+              className="shrink-0 text-xs font-semibold uppercase tracking-[0.16em] opacity-70 hover:opacity-100"
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {confirmation ? (
+        <div className="mb-6 rounded-2xl border border-[rgba(210,106,92,0.16)] bg-[rgba(210,106,92,0.08)] px-4 py-4">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-[var(--ink-900)]">{confirmation.title}</p>
+              <p className="mt-1 text-sm text-[var(--ink-700)]">{confirmation.message}</p>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => setConfirmation(null)}>Cancelar</Button>
+              <Button size="sm" onClick={handleConfirmAction}>Confirmar</Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       {/* Tabs */}
+      {isAdmin ? (
       <div className="border-b border-[rgba(15,76,129,0.12)] mb-8">
         <nav className="-mb-px flex space-x-8 overflow-x-auto" aria-label="Tabs">
           <button
@@ -396,7 +649,7 @@ export default function AdminDashboard() {
                 onClick={() => setActiveTab('goals')}
                 className={cn("whitespace-nowrap flex items-center py-4 px-1 border-b-2 text-sm transition-colors", activeTab === 'goals' ? currentTabStyle : defaultTabStyle)}
               >
-                Banco de Metas
+                Catálogo de metas
               </button>
             </>
           )}
@@ -405,112 +658,106 @@ export default function AdminDashboard() {
             onClick={() => setActiveTab('settings')}
             className={cn("whitespace-nowrap flex items-center py-4 px-1 border-b-2 text-sm transition-colors", activeTab === 'settings' ? currentTabStyle : defaultTabStyle)}
           >
-            Ajustes y simulación
+            Configuración
           </button>
         </nav>
       </div>
+      ) : null}
 
       {/* TAB 1: DASHBOARD */}
       {activeTab === 'dashboard' && (
         <div className="animate-in fade-in duration-300">
           
-          {userRole.startsWith('mentor:') && (
-            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl flex items-start gap-4">
-              <ShieldAlert className="w-6 h-6 text-blue-600 shrink-0" />
-              <div>
-                <h3 className="font-bold text-blue-900">
-                  Vista de Mentor: <span className="text-brand-600">{mentors.find(m => m.email === userRole.split(':')[1])?.name}</span>
+          {isMentorView || isAdmin ? (
+            <div className="mb-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+              <div className="rounded-2xl border border-[rgba(15,76,129,0.12)] bg-white px-5 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--navy-600)]">
+                  {isMentorView ? `Mentoría · ${currentMentor?.community || 'Comunidad'}` : 'Operación presencial'}
+                </p>
+                <h3 className="mt-2 text-xl font-bold text-[var(--ink-900)]">
+                  {isMentorView ? (currentMentor?.name || 'Vista de mentor') : 'Panel de coordinación'}
                 </h3>
-                <p className="text-sm text-blue-700">Tu comunidad: <span className="font-bold">{mentors.find(m => m.email === userRole.split(':')[1])?.community}</span>. Aquí ves únicamente a tus estudiantes asignados.</p>
+                <p className="mt-1 text-sm text-[var(--ink-700)]">
+                  {isMentorView
+                    ? 'Aquí ves únicamente a tus estudiantes asignados y el estado de su avance.'
+                    : 'Desde aquí puedes compartir el acceso a check-in y supervisar el avance operativo de la sesión.'}
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-[rgba(15,76,129,0.12)] bg-white px-5 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--navy-600)]">
+                  Check-in presencial
+                </p>
+                <h3 className="mt-2 text-lg font-bold text-[var(--ink-900)]">
+                  Comparte el acceso con tu estudiante
+                </h3>
+                <p className="mt-1 text-sm text-[var(--ink-700)]">
+                  Usa este enlace o muestra el QR para que el estudiante entre directo a Navi y registre su llegada.
+                </p>
+                <div className="mt-4 rounded-xl border border-[rgba(15,76,129,0.12)] bg-[rgba(15,76,129,0.04)] px-3 py-2 font-mono text-xs text-[var(--ink-800)] break-all">
+                  {checkInLink}
+                </div>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Button size="sm" onClick={handleCopyCheckInLink}>
+                    Copiar enlace
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => window.open(checkInLink, '_blank', 'noopener,noreferrer')}>
+                    Abrir check-in
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => setShowCheckInQr((current) => !current)}>
+                    {showCheckInQr ? 'Ocultar QR' : 'Mostrar QR'}
+                  </Button>
+                </div>
+                {showCheckInQr ? (
+                  <div className="mt-4 flex flex-col items-start gap-3 rounded-xl border border-[rgba(15,76,129,0.12)] bg-white px-4 py-4">
+                    <QRCodeSVG value={checkInLink} size={168} includeMargin />
+                    <p className="text-xs text-[var(--ink-700)]">
+                      Muestra este código durante la sesión para facilitar el acceso al check-in.
+                    </p>
+                  </div>
+                ) : null}
               </div>
             </div>
-          )}
+          ) : null}
 
-          {userRole === 'admin' && (
-            <>
-              <div className="grid gap-4 md:grid-cols-3 mb-8">
-                <Card className="border-[rgba(15,76,129,0.10)] shadow-sm relative overflow-hidden">
-                  <CardContent className="p-6">
-                    <h3 className="font-bold text-indigo-900 mb-2 flex items-center"><Mail className="mr-2 h-5 w-5"/> Fase 1: Test Brújula</h3>
-                    <p className="text-sm text-indigo-700/80 mb-4 h-10">Invitación masiva al diagnóstico inicial remoto.</p>
-                    <Button 
-                      className="w-full bg-indigo-600 hover:bg-indigo-700 relative z-10" 
-                      onClick={() => handleOpenCampaignConfig('invitation')}
-                      disabled={stats.pendientes === 0}
-                    >
-                      Configurar e Invitar ({stats.pendientes})
-                    </Button>
-                  </CardContent>
-                </Card>
-
-                <Card className="border-[rgba(15,76,129,0.10)] shadow-sm">
-                  <CardContent className="p-6">
-                    <h3 className="font-bold text-purple-900 mb-2 flex items-center"><CheckCircle className="mr-2 h-5 w-5"/> Fase 2: Mentoría</h3>
-                    <p className="text-sm text-purple-700/80 mb-4 h-10">Agenda sesión presencial para Check-in y Metas.</p>
-                    <Button 
-                      className="w-full bg-purple-600 hover:bg-purple-700 relative z-10"
-                      onClick={() => handleOpenCampaignConfig('session')}
-                    >
-                      Configurar Mensaje Sesión
-                    </Button>
-                  </CardContent>
-                </Card>
-
-                <Card className="border-[rgba(15,76,129,0.10)] shadow-sm">
-                  <CardContent className="p-6">
-                    <h3 className="font-bold text-orange-900 mb-2 flex items-center"><Send className="mr-2 h-5 w-5"/> Fase 3: No-Shows</h3>
-                    <p className="text-sm text-orange-700/80 mb-4 h-10">Recuperación de Post-test para alumnos que faltaron a la sesión.</p>
-                    <Button 
-                      className="w-full bg-orange-600 hover:bg-orange-700 relative z-10"
-                      onClick={() => handleOpenCampaignConfig('noshow')}
-                      disabled={stats.noShows === 0}
-                    >
-                      Configurar Recuperación ({stats.noShows})
-                    </Button>
-                  </CardContent>
-                </Card>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-4 mb-8">
+          <div className="grid gap-4 md:grid-cols-4 mb-8">
                 <Card className="shadow-sm">
                   <CardContent className="p-6 flex items-center">
-                    <div className="p-3 bg-indigo-100 rounded-lg text-indigo-600 mr-4"><Users className="h-6 w-6"/></div>
+                    <div className="p-3 bg-[rgba(15,76,129,0.08)] rounded-lg text-[var(--navy-500)] mr-4"><Users className="h-6 w-6"/></div>
                     <div>
-                      <p className="text-sm font-medium text-gray-500">Estudiantes</p>
+                      <p className="text-sm font-medium text-gray-500">{isAdmin ? 'Estudiantes' : 'Mis estudiantes'}</p>
                       <h4 className="text-2xl font-bold text-gray-900">{stats.total}</h4>
                     </div>
                   </CardContent>
                 </Card>
                 <Card className="shadow-sm">
                   <CardContent className="p-6 flex items-center">
-                    <div className="p-3 bg-orange-100 rounded-lg text-orange-600 mr-4"><ShieldAlert className="h-6 w-6"/></div>
+                    <div className="p-3 bg-[rgba(210,106,92,0.12)] rounded-lg text-[var(--coral-500)] mr-4"><ShieldAlert className="h-6 w-6"/></div>
                     <div>
-                      <p className="text-sm font-medium text-gray-500">No-shows</p>
+                      <p className="text-sm font-medium text-gray-500">Sin sesión</p>
                       <h4 className="text-2xl font-bold text-gray-900">{stats.noShows}</h4>
                     </div>
                   </CardContent>
                 </Card>
                 <Card className="shadow-sm">
                   <CardContent className="p-6 flex items-center">
-                    <div className="p-3 bg-blue-100 rounded-lg text-blue-600 mr-4"><Activity className="h-6 w-6"/></div>
+                    <div className="p-3 bg-[rgba(15,76,129,0.08)] rounded-lg text-[var(--navy-500)] mr-4"><Activity className="h-6 w-6"/></div>
                     <div>
-                      <p className="text-sm font-medium text-gray-500">Test realizado</p>
+                      <p className="text-sm font-medium text-gray-500">Diagnóstico completado</p>
                       <h4 className="text-2xl font-bold text-gray-900">{stats.testRate}%</h4>
                     </div>
                   </CardContent>
                 </Card>
                 <Card className="shadow-sm">
                   <CardContent className="p-6 flex items-center">
-                    <div className="p-3 bg-green-100 rounded-lg text-green-600 mr-4"><CheckCircle className="h-6 w-6"/></div>
+                    <div className="p-3 bg-[rgba(15,76,129,0.08)] rounded-lg text-[var(--navy-500)] mr-4"><CheckCircle className="h-6 w-6"/></div>
                     <div>
                       <p className="text-sm font-medium text-gray-500">Metas definidas</p>
                       <h4 className="text-2xl font-bold text-gray-900">{stats.metasRate}%</h4>
                     </div>
                   </CardContent>
                 </Card>
-              </div>
-            </>
-          )}
+          </div>
 
           <Card className="shadow-sm overflow-hidden border-gray-200">
             <div className="p-4 border-b border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -519,8 +766,8 @@ export default function AdminDashboard() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <input 
                   type="text" 
-                  placeholder="Buscar por matrícula, nombre o correo..." 
-                  className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 bg-white"
+                  placeholder="Buscar por matrícula, nombre o correo" 
+                  className="w-full pl-9 pr-4 py-2 text-sm border border-[rgba(15,76,129,0.12)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[rgba(15,76,129,0.12)] focus:border-[var(--navy-500)] bg-white"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -532,8 +779,8 @@ export default function AdminDashboard() {
                   <tr>
                     <th className="px-6 py-4 font-medium">Matrícula</th>
                     <th className="px-6 py-4 font-medium">Nombre</th>
-                    <th className="px-6 py-4 font-medium">Check-in (On-Site)</th>
-                    <th className="px-6 py-4 font-medium">Status Actual</th>
+                    <th className="px-6 py-4 font-medium">Asistió a sesión</th>
+                    <th className="px-6 py-4 font-medium">Estado</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50 bg-white">
@@ -573,6 +820,51 @@ export default function AdminDashboard() {
               </table>
             </div>
           </Card>
+
+          {permissions.canRunCampaigns ? (
+            <div className="mt-8 grid gap-4 md:grid-cols-3">
+              <Card className="border-[rgba(15,76,129,0.10)] shadow-sm">
+                <CardContent className="p-6">
+                  <h3 className="font-bold text-[var(--navy-700)] mb-2 flex items-center"><Mail className="mr-2 h-5 w-5"/> Invitación al diagnóstico</h3>
+                  <p className="text-sm text-[var(--ink-700)] mb-4 h-10">Envío masivo a estudiantes que aún no completaron el test.</p>
+                  <Button
+                    className="w-full"
+                    onClick={() => handleOpenCampaignConfig('invitation')}
+                    disabled={stats.pendientes === 0}
+                  >
+                    Enviar invitación · {stats.pendientes} pendientes
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="border-[rgba(15,76,129,0.10)] shadow-sm">
+                <CardContent className="p-6">
+                  <h3 className="font-bold text-[var(--navy-700)] mb-2 flex items-center"><CheckCircle className="mr-2 h-5 w-5"/> Convocatoria a sesión</h3>
+                  <p className="text-sm text-[var(--ink-700)] mb-4 h-10">Aviso a estudiantes listos para su sesión presencial.</p>
+                  <Button
+                    className="w-full"
+                    onClick={() => handleOpenCampaignConfig('session')}
+                  >
+                    Enviar convocatoria · {stats.sessionReady} listos
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="border-[rgba(15,76,129,0.10)] shadow-sm">
+                <CardContent className="p-6">
+                  <h3 className="font-bold text-[var(--navy-700)] mb-2 flex items-center"><Send className="mr-2 h-5 w-5"/> Seguimiento a ausencias</h3>
+                  <p className="text-sm text-[var(--ink-700)] mb-4 h-10">Mensaje a estudiantes que no asistieron a su sesión.</p>
+                  <Button
+                    className="w-full"
+                    onClick={() => handleOpenCampaignConfig('noshow')}
+                    disabled={stats.noShows === 0}
+                  >
+                    Enviar seguimiento · {stats.noShows} ausentes
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          ) : null}
         </div>
       )}
 
@@ -624,31 +916,38 @@ export default function AdminDashboard() {
       {/* TAB 3: DEMO & SETTINGS */}
       {activeTab === 'settings' && (
         <div className="max-w-3xl animate-in fade-in duration-300 space-y-6">
+          <div className="rounded-2xl border border-[rgba(15,76,129,0.12)] bg-[rgba(15,76,129,0.04)] px-5 py-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--navy-600)]">Solo administración</p>
+            <p className="mt-2 text-sm text-[var(--ink-700)]">
+              Aquí se definen conexiones, agenda, simulación y parámetros globales del sistema.
+            </p>
+          </div>
           
           {/* Role Simulator */}
-          <Card className="shadow-sm border-blue-200 bg-blue-50/30">
+          {import.meta.env.DEV && isDemoMode ? (
+          <Card className="shadow-sm border-[rgba(15,76,129,0.12)]">
             <CardContent className="p-6 md:p-8">
               <div className="flex items-start gap-4 mb-6">
-                <div className="p-3 bg-blue-100 rounded-xl text-blue-600">
+                <div className="p-3 bg-[rgba(15,76,129,0.08)] rounded-xl text-[var(--navy-500)]">
                   <Users className="h-6 w-6"/>
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">Simulación de roles</h2>
-                  <p className="text-gray-600 text-sm mt-1">
+                  <h2 className="text-xl font-bold text-[var(--ink-900)]">Vista por rol</h2>
+                  <p className="text-[var(--ink-700)] text-sm mt-1">
                     Cambia el rol activo para revisar cómo se ve el panel para administración o mentoría. En producción, este acceso vendrá de la cuenta institucional.
                   </p>
                 </div>
               </div>
 
-              <div className="bg-white p-4 rounded-xl border border-blue-200 flex flex-col gap-4">
+              <div className="bg-white p-4 rounded-xl border border-[rgba(15,76,129,0.12)] flex flex-col gap-4">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div>
-                    <h4 className="font-bold text-gray-900 uppercase">Simular Rol</h4>
+                    <h4 className="font-bold text-[var(--ink-900)]">Rol activo</h4>
                   </div>
-                  <div className="flex bg-gray-100 p-1 rounded-lg overflow-x-auto max-w-full">
+                  <div className="flex bg-[rgba(15,76,129,0.05)] p-1 rounded-lg overflow-x-auto max-w-full">
                     <button 
                       onClick={() => setUserRole('admin')}
-                      className={cn("px-4 py-2 text-sm font-medium rounded-md transition-all whitespace-nowrap", userRole === 'admin' ? "bg-white shadow-sm text-brand-700" : "text-gray-500 hover:text-gray-900")}
+                      className={cn("px-4 py-2 text-sm font-medium rounded-md transition-all whitespace-nowrap", userRole === 'admin' ? "bg-white shadow-sm text-[var(--navy-700)]" : "text-[var(--ink-700)] hover:text-[var(--ink-900)]")}
                     >
                       Admin
                     </button>
@@ -656,7 +955,7 @@ export default function AdminDashboard() {
                       <button 
                         key={m.email}
                         onClick={() => setUserRole(`mentor:${m.email}`)}
-                        className={cn("px-4 py-2 text-sm font-medium rounded-md transition-all whitespace-nowrap", userRole === `mentor:${m.email}` ? "bg-white shadow-sm text-brand-700" : "text-gray-500 hover:text-gray-900")}
+                        className={cn("px-4 py-2 text-sm font-medium rounded-md transition-all whitespace-nowrap", userRole === `mentor:${m.email}` ? "bg-white shadow-sm text-[var(--navy-700)]" : "text-[var(--ink-700)] hover:text-[var(--ink-900)]")}
                       >
                         {m.nickname}
                       </button>
@@ -666,16 +965,17 @@ export default function AdminDashboard() {
               </div>
             </CardContent>
           </Card>
+          ) : null}
 
-          <Card className="shadow-sm border-purple-200 bg-purple-50/30">
+          <Card className="shadow-sm border-[rgba(15,76,129,0.12)]">
             <CardContent className="p-6 md:p-8">
               <div className="flex items-start gap-4 mb-6">
-                <div className="p-3 bg-purple-100 rounded-xl text-purple-600">
+                <div className="p-3 bg-[rgba(15,76,129,0.08)] rounded-xl text-[var(--navy-500)]">
                   <Users className="h-6 w-6"/>
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">Sincronización de Mentores (Ruta C)</h2>
-                  <p className="text-gray-600 text-sm mt-1">
+                  <h2 className="text-xl font-bold text-[var(--ink-900)]">Mentores y comunidades</h2>
+                  <p className="text-[var(--ink-700)] text-sm mt-1">
                     Pega tu lista de mentores para habilitar la asociación automática y los colores por comunidad. <br/>
                     **Formato:** <code>Comunidad</code> | <code>HexColor</code> | <code>Nombre</code> | <code>Nickname</code> | <code>Email</code>
                   </p>
@@ -685,38 +985,38 @@ export default function AdminDashboard() {
               <textarea
                 className="w-full rounded-xl border border-gray-300 p-4 text-sm font-mono text-gray-700 shadow-inner focus:border-brand-500 focus:ring-brand-500 transition-all resize-none mb-4"
                 rows="6"
-                placeholder={`Krei\t#79858B\tKaren Ariadna\tKaren\tkareng@tec.mx`}
+                placeholder={`Comunidad A\t#79858B\tNombre Mentor\tMentor\tmentor@tec.mx`}
                 value={mentorSyncText}
                 onChange={(e) => setMentorSyncText(e.target.value)}
               />
               <Button onClick={handleParseMentors} disabled={!mentorSyncText.trim()}>
-                Actualizar Lista de Mentores
-              </Button>
+                    Actualizar mentores
+                  </Button>
             </CardContent>
           </Card>
 
-          <Card className="shadow-sm border-orange-200 bg-orange-50/30">
+          <Card className="shadow-sm border-[rgba(15,76,129,0.12)]">
             <CardContent className="p-6 md:p-8">
               <div className="flex items-start gap-4 mb-6">
-                <div className="p-3 bg-orange-100 rounded-xl text-orange-600">
-                  <ShieldAlert className="h-6 w-6"/>
+                <div className="p-3 bg-[rgba(210,106,92,0.10)] rounded-xl text-[var(--coral-500)]">
+                  <Beaker className="h-6 w-6"/>
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">Modo demo</h2>
-                  <p className="text-gray-600 text-sm mt-1">
+                  <h2 className="text-xl font-bold text-[var(--ink-900)]">Modo demo</h2>
+                  <p className="text-[var(--ink-700)] text-sm mt-1">
                     Al activar el modo demo, las campañas del tablero no dispararán correos reales. Úsalo para capacitación o presentaciones.
                   </p>
                 </div>
               </div>
 
-              <div className="bg-white p-4 rounded-xl border border-orange-200 flex items-center justify-between">
+              <div className="bg-white p-4 rounded-xl border border-[rgba(210,106,92,0.16)] flex items-center justify-between">
                 <div>
-                  <h4 className="font-bold text-gray-900">Estado del Modo Demo</h4>
-                  <p className="text-sm text-gray-500">{isDemoMode ? "Activado. Entorno seguro para demostraciones." : "Desactivado. Operación real."}</p>
+                  <h4 className="font-bold text-[var(--ink-900)]">Estado actual</h4>
+                  <p className="text-sm text-[var(--ink-700)]">{isDemoMode ? "Activado. Entorno seguro para demostraciones." : "Desactivado. Operación real."}</p>
                 </div>
                 <Button 
                   variant={isDemoMode ? "default" : "outline"}
-                  className={isDemoMode ? "bg-orange-500 hover:bg-orange-600" : ""}
+                  className={isDemoMode ? "bg-[var(--coral-500)] hover:bg-[rgba(210,106,92,0.9)]" : ""}
                   onClick={() => setIsDemoMode(!isDemoMode)}
                 >
                   {isDemoMode ? "Desactivar Demo" : "Activar Demo"}
@@ -743,26 +1043,30 @@ export default function AdminDashboard() {
                 <Button 
                   onClick={() => {
                     setIsSendingTest(true);
-                    setTimeout(() => { alert("Correo de prueba entregado a: " + testEmail); setIsSendingTest(false); setTestEmail(''); }, 1200);
+                    setTimeout(() => {
+                      setFeedback({ tone: 'success', message: `Correo de prueba enviado a ${testEmail}.` });
+                      setIsSendingTest(false);
+                      setTestEmail('');
+                    }, 1200);
                   }}
                   disabled={!testEmail.includes('@')}
                   isLoading={isSendingTest}
                 >
-                  <Send className="w-4 h-4 mr-2"/> Enviar Prueba
+                  <Send className="w-4 h-4 mr-2"/> Enviar prueba
                 </Button>
               </div>
             </CardContent>
           </Card>
-          <Card className="shadow-sm border-blue-200 bg-blue-50/30">
+          <Card className="shadow-sm border-[rgba(15,76,129,0.12)]">
             <CardContent className="p-6 md:p-8">
               <div className="flex items-start gap-4 mb-6">
-                <div className="p-3 bg-blue-100 rounded-xl text-blue-600">
+                <div className="p-3 bg-[rgba(15,76,129,0.08)] rounded-xl text-[var(--navy-500)]">
                   <LayoutDashboard className="h-6 w-6"/>
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">Conectividad con Google Sheets</h2>
-                  <p className="text-gray-600 text-sm mt-1">
-                    Configura la URL de tu Web App de Google Apps Script para habilitar la sincronización en tiempo real.
+                  <h2 className="text-xl font-bold text-[var(--ink-900)]">Conexión con Google Sheets</h2>
+                  <p className="text-[var(--ink-700)] text-sm mt-1">
+                    Configura la URL de tu Web App de Google Apps Script y la clave admin usada para operaciones de escritura.
                   </p>
                 </div>
               </div>
@@ -778,29 +1082,41 @@ export default function AdminDashboard() {
                   />
                   <Button onClick={handleSaveApiUrl}>Guardar URL</Button>
                 </div>
+                <div className="flex gap-2">
+                  <input 
+                    type="password"
+                    placeholder="Clave admin para guardar en Sheets"
+                    className="flex-1 rounded-xl border border-gray-300 px-4 py-2 focus:border-brand-500 focus:ring-brand-500 font-mono text-xs"
+                    value={adminSecret}
+                    onChange={(e) => setAdminSecret(e.target.value)}
+                  />
+                </div>
                 <p className="text-[10px] text-gray-400 italic">
                   ID actual detectado: {apiUrl ? apiUrl.split('/s/')[1]?.split('/')[0] : 'Ninguno'}
+                </p>
+                <p className="text-[10px] text-gray-400 italic">
+                  La clave admin no debe ir en variables públicas del frontend. Se guarda localmente en este navegador para acciones de escritura.
                 </p>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="shadow-sm border-emerald-200 bg-emerald-50/30">
+          <Card className="shadow-sm border-[rgba(15,76,129,0.12)]">
             <CardContent className="p-6 md:p-8">
               <div className="flex items-start gap-4 mb-6">
-                <div className="p-3 bg-emerald-100 rounded-xl text-emerald-600">
+                <div className="p-3 bg-[rgba(15,76,129,0.08)] rounded-xl text-[var(--navy-500)]">
                   <CalendarDays className="h-6 w-6"/>
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">Configuración de agenda</h2>
-                  <p className="text-gray-600 text-sm mt-1">
+                  <h2 className="text-xl font-bold text-[var(--ink-900)]">Agenda de mentoría</h2>
+                  <p className="text-[var(--ink-700)] text-sm mt-1">
                     Define si los resultados deben dirigir a una sesión individual o a un registro grupal por bloques.
                   </p>
                 </div>
               </div>
 
               <div className="space-y-5">
-                <div className="flex bg-white p-1 rounded-lg overflow-x-auto max-w-full border border-emerald-200">
+                <div className="flex bg-[rgba(15,76,129,0.05)] p-1 rounded-lg overflow-x-auto max-w-full border border-[rgba(15,76,129,0.12)]">
                   <button
                     onClick={() => setBookingConfig({
                       mode: 'individual',
@@ -809,7 +1125,7 @@ export default function AdminDashboard() {
                     })}
                     className={cn(
                       'px-4 py-2 text-sm font-medium rounded-md transition-all whitespace-nowrap',
-                      bookingConfig.mode === 'individual' ? 'bg-white shadow-sm text-brand-700' : 'text-gray-500 hover:text-gray-900'
+                      bookingConfig.mode === 'individual' ? 'bg-white shadow-sm text-[var(--navy-700)]' : 'text-[var(--ink-700)] hover:text-[var(--ink-900)]'
                     )}
                   >
                     Sesión individual
@@ -822,7 +1138,7 @@ export default function AdminDashboard() {
                     })}
                     className={cn(
                       'px-4 py-2 text-sm font-medium rounded-md transition-all whitespace-nowrap',
-                      bookingConfig.mode === 'grupal' ? 'bg-white shadow-sm text-brand-700' : 'text-gray-500 hover:text-gray-900'
+                      bookingConfig.mode === 'grupal' ? 'bg-white shadow-sm text-[var(--navy-700)]' : 'text-[var(--ink-700)] hover:text-[var(--ink-900)]'
                     )}
                   >
                     Evento grupal
@@ -831,7 +1147,7 @@ export default function AdminDashboard() {
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wider">Texto del botón</label>
+                    <label className="block text-sm font-bold text-[var(--ink-700)] mb-2 uppercase tracking-wider">Texto del botón</label>
                     <input
                       type="text"
                       className="w-full rounded-xl border border-gray-300 px-4 py-2 focus:border-brand-500 focus:ring-brand-500"
@@ -840,7 +1156,7 @@ export default function AdminDashboard() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wider">URL activa</label>
+                    <label className="block text-sm font-bold text-[var(--ink-700)] mb-2 uppercase tracking-wider">URL activa</label>
                     <input
                       type="text"
                       className="w-full rounded-xl border border-gray-300 px-4 py-2 focus:border-brand-500 focus:ring-brand-500 font-mono text-xs"
@@ -848,8 +1164,8 @@ export default function AdminDashboard() {
                       onChange={(e) => setBookingConfig((prev) => ({ ...prev, url: e.target.value }))}
                     />
                   </div>
-                  <p className="text-sm text-gray-500">
-                    Modo actual: <span className="font-semibold text-gray-700">{bookingConfig.mode === 'individual' ? 'Sesión individual 1:1' : 'Registro a evento grupal'}</span>
+                  <p className="text-sm text-[var(--ink-700)]">
+                    Modo actual: <span className="font-semibold text-[var(--ink-900)]">{bookingConfig.mode === 'individual' ? 'Sesión individual 1:1' : 'Registro a evento grupal'}</span>
                   </p>
                 </div>
               </div>
@@ -864,10 +1180,10 @@ export default function AdminDashboard() {
           <div className="bg-white w-full max-w-5xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
               <div>
-                <h2 className="text-xl font-bold text-gray-900 flex items-center capitalize">
-                  <Mail className="w-5 h-5 mr-2 text-brand-600" /> Configurar {campaignType}
+                <h2 className="text-xl font-bold text-gray-900 flex items-center">
+                  <Mail className="w-5 h-5 mr-2 text-[var(--navy-500)]" /> Preparar campaña
                 </h2>
-                <p className="text-sm text-gray-500">Configura el contenido y los destinatarios del correo masivo.</p>
+                <p className="text-sm text-gray-500">{campaignLabels[campaignType]}. Ajusta el contenido y define a quién se enviará.</p>
               </div>
               <button onClick={() => setIsCampaignModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
                 <Trash2 className="w-5 h-5 text-gray-400" />
@@ -878,7 +1194,7 @@ export default function AdminDashboard() {
               {/* Left Column: Config */}
               <div className="w-full md:w-1/2 space-y-6">
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wider">Asunto del Correo</label>
+                  <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wider">Asunto del correo</label>
                   <input 
                     type="text" 
                     className="w-full rounded-xl border border-gray-300 px-4 py-2 focus:border-brand-500 focus:ring-brand-500"
@@ -889,7 +1205,7 @@ export default function AdminDashboard() {
 
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wider">Cuerpo HTML</label>
-                  <div className="text-xs text-brand-600 mb-2 font-mono">Tags: {'{{nombre}} | {{mentor}} | {{comunidad}}'}</div>
+                  <div className="text-xs text-[var(--navy-600)] mb-2 font-mono">Tags: {'{{nombre}} | {{mentor}} | {{comunidad}}'}</div>
                   <textarea 
                     className="w-full rounded-xl border border-gray-300 p-4 text-sm font-mono text-gray-700 shadow-inner focus:border-brand-500 focus:ring-brand-500 h-64 resize-none"
                     value={campaignConfig.htmlBody}
@@ -898,7 +1214,7 @@ export default function AdminDashboard() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wider">Comunidades Participantes</label>
+                  <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wider">Mentores y comunidades</label>
                   <div className="grid grid-cols-2 gap-2 mt-2">
                     {mentors.map(m => (
                       <label key={m.email} className="flex items-center p-3 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer group">
@@ -925,7 +1241,7 @@ export default function AdminDashboard() {
 
               {/* Right Column: Preview */}
               <div className="w-full md:w-1/2 flex flex-col">
-                <label className="block text-sm font-bold text-gray-700 mb-4 uppercase tracking-wider">Previsualización (Demo)</label>
+                <label className="block text-sm font-bold text-gray-700 mb-4 uppercase tracking-wider">Previsualización</label>
                 <div className="flex-1 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200 p-6 flex flex-col overflow-hidden">
                    <div className="bg-white rounded-xl shadow-lg flex-1 overflow-y-auto overflow-x-hidden p-6 border border-gray-100">
                       {/* Render simulated HTML body with dynamic tags replace for "Demo" */}
@@ -938,7 +1254,7 @@ export default function AdminDashboard() {
                         }} 
                       />
                    </div>
-                   <p className="text-[10px] text-gray-400 mt-4 text-center italic">Este es un render simulado del HTML final que recibirá el estudiante.</p>
+                   <p className="text-[10px] text-gray-400 mt-4 text-center italic">Vista de referencia del mensaje que recibirá el estudiante.</p>
                 </div>
               </div>
             </div>
@@ -955,10 +1271,13 @@ export default function AdminDashboard() {
                 <Button 
                   variant="outline" 
                   onClick={() => {
-                    if (!testEmail) return alert("Ingresa un correo de prueba");
+                    if (!testEmail) {
+                      setFeedback({ tone: 'error', message: 'Ingresa un correo de prueba antes de enviarlo.' });
+                      return;
+                    }
                     setIsSendingTest(true);
                     setTimeout(() => {
-                      alert(`[PRUEBA] Correo enviado a ${testEmail} con el asunto: ${campaignConfig.subject}`);
+                      setFeedback({ tone: 'success', message: `Correo de prueba enviado a ${testEmail}.` });
                       setIsSendingTest(false);
                     }, 1000);
                   }}
@@ -976,7 +1295,7 @@ export default function AdminDashboard() {
                   isLoading={isSendingInitial}
                   disabled={campaignConfig.selectedMentorEmails.length === 0}
                 >
-                  Disparar Campaña Masiva
+                  Enviar campaña
                 </Button>
               </div>
             </div>

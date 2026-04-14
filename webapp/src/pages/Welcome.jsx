@@ -154,7 +154,7 @@ export default function Welcome() {
                 onChange={(e) => setPreferredName(e.target.value)}
               />
               <p className="text-xs font-medium uppercase tracking-[0.12em] text-[var(--ink-700)]">
-                Opcional. Lo usaremos para personalizar tu experiencia en Navi.
+                Opcional. Así te llamará tu mentor o mentora.
               </p>
             </div>
 

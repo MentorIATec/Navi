@@ -1,16 +1,33 @@
-# React + Vite
+# Navi Webapp
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Variables de entorno
 
-Currently, two official plugins are available:
+Copia `.env.example` a `.env.local` para desarrollo local o configura la variable en tu hosting:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```bash
+VITE_API_URL=https://script.google.com/macros/s/TU_DEPLOYMENT_ID/exec
+```
 
-## React Compiler
+La clave de escritura admin no debe ir en `.env` del frontend. Configúrala así:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+1. En Google Apps Script, crea `NAVI_ADMIN_SECRET` en **Script Properties**
+2. En `/admin > Configuración`, pega esa misma clave en **Conexión con Google Sheets**
 
-## Expanding the ESLint configuration
+## Desarrollo
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+npm install
+npm run dev
+```
+
+## Build
+
+```bash
+npm run build
+```
+
+## Deployment
+
+- El frontend usa `BrowserRouter`.
+- Si despliegas en Vercel con raíz en `webapp/`, el archivo `vercel.json` ya incluye el rewrite necesario para servir `index.html` en todas las rutas.
+- Si despliegas en otra plataforma, debes configurar el equivalente para evitar `404` en rutas como `/admin` o `/seleccion-metas`.

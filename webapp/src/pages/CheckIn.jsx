@@ -182,7 +182,7 @@ export default function CheckIn() {
                 onChange={(e) => setPreferredName(e.target.value)}
               />
               <p className="text-sm text-[var(--ink-700)]">
-                Opcional. Así podremos dirigirnos a ti de la forma que prefieras.
+                Opcional. Así te llamará tu mentor o mentora.
               </p>
             </div>
 
@@ -193,7 +193,7 @@ export default function CheckIn() {
               disabled={!isValidMatricula}
               isLoading={isLoading}
             >
-              Ir al siguiente paso
+              {missingRemoteTest ? 'Actualizar matrícula' : 'Registrar mi llegada'}
               <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
             </Button>
 
@@ -210,6 +210,9 @@ export default function CheckIn() {
                     ? `${missingRemoteTest.name.split(' ')[0]}, `
                     : ''}
                   para aprovechar mejor la sesión conviene completar primero el diagnóstico remoto. Si hoy no es posible, puedes continuar con apoyo de tu mentor o mentora y definir tus metas desde esta sesión.
+                </p>
+                <p className="mt-3 text-sm font-medium text-[var(--navy-700)]">
+                  Tu llegada ya quedó registrada. Elige cómo quieres continuar.
                 </p>
                 <div className="mt-5 flex flex-col gap-3">
                   <Button type="button" size="lg" className="w-full" onClick={handleTakeDiagnosticNow}>

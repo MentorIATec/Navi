@@ -151,6 +151,33 @@ export const CATEGORY_META = {
   },
 };
 
+export const DIAGNOSTIC_TO_CATALOG_MAP = {
+  claridad_carrera: {
+    topics: ['carrera', 'academico'],
+    dimensions: ['ocupacional', 'intelectual'],
+  },
+  desempeno_academico: {
+    topics: ['academico', 'organizacion personal'],
+    dimensions: ['intelectual'],
+  },
+  plan_practicas: {
+    topics: ['practicas', 'carrera'],
+    dimensions: ['ocupacional'],
+  },
+  servicio_social: {
+    topics: ['servicio social', 'requisitos de egreso'],
+    dimensions: ['ocupacional'],
+  },
+  decision_semestre_tec: {
+    topics: ['carrera', 'practicas', 'requisitos de egreso'],
+    dimensions: ['ocupacional'],
+  },
+  certificacion_idioma: {
+    topics: ['requisitos de egreso', 'carrera'],
+    dimensions: ['intelectual', 'ocupacional'],
+  },
+};
+
 export const STAGE_COPY = {
   exploracion: {
     hero: 'Aquí suele tocarte confirmar tu vocación profesional, fortalecer hábitos saludables, cuidar tu promedio académico y empezar a planear experiencias futuras como idiomas o programas insignia del Tec.',
