@@ -7,7 +7,7 @@ claridad_carrera,enfoque,1,SEED089,primary,Si,Construcción de evidencia profesi
 claridad_carrera,enfoque,2,SEED090,primary,Si,Claridad orientada a reclutamiento real.
 claridad_carrera,enfoque,3,CAR006,secondary,Si,Investigación de empresas para decidir con más criterio.
 claridad_carrera,enfoque,4,SEED096,secondary,Si,Experiencia aplicada para validar dirección profesional.
-desempeno_academico,exploracion,1,ACA002,primary,Si,Hábito concreto y accionable para mejorar rendimiento.
+desempeno_academico,exploracion,1,ACA001,primary,Si,Meta académica con resultado visible en una materia crítica.
 desempeno_academico,exploracion,2,ACA003,primary,Si,Orden y cumplimiento con efecto inmediato.
 desempeno_academico,exploracion,3,ACA006,secondary,Si,Mejora base de organización del estudio.
 desempeno_academico,exploracion,4,SEED098,multietapa,Si,Sistema semanal sostenido para el semestre.
@@ -35,9 +35,9 @@ decision_semestre_tec,exploracion,1,CAR001,primary,Si,Explora opciones mediante 
 decision_semestre_tec,exploracion,2,CAR002,primary,Si,Reduce ambigüedad antes de decisiones más complejas.
 decision_semestre_tec,exploracion,3,SEED085,secondary,Si,Aprendizaje vicario con estudiantes que ya recorrieron opciones.
 decision_semestre_tec,exploracion,4,SEED097,multietapa,Si,Ruta de decisión amplia antes del cierre del año académico.
-decision_semestre_tec,enfoque,1,SEED101,primary,Si,Decisión operativa con plan A y plan B.
-decision_semestre_tec,enfoque,2,SEED084,primary,Si,Matriz concreta para comparar alternativas.
-decision_semestre_tec,enfoque,3,SEED092,secondary,Si,Contingencia con fechas límite para ejecución.
+decision_semestre_tec,enfoque,1,SEED084,primary,Si,Matriz concreta para comparar alternativas.
+decision_semestre_tec,enfoque,2,SEED101,primary,Si,Decisión operativa con plan A y plan B.
+decision_semestre_tec,enfoque,3,SEED097,multietapa,Si,Ruta de decisión amplia antes del cierre del año académico.
 decision_semestre_tec,enfoque,4,SEED085,secondary,Si,Contraste con experiencias de otros estudiantes.
 certificacion_idioma,exploracion,1,INT004,primary,Si,Entrada ligera a práctica y aprendizaje transferible.
 certificacion_idioma,exploracion,2,CAR004,primary,Si,Habilidad complementaria útil mientras se aclara ruta de idioma.

@@ -30,7 +30,7 @@ export default function Welcome() {
       const mentor = response?.mentor;
 
       if (!student) {
-        setErrorMessage('No encontramos tu matrícula en la base de Navi.');
+        setErrorMessage('No encontramos tu matrícula en la base de Navi. Si crees que es un error, consulta con tu mentor o con la coordinación de mentoría antes de continuar.');
         return;
       }
 
@@ -168,6 +168,18 @@ export default function Welcome() {
               Comenzar Diagnóstico
               <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
             </Button>
+            <p className="text-xs leading-6 text-[var(--ink-700)]">
+              Al continuar, aceptas el{' '}
+              <a
+                href="https://tec.mx/es/aviso-de-privacidad-alumnos"
+                target="_blank"
+                rel="noreferrer"
+                className="font-semibold text-[var(--navy-700)] underline underline-offset-2"
+              >
+                Aviso de Privacidad del Tecnológico de Monterrey
+              </a>
+              .
+            </p>
           </form>
         </CardContent>
       </Card>

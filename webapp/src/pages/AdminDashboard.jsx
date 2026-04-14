@@ -549,9 +549,6 @@ export default function AdminDashboard() {
                 Continuar
               </Button>
             </div>
-            <p className="mt-4 text-sm text-[var(--ink-700)]">
-              Si tu correo todavía no tiene permisos, agrégalo en la hoja <span className="font-semibold">Users</span>.
-            </p>
           </CardContent>
         </Card>
       </div>

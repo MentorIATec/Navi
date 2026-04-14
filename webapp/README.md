@@ -56,3 +56,11 @@ Rutas verificadas con `200`:
 - Permisos resueltos del lado servidor, no solo en cliente
 - Check-in con contexto de sesión/mentor mediante token opaco
 - Reducir duplicación de lógica entre frontend y Apps Script
+
+## Documentación piloto
+
+- `webapp/docs/pilot-mentors-overview.md`
+- `webapp/docs/pilot-invitation-email.md`
+- `webapp/docs/pilot-presential-session-guide.md`
+- `webapp/docs/pilot-technical-setup.md`
+- `webapp/docs/pilot-faq.md`
