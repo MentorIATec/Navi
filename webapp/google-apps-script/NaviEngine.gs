@@ -20,6 +20,7 @@ const CONFIG_KEYS = {
 const STUDENT_HEADERS = ['Matrícula', 'Nombre', 'NombrePreferido', 'Email', 'NicknameMentor', 'Comunidad', 'Status', 'Check-in'];
 const LEGACY_STUDENT_HEADERS = ['Matrícula', 'Nombre', 'Email', 'NicknameMentor', 'Comunidad', 'Status', 'Check-in'];
 const USER_HEADERS = ['Email', 'Nombre', 'Rol', 'Comunidad', 'Hex', 'Slogan', 'Activo'];
+const RESPONSES_HEADERS = ['Matrícula', 'FechaTest', 'Modalidad', 'Etapa', 'ScorePromedio', 'AreasPrioritarias', 'Claridad_Carrera', 'Desempeno_Academico', 'Plan_Practicas', 'Servicio_Social', 'Decision_SemestreTec', 'Certificacion_Idioma'];
 // Dimension = una sola de las 7 dimensiones del bienestar del modelo Tec.
 // TemaOperativo = agrupador práctico de navegación/curación para mentoría; no reemplaza a la dimensión.
 const GOALS_CATALOG_HEADERS = ['Id', 'TemaOperativo', 'Dimension', 'Etapa', 'MetaBase', 'PasosBase', 'HorizonteSugerido', 'IndicadorLogro', 'CuandoUsarla', 'NivelDificultad', 'FrecuenciaSeguimiento', 'ConexionDiagnostico', 'PreguntasParaAfinar', 'Activa'];
@@ -132,6 +133,7 @@ function doGet(e) {
         students: parseSheetData(ss.getSheetByName('Students').getDataRange().getValues()),
         mentors: parseSheetData(ss.getSheetByName('Mentors').getDataRange().getValues()),
         goals: getMetasData(ss, e && e.parameter ? e.parameter : {}),
+        responses: parseSheetData(ensureSheetWithHeaders_(ss, 'Responses', RESPONSES_HEADERS).getDataRange().getValues()),
       }
     };
 
@@ -195,6 +197,14 @@ function doPost(e) {
 
     if (action === 'saveGoalSelection') {
       return saveGoalSelection(ss, params.data);
+    }
+
+    if (action === 'saveTestResponse') {
+      return saveTestResponse(ss, params.data);
+    }
+
+    if (action === 'getTestResponse') {
+      return getTestResponse(ss, params.data);
     }
 
     return jsonResponse_({ 
@@ -751,6 +761,7 @@ function ensureCoreSheets_(ss) {
 function ensureOperationsSheets_(ss) {
   const usersSheet = ensureSheetWithHeaders_(ss, 'Users', USER_HEADERS);
   const goalsCatalogSheet = ensureSheetWithHeaders_(ss, 'GoalsCatalog', GOALS_CATALOG_HEADERS);
+  ensureSheetWithHeaders_(ss, 'Responses', RESPONSES_HEADERS);
   ensureGoalsCatalogSchema_(goalsCatalogSheet);
   applyGoalsCatalogValidation_(goalsCatalogSheet);
 
@@ -1031,6 +1042,72 @@ function normalizeGoalsCatalogPayload_(items) {
 function jsonResponse_(payload) {
   return ContentService.createTextOutput(JSON.stringify(payload))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+function saveTestResponse(ss, data) {
+  const sheet = ensureSheetWithHeaders_(ss, 'Responses', RESPONSES_HEADERS);
+  const matricula = String(data.matricula || '').trim().toUpperCase();
+  
+  if (!matricula) {
+    return jsonResponse_({ status: 'error', message: 'Falta la matrícula del alumno' });
+  }
+
+  sheet.appendRow([
+    matricula,
+    new Date().toISOString(),
+    data.modalidad || 'remoto',
+    data.etapa || '',
+    data.scorePromedio || '',
+    data.areasPrioritarias || '',
+    data.claridad_carrera || '',
+    data.desempeno_academico || '',
+    data.plan_practicas || '',
+    data.servicio_social || '',
+    data.decision_semestre_tec || '',
+    data.certificacion_idioma || ''
+  ]);
+
+  return updateStudentStatus(ss, {
+    matricula: matricula,
+    status: 'Test Completado'
+  });
+}
+
+function getTestResponse(ss, data) {
+  const sheet = ensureSheetWithHeaders_(ss, 'Responses', RESPONSES_HEADERS);
+  const matricula = String(data.matricula || '').trim().toUpperCase();
+  
+  if (!matricula) {
+    return jsonResponse_({ status: 'error', message: 'Falta la matrícula del alumno' });
+  }
+
+  const values = sheet.getDataRange().getValues();
+  for (let i = values.length - 1; i > 0; i--) {
+    if (String(values[i][0]).toUpperCase() === matricula) {
+      const row = values[i];
+      return jsonResponse_({
+        status: 'success',
+        data: {
+          matricula: row[0],
+          fechaTest: row[1],
+          modalidad: row[2],
+          etapa: row[3],
+          scorePromedio: row[4],
+          areasPrioritarias: row[5],
+          scores: {
+            claridad_carrera: row[6],
+            desempeno_academico: row[7],
+            plan_practicas: row[8],
+            servicio_social: row[9],
+            decision_semestre_tec: row[10],
+            certificacion_idioma: row[11]
+          }
+        }
+      });
+    }
+  }
+
+  return jsonResponse_({ status: 'error', message: 'No se encontraron respuestas para este alumno' });
 }
 
 function saveGoalSelection(ss, data) {

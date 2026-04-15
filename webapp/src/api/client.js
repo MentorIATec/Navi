@@ -52,9 +52,11 @@ function getLocalUsersFallback() {
 function getLocalDataFallback() {
   const savedStudents = JSON.parse(localStorage.getItem('navi_students') || '[]');
   const savedMentors = JSON.parse(localStorage.getItem('navi_mentors') || '[]');
+  const savedResponses = JSON.parse(localStorage.getItem('navi_responses') || '[]');
   return {
     students: savedStudents,
     mentors: savedMentors,
+    responses: savedResponses,
   };
 }
 
@@ -438,6 +440,41 @@ export const apiClient = {
           warning: 'Tu plan se guardó solo en este dispositivo. Intenta sincronizarlo otra vez para que mentoría lo reciba.',
         };
       }
+      if (action === 'saveTestResponse') {
+        const savedResponses = JSON.parse(localStorage.getItem('navi_responses') || '[]');
+        savedResponses.push({ ...data, fechaTest: new Date().toISOString() });
+        localStorage.setItem('navi_responses', JSON.stringify(savedResponses));
+        return { status: 'success', source: 'fallback' };
+      }
+      if (action === 'getTestResponse') {
+        const savedResponses = JSON.parse(localStorage.getItem('navi_responses') || '[]');
+        const matricula = String(data.matricula || '').trim().toUpperCase();
+        let match = null;
+        for (let i = savedResponses.length - 1; i >= 0; i--) {
+          if (String(savedResponses[i].matricula).toUpperCase() === matricula) {
+            match = savedResponses[i];
+            break;
+          }
+        }
+        if (match) {
+          return {
+            status: 'success',
+            data: {
+              ...match,
+              scores: {
+                claridad_carrera: match.claridad_carrera,
+                desempeno_academico: match.desempeno_academico,
+                plan_practicas: match.plan_practicas,
+                servicio_social: match.servicio_social,
+                decision_semestre_tec: match.decision_semestre_tec,
+                certificacion_idioma: match.certificacion_idioma
+              }
+            }
+          };
+        } else {
+          throw new Error('No se encontraron respuestas para este alumno');
+        }
+      }
       console.error(`API Error (POST) [${action}]:`, error);
       throw error;
     }
@@ -453,9 +490,11 @@ export const apiClient = {
           case 'getData': {
             const savedStudents = localStorage.getItem('navi_students');
             const savedMentors = localStorage.getItem('navi_mentors');
+            const savedResponses = localStorage.getItem('navi_responses');
             resolve({
               students: savedStudents ? JSON.parse(savedStudents) : [],
-              mentors: savedMentors ? JSON.parse(savedMentors) : []
+              mentors: savedMentors ? JSON.parse(savedMentors) : [],
+              responses: savedResponses ? JSON.parse(savedResponses) : []
             });
             break;
           }
@@ -500,6 +539,43 @@ export const apiClient = {
           case 'saveGoalSelection':
             resolve(data);
             break;
+          case 'saveTestResponse': {
+            const savedResponses = JSON.parse(localStorage.getItem('navi_responses') || '[]');
+            savedResponses.push({ ...data, fechaTest: new Date().toISOString() });
+            localStorage.setItem('navi_responses', JSON.stringify(savedResponses));
+            resolve({ status: 'success' });
+            break;
+          }
+          case 'getTestResponse': {
+            const savedResponses = JSON.parse(localStorage.getItem('navi_responses') || '[]');
+            const matricula = String(data.matricula || '').trim().toUpperCase();
+            let match = null;
+            for (let i = savedResponses.length - 1; i >= 0; i--) {
+              if (String(savedResponses[i].matricula).toUpperCase() === matricula) {
+                match = savedResponses[i];
+                break;
+              }
+            }
+            if (match) {
+              resolve({
+                status: 'success',
+                data: {
+                  ...match,
+                  scores: {
+                    claridad_carrera: match.claridad_carrera,
+                    desempeno_academico: match.desempeno_academico,
+                    plan_practicas: match.plan_practicas,
+                    servicio_social: match.servicio_social,
+                    decision_semestre_tec: match.decision_semestre_tec,
+                    certificacion_idioma: match.certificacion_idioma
+                  }
+                }
+              });
+            } else {
+              reject(new Error('No se encontraron respuestas para este alumno'));
+            }
+            break;
+          }
           case 'updateStudent':
             console.log('Mock Update Student:', data);
             resolve({ status: 'success' });

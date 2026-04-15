@@ -54,12 +54,39 @@ export default function Diagnostic() {
     localStorage.setItem('navi_diagnostic_answers', JSON.stringify(finalAnswers));
     localStorage.removeItem('navi_missing_remote_test');
 
+    const categories = {};
+    questions.forEach((q) => {
+      if (!categories[q.category]) categories[q.category] = { total: 0, count: 0 };
+      categories[q.category].total += finalAnswers[q.key] || 0;
+      categories[q.category].count += 1;
+    });
+
+    const scores = {};
+    let totalScore = 0;
+    let totalQuestions = 0;
+    const priorityAreas = [];
+
+    Object.keys(categories).forEach((cat) => {
+      const avg = categories[cat].total / categories[cat].count;
+      scores[cat] = Math.round(avg * 10) / 10;
+      totalScore += categories[cat].total;
+      totalQuestions += categories[cat].count;
+      if (avg <= 2) priorityAreas.push(cat);
+    });
+
+    const scorePromedio = Math.round((totalScore / totalQuestions) * 10) / 10;
+    const modalidad = localStorage.getItem('navi_session_mode') === 'presencial' ? 'presencial' : 'remoto';
+
     try {
       const matricula = localStorage.getItem('navi_matricula');
       if (matricula) {
-        await apiClient.post('updateStudent', {
+        await apiClient.post('saveTestResponse', {
           matricula,
-          status: 'Test Completado',
+          modalidad,
+          etapa: selectedStage,
+          scorePromedio,
+          areasPrioritarias: priorityAreas.join(','),
+          ...scores
         });
       }
     } catch (error) {

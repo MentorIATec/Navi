@@ -4,6 +4,7 @@ import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { MapPin, UserCheck, ArrowRight } from 'lucide-react';
 import { apiClient } from '../api/client';
+import { DIAGNOSTIC_BANK } from '../data/diagnosticBank';
 
 export default function CheckIn() {
   const navigate = useNavigate();
@@ -76,6 +77,28 @@ export default function CheckIn() {
 
       if (student?.status === 'Test Completado' || student?.status === 'Metas Seleccionadas') {
         localStorage.removeItem('navi_missing_remote_test');
+        
+        try {
+          const res = await apiClient.post('getTestResponse', { matricula: matricula.toUpperCase() });
+          if (res?.data) {
+             const { etapa, scores } = res.data;
+             const questions = DIAGNOSTIC_BANK[etapa] || [];
+             const answers = {};
+             questions.forEach(q => {
+               answers[q.key] = scores[q.category] || 0;
+             });
+             localStorage.setItem('navi_diagnostic_payload', JSON.stringify({
+               stage: etapa,
+               answers,
+               questions
+             }));
+             localStorage.setItem('navi_diagnostic_answers', JSON.stringify(answers));
+             localStorage.setItem('navi_diagnostic_stage', etapa);
+          }
+        } catch (err) {
+          console.error("Test answers could not be loaded from backend", err);
+        }
+
         navigate('/pre-test');
         return;
       }

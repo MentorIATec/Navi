@@ -87,6 +87,10 @@ export default function AdminDashboard() {
     const parsed = saved ? JSON.parse(saved) : DEFAULT_MENTORS;
     return parsed.map(normalizeMentor);
   });
+  const [responses, setResponses] = useState(() => {
+    const saved = localStorage.getItem('navi_responses');
+    return saved ? JSON.parse(saved) : [];
+  });
 
   // Tab 1: Dashboard
   const [searchTerm, setSearchTerm] = useState('');
@@ -173,6 +177,10 @@ export default function AdminDashboard() {
   }, [mentors]);
 
   useEffect(() => {
+    localStorage.setItem('navi_responses', JSON.stringify(responses));
+  }, [responses]);
+
+  useEffect(() => {
     localStorage.setItem('navi_booking_config', JSON.stringify(bookingConfig));
   }, [bookingConfig]);
 
@@ -238,6 +246,7 @@ export default function AdminDashboard() {
 
   const StatusBadge = ({ student }) => {
     const { status, checkIn } = student;
+    const response = responses.find(r => r.matricula && r.matricula.toUpperCase() === student.matricula.toUpperCase());
     
     // Logic for No-Show according to methodology (Test Done but Check-in No)
     if (status === 'Test Completado' && checkIn === 'No') {
@@ -259,9 +268,12 @@ export default function AdminDashboard() {
       'Metas Seleccionadas': 'Plan definido',
     };
 
+    const isCompleted = status === 'Test Completado' || status === 'Metas Seleccionadas';
+    const modalityLabel = isCompleted && response?.modalidad === 'presencial' ? ' (Presencial)' : isCompleted && response?.modalidad === 'remoto' ? ' (Remoto)' : '';
+
     return (
       <span className={cn('px-2.5 py-1 rounded-full text-xs font-medium border', styles[status] || styles['Pendiente'])}>
-        {labels[status] || labels['Pendiente']}
+        {labels[status] || labels['Pendiente']}{modalityLabel}
       </span>
     );
   };
@@ -381,6 +393,7 @@ export default function AdminDashboard() {
       const data = await apiClient.get();
       if (data.students) setStudents(data.students.map((student, index) => normalizeStudent(student, index)));
       if (data.mentors) setMentors(data.mentors.map(normalizeMentor));
+      if (data.responses) setResponses(data.responses);
       setFeedback({ tone: 'success', message: 'Datos actualizados desde Google Sheets.' });
     } catch (err) {
       setFeedback({ tone: 'error', message: `No fue posible sincronizar: ${err.message}` });
