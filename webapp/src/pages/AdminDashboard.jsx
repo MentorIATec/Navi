@@ -352,33 +352,36 @@ export default function AdminDashboard() {
     
     // Parse Tab-separated or Comma-separated values
     const lines = uploadText.split('\n').filter(line => line.trim());
+    const skipped = [];
     const newStudents = lines.map((line, idx) => {
-      const parts = line.split(/[\t,]/).map(p => p.trim());
-      // Expected: Matricula, Nombre, NombrePreferido (opcional), Correo, NicknameMentor (opcional)
-      const hasPreferredName = parts.length >= 5;
-      const preferredName = hasPreferredName ? parts[2] : '';
-      const email = hasPreferredName ? parts[3] : parts[2];
-      const mentorNick = hasPreferredName ? parts[4] : parts[3];
+      const parts = line.split(/\t/).map(p => p.trim());
+      // Expected: Matrícula | Nombre | Correo | NicknameMentor (4 columnas, todas obligatorias)
+      if (parts.length < 4) {
+        skipped.push(idx + 1);
+        return null;
+      }
+      const [matricula, name, email, mentorNick] = parts;
       const mentor = mentors.find(m => m.nickname === mentorNick || m.name === mentorNick);
-      
+
       return {
         id: Date.now() + idx,
-        matricula: parts[0] || `DESC-${idx}`,
-        name: parts[1] || 'Sin Nombre',
-        preferredName,
+        matricula: matricula || `DESC-${idx}`,
+        name: name || 'Sin Nombre',
+        preferredName: '',
         email: email || 'sin@correo.com',
         mentor: mentorNick || 'Sin Asignar',
         community: mentor?.community || 'N/A',
         status: 'Pendiente',
         checkIn: 'No'
       };
-    });
+    }).filter(Boolean);
 
     setStudents(prev => [...prev, ...newStudents]);
     setUploadText('');
+    const skippedMsg = skipped.length > 0 ? ` Se omitieron ${skipped.length} líneas por formato incompleto (líneas: ${skipped.join(', ')}).` : '';
     setFeedback({
-      tone: 'success',
-      message: `Se cargaron ${newStudents.length} estudiantes al directorio.`,
+      tone: skipped.length > 0 ? 'error' : 'success',
+      message: `Se cargaron ${newStudents.length} estudiantes al directorio.${skippedMsg}`,
     });
     setActiveTab('dashboard');
   };
@@ -890,8 +893,8 @@ export default function AdminDashboard() {
                 <div>
                   <h2 className="text-xl font-bold text-gray-900">Carga masiva de estudiantes</h2>
                   <p className="text-gray-500 text-sm mt-1">
-                    Copia y pega los datos de tu Excel. El sistema reconoce tabulaciones o comas. <br/>
-                    **Orden esperado:** <code>Matrícula</code> | <code>Nombre</code> | <code>NombrePreferido (opcional)</code> | <code>Correo</code> | <code>NicknameMentor (opcional)</code>
+                    Copia y pega los datos de tu Excel. El sistema reconoce tabulaciones. <br/>
+                    **Orden esperado:** <code>Matrícula</code> | <code>Nombre</code> | <code>Correo</code> | <code>NicknameMentor</code>
                   </p>
                 </div>
               </div>
@@ -899,7 +902,7 @@ export default function AdminDashboard() {
               <textarea
                 className="w-full rounded-xl border border-gray-300 p-4 text-sm font-mono text-gray-700 shadow-inner focus:border-brand-500 focus:ring-brand-500 transition-all resize-none mb-4"
                 rows="10"
-                placeholder={`A01234567\tJuan Pérez\tJuan\tA01234567@tec.mx\tJR\nA01998877\tAna Sofía Garza\tAna Sofía\tA01998877@tec.mx\tKaren`}
+                placeholder={`A01234567\tJuan Pérez\tA01234567@tec.mx\tJR\nA01998877\tAna Sofía Garza\tA01998877@tec.mx\tKaren`}
                 value={uploadText}
                 onChange={(e) => setUploadText(e.target.value)}
               />
