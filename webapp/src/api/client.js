@@ -2,7 +2,7 @@
 import goalsCatalogSeed from '../data/goalsCatalogSeed.json';
 
 const ENV_API_URL = String(import.meta.env.VITE_API_URL || '').trim();
-const ADMIN_WRITE_ACTIONS = new Set(['syncBulk', 'saveGoalsCatalog', 'saveMetasConfig']);
+const ADMIN_WRITE_ACTIONS = new Set(['syncBulk', 'saveGoalsCatalog', 'saveMetasConfig', 'sendCampaign']);
 
 function getApiUrl() {
   const savedUrl = localStorage.getItem('navi_api_url');
@@ -580,6 +580,13 @@ export const apiClient = {
             console.log('Mock Update Student:', data);
             resolve({ status: 'success' });
             break;
+          case 'sendCampaign': {
+            const count = (data.destinatarios || []).length;
+            setTimeout(() => {
+              resolve({ status: 'success', enviados: count, fallidos: 0, detalleFallidos: [] });
+            }, 400 * Math.min(count, 5));
+            return;
+          }
           default:
             resolve({ status: 'success' });
         }

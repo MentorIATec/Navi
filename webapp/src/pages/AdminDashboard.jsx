@@ -322,29 +322,42 @@ export default function AdminDashboard() {
     setIsCampaignModalOpen(true);
   };
 
-  const handleExecuteCampaign = () => {
-    // Simular el envío masivo usando el filtro de mentores seleccionados
+  const handleExecuteCampaign = async () => {
     const selectedMentorsData = mentors.filter(m => campaignConfig.selectedMentorEmails.includes(m.email));
-    const targetStudentsCount = students.filter(s => {
-      // Regla: Pendientes (Fase 1), Test Hecho (Fase 2), No-Show (Fase 3)
+    const destinatarios = students.filter(s => {
       if (campaignType === 'invitation') return s.status === 'Pendiente';
       if (campaignType === 'session') return s.status === 'Test Completado';
       if (campaignType === 'noshow') return s.status === 'Test Completado' && s.checkIn === 'No';
       return false;
-    }).filter(s => {
-      // Filtro por mentor seleccionado
-      return selectedMentorsData.some(m => m.nickname === s.mentor);
-    }).length;
+    }).filter(s => selectedMentorsData.some(m => m.nickname === s.mentor));
 
-    setIsSendingInitial(true); // Reutilizar loader genérico
-    setTimeout(() => {
-      setFeedback({
-        tone: 'success',
-        message: `${campaignLabels[campaignType]} enviada a ${targetStudentsCount} estudiantes de las comunidades seleccionadas.`,
+    if (destinatarios.length === 0) {
+      setFeedback({ tone: 'error', message: 'No hay estudiantes que cumplan los criterios para esta campaña.' });
+      setIsCampaignModalOpen(false);
+      return;
+    }
+
+    setIsSendingInitial(true);
+    try {
+      const result = await apiClient.post('sendCampaign', {
+        tipo: campaignType,
+        subject: campaignConfig.subject,
+        htmlBody: campaignConfig.htmlBody,
+        destinatarios,
       });
+      const fallMsg = result.fallidos > 0
+        ? ` ${result.fallidos} no pudieron enviarse.`
+        : '';
+      setFeedback({
+        tone: result.fallidos > 0 ? 'error' : 'success',
+        message: `${campaignLabels[campaignType]}: ${result.enviados} correos enviados.${fallMsg}`,
+      });
+    } catch (err) {
+      setFeedback({ tone: 'error', message: `No fue posible enviar la campaña: ${err.message}` });
+    } finally {
       setIsCampaignModalOpen(false);
       setIsSendingInitial(false);
-    }, 1500);
+    }
   };
 
   const handleParseUpload = () => {
@@ -1281,18 +1294,33 @@ export default function AdminDashboard() {
                   value={testEmail}
                   onChange={(e) => setTestEmail(e.target.value)}
                 />
-                <Button 
-                  variant="outline" 
-                  onClick={() => {
+                <Button
+                  variant="outline"
+                  onClick={async () => {
                     if (!testEmail) {
                       setFeedback({ tone: 'error', message: 'Ingresa un correo de prueba antes de enviarlo.' });
                       return;
                     }
                     setIsSendingTest(true);
-                    setTimeout(() => {
+                    try {
+                      await apiClient.post('sendCampaign', {
+                        tipo: 'prueba',
+                        subject: campaignConfig.subject,
+                        htmlBody: campaignConfig.htmlBody,
+                        destinatarios: [{
+                          email: testEmail,
+                          name: 'Prueba',
+                          mentor: 'Tu Mentor',
+                          community: 'Tu Comunidad',
+                          matricula: 'TEST',
+                        }],
+                      });
                       setFeedback({ tone: 'success', message: `Correo de prueba enviado a ${testEmail}.` });
+                    } catch (err) {
+                      setFeedback({ tone: 'error', message: `No se pudo enviar la prueba: ${err.message}` });
+                    } finally {
                       setIsSendingTest(false);
-                    }, 1000);
+                    }
                   }}
                   isLoading={isSendingTest}
                 >

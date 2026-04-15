@@ -17,7 +17,7 @@ const CONFIG_KEYS = {
   lastSync: 'LAST_SYNC',
 };
 
-const STUDENT_HEADERS = ['Matrícula', 'Nombre', 'NombrePreferido', 'Email', 'NicknameMentor', 'Comunidad', 'Status', 'Check-in'];
+const STUDENT_HEADERS = ['Matrícula', 'Nombre', 'NombrePreferido', 'Email', 'NicknameMentor', 'Comunidad', 'Status', 'Check-in', 'UltimoAviso'];
 const LEGACY_STUDENT_HEADERS = ['Matrícula', 'Nombre', 'Email', 'NicknameMentor', 'Comunidad', 'Status', 'Check-in'];
 const USER_HEADERS = ['Email', 'Nombre', 'Rol', 'Comunidad', 'Hex', 'Slogan', 'Activo'];
 const RESPONSES_HEADERS = ['Matrícula', 'FechaTest', 'Modalidad', 'Etapa', 'ScorePromedio', 'AreasPrioritarias', 'Claridad_Carrera', 'Desempeno_Academico', 'Plan_Practicas', 'Servicio_Social', 'Decision_SemestreTec', 'Certificacion_Idioma'];
@@ -96,7 +96,7 @@ const DIAGNOSTIC_TAG_ALIASES = {
   intercambio: 'certificacion_idioma',
 };
 const CONTROLLED_DIAGNOSTIC_TAGS = Object.keys(DIAGNOSTIC_CATEGORY_MAP);
-const ADMIN_WRITE_ACTIONS = ['syncBulk', 'saveGoalsCatalog', 'saveMetasConfig'];
+const ADMIN_WRITE_ACTIONS = ['syncBulk', 'saveGoalsCatalog', 'saveMetasConfig', 'sendCampaign'];
 
 function onOpen() {
   const ui = SpreadsheetApp.getUi();
@@ -207,9 +207,13 @@ function doPost(e) {
       return getTestResponse(ss, params.data);
     }
 
-    return jsonResponse_({ 
-      status: 'error', 
-      message: 'Acción no reconocida' 
+    if (action === 'sendCampaign') {
+      return sendCampaignHandler(ss, params.data);
+    }
+
+    return jsonResponse_({
+      status: 'error',
+      message: 'Acción no reconocida'
     });
   } catch (err) {
     return jsonResponse_({
@@ -1037,6 +1041,75 @@ function normalizeGoalsCatalogPayload_(items) {
     .filter(function(item) {
       return item.id && item.metabase && item.dimension && item.etapa;
     });
+}
+
+function sendCampaignHandler(ss, data) {
+  var destinatarios = data.destinatarios || [];
+  var subject = String(data.subject || '').trim();
+  var htmlBody = String(data.htmlBody || '').trim();
+
+  if (!subject || !htmlBody) {
+    return jsonResponse_({ status: 'error', message: 'Faltan asunto o cuerpo del correo.' });
+  }
+  if (destinatarios.length === 0) {
+    return jsonResponse_({ status: 'error', message: 'No hay destinatarios para esta campaña.' });
+  }
+
+  var enviados = [];
+  var fallidos = [];
+
+  destinatarios.forEach(function(estudiante) {
+    var email = String(estudiante.email || '').trim();
+    if (!email || email === 'sin@correo.com') {
+      fallidos.push({ matricula: estudiante.matricula, razon: 'Sin correo válido' });
+      return;
+    }
+
+    var nombre = String(estudiante.name || estudiante.preferredName || '').trim().split(' ')[0] || 'Estudiante';
+    var mentor = String(estudiante.mentor || '').trim();
+    var comunidad = String(estudiante.community || '').trim();
+
+    var subjectFinal = subject
+      .replace(/\{\{nombre\}\}/g, nombre)
+      .replace(/\{\{mentor\}\}/g, mentor)
+      .replace(/\{\{comunidad\}\}/g, comunidad);
+
+    var htmlFinal = htmlBody
+      .replace(/\{\{nombre\}\}/g, nombre)
+      .replace(/\{\{mentor\}\}/g, mentor)
+      .replace(/\{\{comunidad\}\}/g, comunidad);
+
+    try {
+      GmailApp.sendEmail(email, subjectFinal, '', { htmlBody: htmlFinal });
+      enviados.push(estudiante.matricula);
+      markUltimoAviso_(ss, estudiante.matricula, data.tipo || 'campaña');
+    } catch (err) {
+      fallidos.push({ matricula: estudiante.matricula, razon: err.toString() });
+    }
+  });
+
+  return jsonResponse_({
+    status: 'success',
+    enviados: enviados.length,
+    fallidos: fallidos.length,
+    detalleFallidos: fallidos,
+  });
+}
+
+function markUltimoAviso_(ss, matricula, tipo) {
+  var sheet = ss.getSheetByName('Students');
+  if (!sheet) return;
+  var values = sheet.getDataRange().getValues();
+  var headers = values[0];
+  var colIndex = headers.indexOf('UltimoAviso');
+  if (colIndex === -1) return;
+  var mat = String(matricula).toUpperCase();
+  for (var i = 1; i < values.length; i++) {
+    if (String(values[i][0]).toUpperCase() === mat) {
+      sheet.getRange(i + 1, colIndex + 1).setValue(tipo + ' · ' + new Date().toLocaleDateString('es-MX'));
+      return;
+    }
+  }
 }
 
 function jsonResponse_(payload) {
