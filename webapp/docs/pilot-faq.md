@@ -28,7 +28,7 @@ Acción:
 ## 5. El QR no funciona
 
 Acción:
-- confirmar que el panel esté abierto en `https://ruta-mentoria.vercel.app`
+- confirmar que el panel esté abierto en `https://faro-me.vercel.app`
 - si no, copiar el link directo de check-in
 
 ## 6. Un mentor no puede entrar al panel

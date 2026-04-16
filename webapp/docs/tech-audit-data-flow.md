@@ -33,7 +33,7 @@ Los deployments manuales previos (`vercel deploy` desde `webapp/`) funcionaban p
 
 ### Acción tomada
 
-Se configuró `rootDirectory: webapp` en el proyecto Vercel vía API REST. Se disparó un redeploy del commit `e534657` y se reasignó el alias `ruta-mentoria.vercel.app` al nuevo deployment exitoso.
+Se configuró `rootDirectory: webapp` en el proyecto Vercel vía API REST. Se disparó un redeploy del commit `e534657` y se reasignó el alias `faro-me.vercel.app` al nuevo deployment exitoso.
 
 ### Estado
 

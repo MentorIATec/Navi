@@ -6,9 +6,9 @@ Esta guía resume cómo operar Navi durante el piloto con 5 mentores, desde la i
 
 ## URLs clave
 
-- App pública: `https://ruta-mentoria.vercel.app`
-- Acceso mentor/admin: `https://ruta-mentoria.vercel.app/admin`
-- Check-in estudiantil: `https://ruta-mentoria.vercel.app/check-in`
+- App pública: `https://faro-me.vercel.app`
+- Acceso mentor/admin: `https://faro-me.vercel.app/admin`
+- Check-in estudiantil: `https://faro-me.vercel.app/check-in`
 
 ## Flujo operativo
 

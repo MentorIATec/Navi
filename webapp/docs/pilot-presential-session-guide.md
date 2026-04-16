@@ -2,11 +2,11 @@
 
 ## Antes de que lleguen los estudiantes
 
-1. Entrar a `https://ruta-mentoria.vercel.app/admin`
+1. Entrar a `https://faro-me.vercel.app/admin`
 2. Hacer `Traer de Sheets`
 3. Abrir la pestaña `Vista general`
 4. Mostrar el bloque de check-in
-5. Tener visible el QR o el link de `https://ruta-mentoria.vercel.app/check-in`
+5. Tener visible el QR o el link de `https://faro-me.vercel.app/check-in`
 
 ## Cuando llega el estudiante
 

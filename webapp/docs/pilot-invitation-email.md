@@ -11,7 +11,7 @@ Hola {{nombre}},
 Te invito a entrar a Navi para completar tu diagnóstico de trayectoria antes de nuestra sesión de mentoría.
 
 Ingresa aquí:
-`https://ruta-mentoria.vercel.app`
+`https://faro-me.vercel.app`
 
 Necesitarás:
 - tu matrícula

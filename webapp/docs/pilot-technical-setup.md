@@ -3,7 +3,7 @@
 ## Componentes
 
 - Frontend: Vercel
-- Dominio beta: `https://ruta-mentoria.vercel.app`
+- Dominio beta: `https://faro-me.vercel.app`
 - Backend: Google Apps Script + Google Sheets
 
 ## Variables y secretos

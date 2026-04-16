@@ -34,7 +34,7 @@ npm run build
 
 ## Estado beta
 
-- Dominio beta activo: `https://ruta-mentoria.vercel.app`
+- Dominio beta activo: `https://faro-me.vercel.app`
 - Proyecto Vercel enlazado al repositorio `MentorIATec/Navi` con raíz en `webapp/`
 - Commit base de la beta: `2dbb7f9`
 - `VITE_API_URL` configurada en Vercel apuntando al Apps Script activo
