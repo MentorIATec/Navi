@@ -20,12 +20,7 @@ const BOOKING_URLS = {
 
 const DEFAULT_MENTORS = [];
 
-const DEFAULT_STUDENTS = [
-  { id: 1, name: 'Juan Pérez', preferredName: 'Juan', matricula: 'A01234567', email: 'A01234567@tec.mx', status: 'Test Completado', checkIn: 'No', mentor: 'JR', community: 'Krei' },
-  { id: 2, name: 'Ana Sofía Garza', preferredName: 'Ana Sofía', matricula: 'A01998877', email: 'A01998877@tec.mx', status: 'Metas Seleccionadas', checkIn: 'Si', mentor: 'Karen', community: 'Krei' },
-  { id: 3, name: 'Luis Martínez', preferredName: 'Luis', matricula: 'A01776655', email: 'A01776655@tec.mx', status: 'Pendiente', checkIn: 'No', mentor: 'Karla', community: 'Krei' },
-  { id: 4, name: 'María Rodríguez', preferredName: 'María', matricula: 'A01554433', email: 'A01554433@tec.mx', status: 'Pendiente', checkIn: 'No', mentor: 'JR', community: 'Krei' },
-];
+const DEFAULT_STUDENTS = [];
 
 function normalizeStudent(raw, fallbackIndex = 0) {
   return {
@@ -37,7 +32,9 @@ function normalizeStudent(raw, fallbackIndex = 0) {
     mentor: raw.mentor || raw.nicknamementor || '',
     community: raw.community || raw.comunidad || '',
     status: raw.status || 'Pendiente',
+    status: raw.status || 'Pendiente',
     checkIn: raw.checkIn || raw.checkin || 'No',
+    agenciaCheckIn: raw.agenciaCheckIn || raw.agenciacheckin || '',
   };
 }
 
@@ -65,11 +62,13 @@ function normalizeUser(raw) {
 
 export default function AdminDashboard() {
   const [accessEmail, setAccessEmail] = useState(() => localStorage.getItem('navi_admin_email') || '');
+  const [accessPin, setAccessPin] = useState('');
   const [authUser, setAuthUser] = useState(() => {
     const saved = localStorage.getItem('navi_admin_user');
     return saved ? normalizeUser(JSON.parse(saved)) : null;
   });
   const [isResolvingUser, setIsResolvingUser] = useState(false);
+  const [selectedStudentForDiagnostic, setSelectedStudentForDiagnostic] = useState(null);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [students, setStudents] = useState(() => {
     const saved = localStorage.getItem('navi_students');
@@ -137,6 +136,14 @@ export default function AdminDashboard() {
   useEffect(() => {
     localStorage.setItem('navi_students', JSON.stringify(students));
   }, [students]);
+
+  // Auto-fetch al iniciar sesión con directorio vacío
+  useEffect(() => {
+    if (authUser && students.length === 0) {
+      handleFetchFromSheets();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authUser]);
 
   useEffect(() => {
     localStorage.setItem('navi_demo_mode', isDemoMode.toString());
@@ -517,13 +524,18 @@ export default function AdminDashboard() {
 
   const handleResolveInstitutionalUser = async () => {
     const email = accessEmail.trim().toLowerCase();
+    const pin = accessPin.trim();
     if (!email.endsWith('@tec.mx')) {
       setFeedback({ tone: 'error', message: 'Ingresa un correo institucional del Tec.' });
       return;
     }
+    if (!pin) {
+      setFeedback({ tone: 'error', message: 'Ingresa tu PIN de acceso.' });
+      return;
+    }
     setIsResolvingUser(true);
     try {
-      const response = await apiClient.post('resolveUserByEmail', { email });
+      const response = await apiClient.post('resolveUserByEmail', { email, pin });
       const normalized = normalizeUser(response.user || response);
       setAuthUser(normalized);
       setFeedback({ tone: 'success', message: `Acceso habilitado para ${normalized.name}.` });
@@ -566,13 +578,20 @@ export default function AdminDashboard() {
                 {feedback.message}
               </div>
             ) : null}
-            <div className="mt-8 grid gap-4 md:grid-cols-[1fr_auto]">
+            <div className="mt-8 grid gap-4 md:grid-cols-[1fr_auto_auto]">
               <input
                 type="email"
                 placeholder="tu.correo@tec.mx"
                 className="w-full rounded-2xl border border-[rgba(15,76,129,0.12)] px-4 py-3 text-base focus:border-[var(--navy-500)] focus:outline-none focus:ring-2 focus:ring-[rgba(15,76,129,0.12)]"
                 value={accessEmail}
                 onChange={(e) => setAccessEmail(e.target.value)}
+              />
+              <input
+                type="password"
+                placeholder="PIN"
+                className="w-full max-w-[124px] rounded-2xl border border-[rgba(15,76,129,0.12)] px-4 py-3 text-base focus:border-[var(--navy-500)] focus:outline-none focus:ring-2 focus:ring-[rgba(15,76,129,0.12)] text-center tracking-widest"
+                value={accessPin}
+                onChange={(e) => setAccessPin(e.target.value)}
               />
               <Button onClick={handleResolveInstitutionalUser} isLoading={isResolvingUser} className="px-8">
                 Continuar
@@ -825,14 +844,33 @@ export default function AdminDashboard() {
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <span className={cn(
-                            "px-2 py-0.5 rounded text-xs font-bold",
-                            student.checkIn === 'Si' ? "bg-green-50 text-green-700" : "bg-gray-50 text-gray-500"
-                          )}>
-                            {student.checkIn === 'Si' ? 'SI' : 'NO'}
-                          </span>
+                          <div className="flex flex-col gap-1 items-start">
+                            <span className={cn(
+                              "px-2 py-0.5 rounded text-xs font-bold",
+                              student.checkIn === 'Si' ? "bg-green-50 text-green-700" : "bg-gray-50 text-gray-500"
+                            )}>
+                              {student.checkIn === 'Si' ? 'SI' : 'NO'}
+                            </span>
+                            {student.agenciaCheckIn ? (
+                              <span className="text-[11px] font-medium text-[var(--ink-700)] bg-[rgba(15,76,129,0.06)] px-2 py-0.5 rounded-full mt-1">
+                                {student.agenciaCheckIn.split('·')[0].trim()}
+                              </span>
+                            ) : null}
+                          </div>
                         </td>
-                        <td className="px-6 py-4"><StatusBadge student={student} /></td>
+                        <td className="px-6 py-4">
+                          <div className="flex flex-col gap-2 items-start">
+                            <StatusBadge student={student} />
+                            {(student.status === 'Test Completado' || student.status === 'Metas Seleccionadas') && (
+                              <button 
+                                onClick={() => setSelectedStudentForDiagnostic(student)}
+                                className="text-[11px] font-semibold uppercase tracking-wider text-[var(--navy-600)] hover:text-[var(--navy-700)] hover:underline"
+                              >
+                                Ver Diagnóstico
+                              </button>
+                            )}
+                          </div>
+                        </td>
                       </tr>
                     ))
                   ) : (
@@ -1343,6 +1381,89 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
+      {/* Diagnostic View Modal */}
+      {selectedStudentForDiagnostic && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(17,36,66,0.4)] backdrop-blur-sm p-4">
+          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl relative">
+            <CardContent className="p-6 md:p-8">
+              <div className="flex justify-between items-start mb-6 border-b border-[rgba(15,76,129,0.1)] pb-4">
+                <div>
+                  <h3 className="font-display text-2xl font-bold text-[var(--ink-900)]">Diagnóstico Remoto</h3>
+                  <p className="text-[var(--ink-700)]">{selectedStudentForDiagnostic.preferredName || selectedStudentForDiagnostic.name} · {selectedStudentForDiagnostic.matricula}</p>
+                </div>
+                <button 
+                  onClick={() => setSelectedStudentForDiagnostic(null)} 
+                  className="px-3 py-1 bg-[rgba(15,76,129,0.06)] hover:bg-[rgba(15,76,129,0.12)] text-[var(--ink-900)] rounded-full text-sm font-semibold transition-colors"
+                >
+                  Cerrar
+                </button>
+              </div>
+              
+              {selectedStudentForDiagnostic.agenciaCheckIn ? (
+                <div className="mb-6 p-4 rounded-xl border border-[rgba(210,106,92,0.2)] bg-[rgba(249,236,232,0.4)]">
+                  <p className="text-xs font-bold uppercase tracking-widest text-[var(--coral-500)] mb-2">Termómetro Emocional Presencial</p>
+                  <p className="font-medium text-[var(--ink-900)] text-sm">{selectedStudentForDiagnostic.agenciaCheckIn}</p>
+                </div>
+              ) : null}
+
+              {(() => {
+                const diag = responses.find(r => r.matricula && r.matricula.toUpperCase() === selectedStudentForDiagnostic.matricula.toUpperCase());
+                if (!diag) return <p className="text-[var(--ink-700)] bg-[rgba(15,76,129,0.04)] p-4 rounded-xl text-center">Aún no hay resultados de test guardados en la base de datos para este estudiante.</p>;
+                return (
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="p-4 bg-[rgba(15,76,129,0.04)] rounded-xl">
+                        <p className="text-xs font-semibold uppercase text-[var(--ink-500)]">Etapa</p>
+                        <p className="font-medium text-[var(--ink-900)] mt-1">{diag.etapa || 'General'}</p>
+                      </div>
+                      <div className="p-4 bg-[rgba(15,76,129,0.04)] rounded-xl">
+                        <p className="text-xs font-semibold uppercase text-[var(--ink-500)]">Modalidad</p>
+                        <p className="font-medium text-[var(--ink-900)] mt-1 capitalize">{diag.modalidad || 'Remoto'}</p>
+                      </div>
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-[var(--ink-900)] mb-3">Áreas Prioritarias Detectadas</h4>
+                      {diag.areasprioritarias ? (
+                        <div className="flex flex-wrap gap-2">
+                          {diag.areasprioritarias.split(',').map(area => (
+                            <span key={area} className="px-3 py-1 bg-[rgba(210,106,92,0.12)] text-[var(--coral-600)] font-semibold text-sm rounded-full capitalize">
+                              {area.replace(/_/g, ' ')}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-[var(--ink-700)] text-sm border-l-2 border-[var(--navy-300)] pl-3 py-1">No se detectaron áreas de riesgo significativas.</p>
+                      )}
+                    </div>
+                    <div>
+                        <h4 className="font-bold text-[var(--ink-900)] mb-3 flex items-center">
+                          Métricas <span className="ml-2 px-2 py-0.5 border border-[rgba(15,76,129,0.15)] rounded text-xs text-[var(--ink-500)]">Escala 1-4</span>
+                        </h4>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                          {['claridad_carrera', 'desempeno_academico', 'plan_practicas', 'servicio_social', 'decision_semestretec', 'certificacion_idioma'].map(cat => {
+                            if (!diag[cat.replace(/_/g, '')] && !diag[cat]) return null;
+                            const score = parseFloat(diag[cat.replace(/_/g, '')] || diag[cat]);
+                            const isLow = score <= 2.5;
+                            return (
+                              <div key={cat} className={cn("p-3 rounded-xl border relative overflow-hidden", isLow ? "border-[rgba(210,106,92,0.3)] bg-[rgba(253,245,242,0.8)]" : "border-[rgba(15,76,129,0.1)] bg-white")}>
+                                {isLow && <div className="absolute top-0 left-0 w-1 h-full bg-[var(--coral-400)]" />}
+                                <p className="text-[11px] font-semibold text-[var(--ink-500)] uppercase tracking-wider mb-1 truncate">{cat.replace(/_/g, ' ')}</p>
+                                <p className={cn("text-xl font-bold", isLow ? "text-[var(--coral-600)]" : "text-[var(--navy-600)]")}>
+                                  {score.toFixed(1)}
+                                </p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
     </div>
   );
 }

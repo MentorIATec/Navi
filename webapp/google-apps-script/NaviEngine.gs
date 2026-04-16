@@ -17,9 +17,9 @@ const CONFIG_KEYS = {
   lastSync: 'LAST_SYNC',
 };
 
-const STUDENT_HEADERS = ['Matrícula', 'Nombre', 'NombrePreferido', 'Email', 'NicknameMentor', 'Comunidad', 'Status', 'Check-in', 'UltimoAviso'];
+const STUDENT_HEADERS = ['Matrícula', 'Nombre', 'NombrePreferido', 'Email', 'NicknameMentor', 'Status', 'Check-in', 'AgenciaCheckIn', 'UltimoAviso'];
 const LEGACY_STUDENT_HEADERS = ['Matrícula', 'Nombre', 'Email', 'NicknameMentor', 'Comunidad', 'Status', 'Check-in'];
-const USER_HEADERS = ['Email', 'Nombre', 'Rol', 'Comunidad', 'Hex', 'Slogan', 'Activo'];
+const STAFF_HEADERS = ['Email', 'PIN', 'Nombre', 'Alias', 'Rol', 'Comunidad', 'Hex', 'Slogan', 'Activo'];
 const RESPONSES_HEADERS = ['Matrícula', 'FechaTest', 'Modalidad', 'Etapa', 'ScorePromedio', 'AreasPrioritarias', 'Claridad_Carrera', 'Desempeno_Academico', 'Plan_Practicas', 'Servicio_Social', 'Decision_SemestreTec', 'Certificacion_Idioma'];
 // Dimension = una sola de las 7 dimensiones del bienestar del modelo Tec.
 // TemaOperativo = agrupador práctico de navegación/curación para mentoría; no reemplaza a la dimensión.
@@ -131,8 +131,9 @@ function doGet(e) {
       status: 'success',
       data: {
         students: parseSheetData(ss.getSheetByName('Students').getDataRange().getValues()),
-        mentors: parseSheetData(ss.getSheetByName('Mentors').getDataRange().getValues()),
-        goals: getMetasData(ss, e && e.parameter ? e.parameter : {}),
+        staff: parseSheetData(ensureSheetWithHeaders_(ss, 'Staff', STAFF_HEADERS).getDataRange().getValues()),
+        mentors: parseSheetData(ensureSheetWithHeaders_(ss, 'Staff', STAFF_HEADERS).getDataRange().getValues()),
+        goalSelections: parseSheetData(ensureSheetWithHeaders_(ss, 'GoalSelections', ['Timestamp', 'Matrícula', 'Nombre', 'Meta Prioritaria', 'Meta Complementaria', 'Tiempo', 'Obstáculo', 'Plan']).getDataRange().getValues()),
         responses: parseSheetData(ensureSheetWithHeaders_(ss, 'Responses', RESPONSES_HEADERS).getDataRange().getValues()),
       }
     };
@@ -248,16 +249,8 @@ function parseSheetData(values) {
 function syncBulkData(ss, data) {
   validateSyncBulkPayload_(ss, data);
   const studentSheet = ss.getSheetByName('Students');
-  const mentorSheet = ss.getSheetByName('Mentors');
-  
-  // Limpiar y escribir Mentores
-  mentorSheet.clearContents();
-  mentorSheet.appendRow(['Comunidad', '#HEX', 'Nombre', 'Nickname', 'Email']);
-  (data.mentors || []).forEach(m => {
-    mentorSheet.appendRow([m.community, m.hex, m.name, m.nickname, m.email]);
-  });
-  
-  // Limpiar y escribir Alumnos
+
+  // Limpiar y escribir Alumnos (Staff se gestiona directamente en la hoja, no desde syncBulk)
   studentSheet.clearContents();
   studentSheet.appendRow(STUDENT_HEADERS);
   (data.students || []).forEach(s => {
@@ -267,14 +260,15 @@ function syncBulkData(ss, data) {
       s.preferredName || s.nombrepreferido || '',
       s.email,
       s.mentor,
-      s.community,
       s.status,
-      s.checkIn
+      s.checkIn,
+      s.agenciaCheckIn || '',
+      s.ultimoAviso || '',
     ]);
   });
-  
+
   setConfigValue_(ss, CONFIG_KEYS.lastSync, new Date().toISOString(), 'Última sincronización masiva');
-  
+
   return jsonResponse_({ status: 'success' });
 }
 
@@ -294,9 +288,9 @@ function updateStudentStatus(ss, data) {
       if (data.preferredName !== undefined) sheet.getRange(i + 1, 3).setValue(data.preferredName);
       if (data.email !== undefined) sheet.getRange(i + 1, 4).setValue(data.email);
       if (data.mentor !== undefined) sheet.getRange(i + 1, 5).setValue(data.mentor);
-      if (data.community !== undefined) sheet.getRange(i + 1, 6).setValue(data.community);
-      if (data.status !== undefined) sheet.getRange(i + 1, 7).setValue(data.status);
-      if (data.checkIn !== undefined) sheet.getRange(i + 1, 8).setValue(data.checkIn);
+      if (data.status !== undefined) sheet.getRange(i + 1, 6).setValue(data.status);
+      if (data.checkIn !== undefined) sheet.getRange(i + 1, 7).setValue(data.checkIn);
+      if (data.agenciaCheckIn !== undefined) sheet.getRange(i + 1, 8).setValue(data.agenciaCheckIn);
 
       return jsonResponse_({ status: 'success' });
     }
@@ -312,31 +306,36 @@ function findStudent(ss, data) {
   }
 
   const students = parseSheetData(ss.getSheetByName('Students').getDataRange().getValues());
-  const mentors = parseSheetData(ss.getSheetByName('Mentors').getDataRange().getValues());
+  const staff = parseSheetData(ensureSheetWithHeaders_(ss, 'Staff', STAFF_HEADERS).getDataRange().getValues());
   const student = students.find(item => String(item.matricula || item.matrcula || '').toUpperCase() === matricula);
 
   if (!student) {
     return jsonResponse_({ status: 'error', message: 'Alumno no encontrado' });
   }
 
-  const mentor = mentors.find(item => item.nickname === student.nicknamementor) || null;
+  const mentor = staff.find(item => item.alias === student.nicknamementor) || null;
   return jsonResponse_({ status: 'success', data: { student, mentor } });
 }
 
 function resolveUserByEmail(ss, data) {
   const email = String(data && data.email ? data.email : '').trim().toLowerCase();
+  const pin = String(data && data.pin ? data.pin : '').trim();
   if (!email) {
     return jsonResponse_({ status: 'error', message: 'Falta el correo institucional.' });
   }
 
-  const users = parseSheetData(ss.getSheetByName('Users').getDataRange().getValues());
-  const user = users.find(function(item) {
+  const staff = parseSheetData(ensureSheetWithHeaders_(ss, 'Staff', STAFF_HEADERS).getDataRange().getValues());
+  const user = staff.find(function(item) {
     return String(item.email || '').trim().toLowerCase() === email &&
       String(item.activo || 'Si').trim().toLowerCase() !== 'no';
   });
 
   if (!user) {
-    return jsonResponse_({ status: 'error', message: 'No encontramos permisos para este correo institucional.' });
+    return jsonResponse_({ status: 'error', message: 'No encontramos permisos vigentes para este correo.' });
+  }
+
+  if (String(user.pin || '').trim() !== pin) {
+    return jsonResponse_({ status: 'error', message: 'El PIN ingresado es incorrecto.' });
   }
 
   return jsonResponse_({ status: 'success', data: { user: user } });
@@ -346,7 +345,7 @@ function resolveUserByEmail(ss, data) {
 function clearTestData() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   ensureCoreSheets_(ss);
-  ss.getSheetByName('Students').getRange('A2:H').clearContent();
+  ss.getSheetByName('Students').getRange('A2:I').clearContent();
   SpreadsheetApp.getUi().alert('🧹 Datos de alumnos limpiados.');
 }
 
@@ -355,12 +354,12 @@ function seedCommunityTestData() {
   ensureCoreSheets_(ss);
   ensureOperationsSheets_(ss);
 
-  const mentorsSheet = ss.getSheetByName('Mentors');
+  const staffSheet = ensureSheetWithHeaders_(ss, 'Staff', STAFF_HEADERS);
   const studentsSheet = ss.getSheetByName('Students');
 
-  upsertRowByKey_(mentorsSheet, 4, 'JR', ['Krei', '#79858B', 'José Ricardo Flores Espinoza', 'JR', 'jr.flores@tec.mx']);
-  upsertRowByKey_(mentorsSheet, 4, 'Karen', ['Krei', '#79858B', 'Karen Ariadna Guzmán Vega', 'Karen', 'kareng@tec.mx']);
-  upsertRowByKey_(studentsSheet, 1, 'A00803848', ['A00803848', 'karen', 'Karen', 'kareng@tec.mx', 'Karen', 'KREI', 'Metas Seleccionadas', 'Si']);
+  upsertRowByKey_(staffSheet, 1, 'jr.flores@tec.mx', ['jr.flores@tec.mx', '1234', 'José Ricardo Flores Espinoza', 'JR', 'mentor', 'Krei', '#79858B', COMMUNITY_SLOGANS.Krei, 'Si']);
+  upsertRowByKey_(staffSheet, 1, 'kareng@tec.mx', ['kareng@tec.mx', '1234', 'Karen Ariadna Guzmán Vega', 'Karen', 'admin', 'Krei', '#79858B', COMMUNITY_SLOGANS.Krei, 'Si']);
+  upsertRowByKey_(studentsSheet, 1, 'A00803848', ['A00803848', 'Karen Ariadna Guzman Vega', 'Karen', 'kareng@tec.mx', 'Karen', 'Metas Seleccionadas', 'Si', '', '']);
 
   SpreadsheetApp.getUi().alert('✅ Datos de prueba de comunidad cargados o actualizados sin duplicados.');
 }
@@ -672,9 +671,7 @@ function requireAdminSecret_(params, action) {
 function validateSyncBulkPayload_(ss, data) {
   var payload = data || {};
   var students = Array.isArray(payload.students) ? payload.students : [];
-  var mentors = Array.isArray(payload.mentors) ? payload.mentors : [];
   var studentCount = Number(payload.studentCount);
-  var mentorCount = Number(payload.mentorCount);
 
   if (payload.confirmOverwrite !== true) {
     throw new Error('syncBulk requiere confirmación explícita antes de sobrescribir Google Sheets.');
@@ -684,17 +681,9 @@ function validateSyncBulkPayload_(ss, data) {
     throw new Error('El payload de estudiantes es inconsistente. Revisa la sincronización antes de guardar.');
   }
 
-  if (!Number.isFinite(mentorCount) || mentorCount !== mentors.length) {
-    throw new Error('El payload de mentores es inconsistente. Revisa la sincronización antes de guardar.');
-  }
-
   var currentStudentRows = Math.max(ss.getSheetByName('Students').getLastRow() - 1, 0);
-  var currentMentorRows = Math.max(ss.getSheetByName('Mentors').getLastRow() - 1, 0);
   if (currentStudentRows > 0 && students.length === 0) {
     throw new Error('syncBulk rechazado: no se permite vaciar Students con un payload vacío.');
-  }
-  if (currentMentorRows > 0 && mentors.length === 0) {
-    throw new Error('syncBulk rechazado: no se permite vaciar Mentors con un payload vacío.');
   }
 
   var invalidStudents = students.filter(function(student) {
@@ -702,13 +691,6 @@ function validateSyncBulkPayload_(ss, data) {
   });
   if (invalidStudents.length) {
     throw new Error('Hay estudiantes sin matrícula o nombre. Corrige el directorio antes de sincronizar.');
-  }
-
-  var invalidMentors = mentors.filter(function(mentor) {
-    return !String(mentor.nickname || mentor.apodo || '').trim() || !String(mentor.email || '').trim();
-  });
-  if (invalidMentors.length) {
-    throw new Error('Hay mentores sin nickname o correo. Corrige la tabla antes de sincronizar.');
   }
 }
 
@@ -741,15 +723,14 @@ function validateGoalsCatalogPayload_(items) {
 }
 
 function ensureCoreSheets_(ss) {
-  const mentorsSheet = ensureSheetWithHeaders_(ss, 'Mentors', ['Comunidad', '#HEX', 'Nombre', 'Nickname', 'Email']);
+  const staffSheet = ensureSheetWithHeaders_(ss, 'Staff', STAFF_HEADERS);
   const studentsSheet = ensureSheetWithHeaders_(ss, 'Students', STUDENT_HEADERS);
   const configSheet = ensureSheetWithHeaders_(ss, 'Config', ['Key', 'Value', 'Description']);
 
   ensureStudentsSheetSchema_(studentsSheet);
 
-  if (mentorsSheet.getLastRow() === 1) {
-    mentorsSheet.appendRow(['Krei', '#79858B', 'José Ricardo Flores Espinoza', 'JR', 'jr.flores@tec.mx']);
-    mentorsSheet.appendRow(['Krei', '#79858B', 'Karen Ariadna Guzmán Vega', 'Karen', 'kareng@tec.mx']);
+  if (staffSheet.getLastRow() === 1) {
+    seedStaffSheet_(staffSheet);
   }
 
   if (studentsSheet.getLastRow() === 1) {
@@ -757,21 +738,16 @@ function ensureCoreSheets_(ss) {
   }
 
   if (configSheet.getLastRow() === 1) {
-    configSheet.appendRow([CONFIG_KEYS.version, '1.0', 'Versión del motor']);
+    configSheet.appendRow([CONFIG_KEYS.version, '1.1', 'Versión del motor']);
     configSheet.appendRow([CONFIG_KEYS.lastSync, new Date().toISOString(), 'Última sincronización masiva']);
   }
 }
 
 function ensureOperationsSheets_(ss) {
-  const usersSheet = ensureSheetWithHeaders_(ss, 'Users', USER_HEADERS);
   const goalsCatalogSheet = ensureSheetWithHeaders_(ss, 'GoalsCatalog', GOALS_CATALOG_HEADERS);
   ensureSheetWithHeaders_(ss, 'Responses', RESPONSES_HEADERS);
   ensureGoalsCatalogSchema_(goalsCatalogSheet);
   applyGoalsCatalogValidation_(goalsCatalogSheet);
-
-  if (usersSheet.getLastRow() === 1) {
-    seedUsersSheet_(usersSheet);
-  }
 
   if (goalsCatalogSheet.getLastRow() === 1) {
     seedGoalsCatalogSheet_(goalsCatalogSheet);
@@ -1211,12 +1187,12 @@ function saveGoalSelection(ss, data) {
   return jsonResponse_({ status: 'success' });
 }
 
-function seedUsersSheet_(sheet) {
-  upsertRowByKey_(sheet, 1, 'kareng@tec.mx', ['kareng@tec.mx', 'Karen Ariadna Guzmán Vega', 'admin', 'Krei', '#79858B', COMMUNITY_SLOGANS.Krei, 'Si']);
-  upsertRowByKey_(sheet, 1, 'jr.flores@tec.mx', ['jr.flores@tec.mx', 'José Ricardo Flores Espinoza', 'mentor', 'Krei', '#79858B', COMMUNITY_SLOGANS.Krei, 'Si']);
-  upsertRowByKey_(sheet, 1, 'kvillarreal@tec.mx', ['kvillarreal@tec.mx', 'Karla Lorena Villarreal Aldape', 'mentor', 'Krei', '#79858B', COMMUNITY_SLOGANS.Krei, 'Si']);
-  upsertRowByKey_(sheet, 1, 'azuniga@tec.mx', ['azuniga@tec.mx', 'Angélica Yolanda Zúñiga Montemayor', 'mentor', 'Krei', '#79858B', COMMUNITY_SLOGANS.Krei, 'Si']);
-  upsertRowByKey_(sheet, 1, 'jjfranklin@tec.mx', ['jjfranklin@tec.mx', 'Juan José Franklin Uraga', 'mentor', 'Krei', '#79858B', COMMUNITY_SLOGANS.Krei, 'Si']);
+function seedStaffSheet_(sheet) {
+  upsertRowByKey_(sheet, 1, 'kareng@tec.mx', ['kareng@tec.mx', '1234', 'Karen Ariadna Guzmán Vega', 'Karen', 'admin', 'Krei', '#79858B', COMMUNITY_SLOGANS.Krei, 'Si']);
+  upsertRowByKey_(sheet, 1, 'jr.flores@tec.mx', ['jr.flores@tec.mx', '1234', 'José Ricardo Flores Espinoza', 'JR', 'mentor', 'Krei', '#79858B', COMMUNITY_SLOGANS.Krei, 'Si']);
+  upsertRowByKey_(sheet, 1, 'kvillarreal@tec.mx', ['kvillarreal@tec.mx', '1234', 'Karla Lorena Villarreal Aldape', 'Karla', 'mentor', 'Krei', '#79858B', COMMUNITY_SLOGANS.Krei, 'Si']);
+  upsertRowByKey_(sheet, 1, 'azuniga@tec.mx', ['azuniga@tec.mx', '1234', 'Angélica Yolanda Zúñiga Montemayor', 'Angélica', 'mentor', 'Krei', '#79858B', COMMUNITY_SLOGANS.Krei, 'Si']);
+  upsertRowByKey_(sheet, 1, 'jjfranklin@tec.mx', ['jjfranklin@tec.mx', '1234', 'Juan José Franklin Uraga', 'Juanjo', 'mentor', 'Krei', '#79858B', COMMUNITY_SLOGANS.Krei, 'Si']);
 }
 
 function seedGoalsCatalogSheet_(sheet) {

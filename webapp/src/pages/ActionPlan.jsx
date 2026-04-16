@@ -15,7 +15,7 @@ function titleCaseName(name) {
     .join(' ');
 }
 
-function getCommunityTheme(community, color) {
+function getCommunityTheme(community, color, savedSlogan) {
   const normalized = String(community || '').trim().toLowerCase();
   const themes = {
     pasio: {
@@ -73,13 +73,14 @@ function getCommunityTheme(community, color) {
   const fallback = {
     label: community || 'Tec',
     accent: color || 'var(--coral-500)',
-    slogan: 'Ruta guiada para transformar esta sesión en un compromiso concreto.',
+    slogan: savedSlogan || 'Ruta guiada para transformar esta sesión en un compromiso concreto.',
   };
 
   if (themes[normalized]) {
     return {
       ...themes[normalized],
       accent: color || themes[normalized].accent,
+      slogan: savedSlogan || themes[normalized].slogan,
     };
   }
 
@@ -96,7 +97,6 @@ export default function ActionPlan() {
   const [resolvedCommunityColor, setResolvedCommunityColor] = useState(localStorage.getItem('navi_community_color') || '');
   const [syncWarning, setSyncWarning] = useState(localStorage.getItem('navi_goal_selection_warning') || '');
   const badgeRef = useRef(null);
-
   const metaPrioritaria = localStorage.getItem('meta_prioritaria') || 'No seleccionada';
   const metaComplementaria = localStorage.getItem('meta_complementaria') || 'No seleccionada';
   const metaTiempo = localStorage.getItem('meta_tiempo') || 'Flexible';
@@ -104,7 +104,8 @@ export default function ActionPlan() {
   const studentName = titleCaseName(localStorage.getItem('navi_user_name') || localStorage.getItem('navi_matricula') || 'Estudiante');
   const communityTheme = getCommunityTheme(
     resolvedCommunity,
-    resolvedCommunityColor
+    resolvedCommunityColor,
+    localStorage.getItem('navi_community_slogan') || ''
   );
   const currentSessionLabel = new Date().toLocaleDateString('es-MX', {
     month: 'long',
@@ -139,6 +140,10 @@ export default function ActionPlan() {
           localStorage.setItem('navi_community_color', nextColor);
           document.documentElement.style.setProperty('--theme-color', nextColor);
           setResolvedCommunityColor(nextColor);
+        }
+
+        if (mentor?.slogan) {
+          localStorage.setItem('navi_community_slogan', mentor.slogan);
         }
 
         if (mentor?.nombre || mentor?.name) {

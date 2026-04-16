@@ -56,6 +56,9 @@ export default function Welcome() {
         document.documentElement.style.setProperty('--theme-color', mentor.hex);
         localStorage.setItem('navi_community_color', mentor.hex);
         localStorage.setItem('navi_mentor_name', mentor.nombre || mentor.name || '');
+        if (mentor.slogan) {
+          localStorage.setItem('navi_community_slogan', mentor.slogan);
+        }
       }
 
       if (preferredName.trim() && preferredName.trim() !== (student.nombrepreferido || student.preferredName || '')) {

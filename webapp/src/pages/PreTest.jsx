@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { ArrowRight } from 'lucide-react';
+import { apiClient } from '../api/client';
 import { cn } from '../utils/cn';
 
 const arrivalOptions = [
@@ -21,29 +22,28 @@ const agencyOptions = [
 
 function getMicroPreSummary(answers) {
   const arrivalSummary = {
-    clear: 'llegas con claridad y disposición para avanzar',
-    stress: 'llegas con algo de estrés o cansancio',
-    confused: 'llegas con dudas sobre qué atender primero',
-    sorting: 'llegas con ganas de ordenar tus ideas',
+    clear: 'Llega con claridad y disposición',
+    stress: 'Llega con algo de estrés o cansancio',
+    confused: 'Llega con dudas o confusión',
+    sorting: 'Llega con ganas de ordenar ideas',
   };
 
   const agencySummary = {
-    high: 'sientes que puedes salir de esta sesión con un siguiente paso claro',
-    medium: 'crees que puedes encontrar un siguiente paso si logras enfocarte en lo importante',
-    low: 'todavía no tienes claro si hoy podrás salir con un siguiente paso definido',
-    blocked: 'hoy te cuesta imaginar cuál debería ser tu siguiente paso',
+    high: 'Confía en salir con un plan claro',
+    medium: 'Confía en lograrlo si se enfoca',
+    low: 'Con dudas de salir con un plan hoy',
+    blocked: 'Se siente bloqueado/a para ver un paso siguiente',
   };
 
-  return {
-    arrival: arrivalSummary[answers.arrival] || '',
-    agency: agencySummary[answers.agency] || '',
-  };
+  return `${arrivalSummary[answers.arrival] || ''} · ${agencySummary[answers.agency] || ''}`;
 }
 
 export default function PreTest() {
   const navigate = useNavigate();
   const isSessionMode = localStorage.getItem('navi_session_mode') === 'presencial';
+  const matricula = localStorage.getItem('navi_matricula');
   const [answers, setAnswers] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isComplete = useMemo(
     () => Boolean(answers.arrival && answers.agency),
@@ -54,10 +54,31 @@ export default function PreTest() {
     setAnswers((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleContinue = () => {
-    const summary = getMicroPreSummary(answers);
-    localStorage.setItem('micro_pre', JSON.stringify({ ...answers, summary }));
-    navigate(isSessionMode ? '/resultados' : '/test');
+  const handleContinue = async () => {
+    setIsSubmitting(true);
+    const textSummary = getMicroPreSummary(answers);
+    
+    try {
+      if (matricula) {
+        // Enviar la "maleta emocional" al backend para que el mentor la vea
+        await apiClient.post('updateStudent', {
+          matricula,
+          agenciaCheckIn: textSummary
+        });
+      }
+    } catch (error) {
+      console.error('Error enviando pre-test:', error);
+    } finally {
+      setIsSubmitting(false);
+      localStorage.setItem('micro_pre', JSON.stringify({ ...answers, summary: textSummary }));
+      
+      const missingTest = localStorage.getItem('navi_missing_remote_test');
+      if (missingTest === 'true') {
+        navigate('/test');
+      } else {
+        navigate('/resultados');
+      }
+    }
   };
 
   return (
@@ -65,15 +86,13 @@ export default function PreTest() {
       <div className="mb-8 space-y-4">
         <div>
           <p className="navi-eyebrow" style={{ color: isSessionMode ? 'var(--coral-500)' : 'var(--ink-700)' }}>
-            {isSessionMode ? 'Antes de continuar' : 'Antes de comenzar'}
+            Termómetro de Sesión
           </p>
           <h2 className="mt-3 font-display text-3xl font-bold tracking-tight text-[var(--ink-900)] sm:text-4xl">
-            {isSessionMode ? 'Cuéntanos cómo llegas hoy' : 'Cuéntanos cómo te sientes en este momento'}
+            Cuéntanos cómo llegas hoy
           </h2>
           <p className="navi-prose mt-3 max-w-2xl text-sm sm:text-base">
-            {isSessionMode
-              ? 'Dos preguntas para que la sesión empiece con más foco.'
-              : 'Dos preguntas breves antes de comenzar tu diagnóstico.'}
+            Dos preguntas muy breves para que la sesión empiece con más foco y empatía.
           </p>
         </div>
       </div>
@@ -90,6 +109,7 @@ export default function PreTest() {
                   key={option.id}
                   type="button"
                   onClick={() => handleSelect('arrival', option.id)}
+                  disabled={isSubmitting}
                   className={cn(
                     'answer-shift stage-card-lift w-full rounded-[22px] border px-5 py-4 text-left transition-all active:scale-[0.99]',
                     answers.arrival === option.id
@@ -113,6 +133,7 @@ export default function PreTest() {
                   key={option.id}
                   type="button"
                   onClick={() => handleSelect('agency', option.id)}
+                  disabled={isSubmitting}
                   className={cn(
                     'answer-shift stage-card-lift w-full rounded-[22px] border px-5 py-4 text-left transition-all active:scale-[0.99]',
                     answers.agency === option.id
@@ -132,11 +153,12 @@ export default function PreTest() {
             </p>
             <Button
               size="lg"
-              disabled={!isComplete}
+              disabled={!isComplete || isSubmitting}
+              isLoading={isSubmitting}
               onClick={handleContinue}
               className="w-full sm:w-auto"
             >
-              {isSessionMode ? 'Continuar a mis resultados' : 'Continuar al diagnóstico'}
+              Continuar
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </div>
