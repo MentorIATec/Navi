@@ -32,7 +32,6 @@ function normalizeStudent(raw, fallbackIndex = 0) {
     mentor: raw.mentor || raw.nicknamementor || '',
     community: raw.community || raw.comunidad || '',
     status: raw.status || 'Pendiente',
-    status: raw.status || 'Pendiente',
     checkIn: raw.checkIn || raw.checkin || 'No',
     agenciaCheckIn: raw.agenciaCheckIn || raw.agenciacheckin || '',
   };

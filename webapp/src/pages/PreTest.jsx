@@ -35,7 +35,10 @@ function getMicroPreSummary(answers) {
     blocked: 'Se siente bloqueado/a para ver un paso siguiente',
   };
 
-  return `${arrivalSummary[answers.arrival] || ''} · ${agencySummary[answers.agency] || ''}`;
+  return {
+    arrival: arrivalSummary[answers.arrival] || '',
+    agency: agencySummary[answers.agency] || '',
+  };
 }
 
 export default function PreTest() {
@@ -56,7 +59,8 @@ export default function PreTest() {
 
   const handleContinue = async () => {
     setIsSubmitting(true);
-    const textSummary = getMicroPreSummary(answers);
+    const summary = getMicroPreSummary(answers);
+    const textSummary = `${summary.arrival} · ${summary.agency}`;
     
     try {
       if (matricula) {
@@ -70,7 +74,7 @@ export default function PreTest() {
       console.error('Error enviando pre-test:', error);
     } finally {
       setIsSubmitting(false);
-      localStorage.setItem('micro_pre', JSON.stringify({ ...answers, summary: textSummary }));
+      localStorage.setItem('micro_pre', JSON.stringify({ ...answers, summary, textSummary }));
       
       const missingTest = localStorage.getItem('navi_missing_remote_test');
       if (missingTest === 'true') {

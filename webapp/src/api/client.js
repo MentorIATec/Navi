@@ -24,31 +24,6 @@ function isMockUrl(url) {
   return url.includes('AKfycbz');
 }
 
-function getLocalUsersFallback() {
-  const savedUsers = JSON.parse(localStorage.getItem('navi_users') || '[]');
-  if (savedUsers.length > 0) return savedUsers;
-
-  const savedMentors = JSON.parse(localStorage.getItem('navi_mentors') || '[]');
-  const mentorUsers = savedMentors
-    .filter((mentor) => mentor.email)
-    .map((mentor) => ({
-      email: String(mentor.email).trim().toLowerCase(),
-      name: mentor.name || mentor.nombre || mentor.nickname || 'Sin Nombre',
-      role: 'mentor',
-      community: mentor.community || mentor.comunidad || '',
-      hex: mentor.hex || '#0033A0',
-      slogan: mentor.slogan || '',
-      active: 'Si',
-    }));
-
-  if (mentorUsers.length > 0) {
-    localStorage.setItem('navi_users', JSON.stringify(mentorUsers));
-    return mentorUsers;
-  }
-
-  return [];
-}
-
 function getLocalDataFallback() {
   const savedStudents = JSON.parse(localStorage.getItem('navi_students') || '[]');
   const savedMentors = JSON.parse(localStorage.getItem('navi_mentors') || '[]');

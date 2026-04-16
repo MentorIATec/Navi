@@ -91,10 +91,10 @@ export default function Welcome() {
             Tu punto de partida
           </p>
           <h1 className="font-display text-5xl font-bold tracking-[-0.05em] text-white sm:text-6xl">
-            Descubre dónde estás y hacia dónde quieres avanzar.
+            Traza una ruta clara para este semestre.
           </h1>
           <p className="mt-5 max-w-lg text-lg leading-8 text-white/78">
-            Este primer paso te ayudará a ordenar ideas, identificar lo importante y llegar mejor preparado a tu mentoría.
+            Empieza con claridad. faro te ayuda a ordenar lo importante y llegar mejor preparado a tu mentoría.
           </p>
         </div>
       </div>
@@ -102,6 +102,9 @@ export default function Welcome() {
       <Card className="overflow-hidden">
         <CardContent className="p-7 sm:p-9">
           <div className="mb-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--navy-600)]">
+              faro · Ruta guiada de acompañamiento
+            </p>
             <h2 className="mt-3 font-display text-3xl font-bold tracking-[-0.04em] text-[var(--navy-700)]">
               Ingresa tu matrícula
             </h2>

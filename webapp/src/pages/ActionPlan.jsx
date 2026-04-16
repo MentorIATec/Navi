@@ -231,18 +231,18 @@ export default function ActionPlan() {
       ) : null}
       <div className="mb-10 grid gap-8 lg:grid-cols-[0.8fr_1.2fr]">
         <section className="shell-panel rounded-[30px] border border-[rgba(15,76,129,0.12)] px-7 py-8 sm:px-8 sm:py-10">
-          <p className="navi-eyebrow" style={{ color: 'var(--coral-500)' }}>Cierre de ciclo</p>
+          <p className="navi-eyebrow" style={{ color: 'var(--coral-500)' }}>faro · Ruta guiada de acompañamiento</p>
           <h2 className="mt-4 font-display text-4xl font-bold tracking-tight text-[var(--ink-900)] sm:text-5xl">
-            Tu plan ya tiene forma
+            Tu faro está trazado
           </h2>
           <p className="navi-prose mt-4 text-sm sm:text-base">
-            Cerraste el recorrido con dos compromisos concretos y una estrategia para cuando el semestre se complique.
+            Cerraste el recorrido con dos compromisos concretos y una estrategia para sostener tu avance cuando el semestre se complique.
           </p>
           <div className="mt-8 flex items-start gap-4 rounded-[22px] border border-[rgba(210,106,92,0.16)] bg-[rgba(249,236,232,0.5)] px-5 py-5">
             <div>
-              <p className="font-display text-xl font-semibold text-[var(--ink-900)]">Ya sabes hacia dónde vas</p>
+              <p className="font-display text-xl font-semibold text-[var(--ink-900)]">Ya tienes una ruta clara</p>
               <p className="mt-2 text-sm text-[var(--ink-700)]">
-                Descarga este plan, compártelo con tu mentor o mentora y vuelve a él cuando necesites orientarte.
+                Descárgalo. Es tuyo. Compártelo con tu mentor o mentora y vuelve a él cuando necesites orientarte.
               </p>
             </div>
           </div>

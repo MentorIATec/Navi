@@ -66,6 +66,27 @@ function getMicroPre() {
   }
 }
 
+function getSessionArrivalCopy(microPre) {
+  if (!microPre) return null;
+
+  if (microPre.summary && typeof microPre.summary === 'object') {
+    const arrival = String(microPre.summary.arrival || '').trim();
+    const agency = String(microPre.summary.agency || '').trim();
+    if (arrival && agency) {
+      return `Hoy llegas con la sensación de que ${arrival.toLowerCase()} y ${agency.toLowerCase()}. Tengámoslo en cuenta mientras revisamos tu diagnóstico.`;
+    }
+  }
+
+  if (typeof microPre.textSummary === 'string' && microPre.textSummary.trim()) {
+    const parts = microPre.textSummary.split('·').map((part) => part.trim()).filter(Boolean);
+    if (parts.length === 2) {
+      return `Hoy llegas con la sensación de que ${parts[0].toLowerCase()} y ${parts[1].toLowerCase()}. Tengámoslo en cuenta mientras revisamos tu diagnóstico.`;
+    }
+  }
+
+  return null;
+}
+
 export default function Results() {
   const navigate = useNavigate();
   const scoreData = getScoreData();
@@ -73,6 +94,7 @@ export default function Results() {
   const isMissingRemoteTest = localStorage.getItem('navi_missing_remote_test') === 'true';
   const bookingConfig = getBookingConfig();
   const microPre = getMicroPre();
+  const sessionArrivalCopy = getSessionArrivalCopy(microPre);
   const priorityAreas = getPriorityAreas(scoreData);
   const priorityCount = priorityAreas.length;
 
@@ -118,18 +140,18 @@ export default function Results() {
           <Card className="overflow-hidden">
             <CardContent className="p-10 sm:p-12">
               <p className={isSessionMode ? 'navi-eyebrow' : 'text-center text-sm font-semibold tracking-[0.02em] text-[var(--ink-600)]'}>
-                {isSessionMode ? 'Tu sesión de hoy' : 'Tu diagnóstico de trayectoria'}
+                {isSessionMode ? 'Tu sesión de hoy' : 'faro · Ruta guiada de acompañamiento'}
               </p>
               <div className={`mt-5 ${isSessionMode ? 'max-w-2xl' : 'mx-auto max-w-3xl text-center'}`}>
                 {isSessionMode ? (
                   <div className="space-y-4">
-                    {microPre?.summary ? (
+                    {sessionArrivalCopy ? (
                       <div className="rounded-[22px] border border-[rgba(15,76,129,0.10)] bg-[rgba(249,252,255,0.78)] px-5 py-5">
                         <p className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--coral-500)]">
                           Cómo llegas hoy
                         </p>
                         <p className="mt-3 text-base leading-7 text-[var(--ink-700)]">
-                          Hoy llegas con la sensación de que {microPre.summary.arrival} y {microPre.summary.agency}. Tengámoslo en cuenta mientras revisamos tu diagnóstico.
+                          {sessionArrivalCopy}
                         </p>
                       </div>
                     ) : null}
@@ -143,7 +165,7 @@ export default function Results() {
                       {priorityCount}
                     </div>
                     <p className="mt-1 text-2xl font-semibold tracking-[-0.03em] text-[var(--navy-600)] sm:text-3xl">
-                      temas prioritarios para revisar
+                      áreas prioritarias para revisar
                     </p>
                     {priorityAreas.length > 0 ? (
                       <div className="mt-4 flex flex-wrap justify-center gap-2">
@@ -158,7 +180,7 @@ export default function Results() {
                       </div>
                     ) : null}
                     <p className="mt-4 text-lg leading-8 text-[var(--ink-700)]">
-                      La sesión te ayuda a convertir esto en un plan concreto.
+                      La mentoría te ayuda a convertir esto en una ruta clara y accionable.
                     </p>
                   </>
                 )}
