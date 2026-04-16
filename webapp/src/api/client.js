@@ -393,16 +393,7 @@ export const apiClient = {
         return { items: getLocalGoalsCatalogFallback(), source: 'fallback' };
       }
       if (action === 'resolveUserByEmail') {
-        const email = String(data.email || '').trim().toLowerCase();
-        const fallbackUsers = getLocalUsersFallback();
-        const fallbackUser = fallbackUsers.find(
-          (item) =>
-            String(item.email || '').trim().toLowerCase() === email &&
-            String(item.active || item.activo || 'Si').trim().toLowerCase() !== 'no'
-        );
-        if (fallbackUser) {
-          return { user: fallbackUser, source: 'fallback' };
-        }
+        throw error;
       }
       if (action === 'saveGoalSelection') {
         const selections = JSON.parse(localStorage.getItem('navi_goal_selections') || '[]');
