@@ -17,9 +17,6 @@ export default function Layout({ children }) {
               Ruta guiada de acompañamiento
             </p>
           </div>
-          <div className="hidden text-right text-xs font-medium text-[var(--ink-700)] sm:block">
-            <p className="text-sm">Tecnológico de Monterrey</p>
-          </div>
         </div>
 
         <div className="flex-1 px-6 pb-8 pt-2 sm:px-10 sm:pb-10">

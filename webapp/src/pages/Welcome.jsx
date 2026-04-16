@@ -30,7 +30,7 @@ export default function Welcome() {
       const mentor = response?.mentor;
 
       if (!student) {
-        setErrorMessage('No encontramos tu matrícula en la base de Navi. Si crees que es un error, consulta con tu mentor o con la coordinación de mentoría antes de continuar.');
+        setErrorMessage('No encontramos tu matrícula en la base de estudiantes. Si crees que es un error, consulta con tu mentor o con la coordinación de mentoría antes de continuar.');
         return;
       }
 
@@ -88,13 +88,13 @@ export default function Welcome() {
 
         <div className="relative z-10 max-w-xl">
           <p className="mb-4 font-display text-sm font-semibold uppercase tracking-[0.28em] text-white/62">
-            Tu punto de partida
+            Encuentra tu faro
           </p>
           <h1 className="font-display text-5xl font-bold tracking-[-0.05em] text-white sm:text-6xl">
             Traza una ruta clara para este semestre.
           </h1>
           <p className="mt-5 max-w-lg text-lg leading-8 text-white/78">
-            Empieza con claridad. faro te ayuda a ordenar lo importante y llegar mejor preparado a tu mentoría.
+            Ordena lo importante y llega mejor preparado a tu mentoría.
           </p>
         </div>
       </div>
@@ -102,15 +102,9 @@ export default function Welcome() {
       <Card className="overflow-hidden">
         <CardContent className="p-7 sm:p-9">
           <div className="mb-8">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--navy-600)]">
-              faro · Ruta guiada de acompañamiento
-            </p>
-            <h2 className="mt-3 font-display text-3xl font-bold tracking-[-0.04em] text-[var(--navy-700)]">
+            <h2 className="font-display text-3xl font-bold tracking-[-0.04em] text-[var(--navy-700)]">
               Ingresa tu matrícula
             </h2>
-            <p className="mt-3 navi-prose text-base leading-7">
-              Comienza aquí para responder tu evaluación y prepararte para la mentoría.
-            </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
