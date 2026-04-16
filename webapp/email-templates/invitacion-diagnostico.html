@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tu diagnóstico de trayectoria te espera</title>
+</head>
+<body style="margin:0; padding:0; background-color:#f4f6f9; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f4f6f9; padding: 32px 16px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px; width:100%; background-color:#ffffff; border-radius:16px; overflow:hidden; box-shadow: 0 4px 24px rgba(15,76,129,0.08);">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #0F4C81 0%, #1a6db5 100%); padding: 32px 40px 28px;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td>
+                    <p style="margin:0 0 4px 0; font-size:11px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:rgba(255,255,255,0.65);">Mentoría Estudiantil · Tec de Monterrey</p>
+                    <p style="margin:0; font-size:28px; font-weight:700; letter-spacing:-0.04em; color:#ffffff;">faro</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 40px 32px;">
+
+              <p style="margin:0 0 24px 0; font-size:18px; font-weight:600; color:#1a2a3a;">
+                Hola, <span style="color:#0F4C81;">{{nombre}}</span>
+              </p>
+
+              <p style="margin:0 0 16px 0; font-size:15px; line-height:1.7; color:#3d4f61;">
+                Ya estamos más allá de la mitad del semestre. Todavía queda un periodo por delante — el suficiente para cerrar con todo, si te das el tiempo de planear.
+              </p>
+
+              <p style="margin:0 0 16px 0; font-size:15px; line-height:1.7; color:#3d4f61;">
+                Si ya has contestado este diagnóstico previamente, puedes usarlo otra vez: te servirá para ver cómo has avanzado y ajustar el rumbo para lo que resta.
+              </p>
+
+              <p style="margin:0 0 32px 0; font-size:15px; line-height:1.7; color:#3d4f61;">
+                Con tus resultados, te espero en la próxima sesión de revisión de tu trayectoria estudiantil.
+              </p>
+
+              <!-- CTA Button -->
+              <table cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="border-radius:10px; background-color:#0F4C81;">
+                    <a href="https://faro-me.vercel.app"
+                       target="_blank"
+                       style="display:inline-block; padding:14px 32px; font-size:15px; font-weight:600; color:#ffffff; text-decoration:none; letter-spacing:0.01em;">
+                      Comenzar mi diagnóstico →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Divider -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 36px 0 0 0;">
+                <tr>
+                  <td style="border-top: 1px solid rgba(15,76,129,0.10);"></td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Contact & Signature -->
+          <tr>
+            <td style="padding: 0 40px 40px;">
+
+              <!-- WhatsApp contact button -->
+              <p style="margin:0 0 12px 0; font-size:13px; color:#5a6a78;">¿Tienes dudas? Escríbeme directamente:</p>
+              <table cellpadding="0" cellspacing="0" border="0" style="margin-bottom:32px;">
+                <tr>
+                  <td style="border-radius:8px; border: 1px solid rgba(15,76,129,0.20);">
+                    <a href="https://wa.me/{{whatsapp}}"
+                       target="_blank"
+                       style="display:inline-block; padding:10px 22px; font-size:13px; font-weight:600; color:#0F4C81; text-decoration:none;">
+                      💬 Contactar por WhatsApp
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Mentor signature -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td>
+                    <p style="margin:0 0 2px 0; font-size:15px; font-weight:600; color:#1a2a3a;">Karen Guzmán</p>
+                    <p style="margin:0 0 2px 0; font-size:13px; color:#5a6a78;">Mentora Estudiantil</p>
+                    <p style="margin:0 0 16px 0; font-size:13px; color:#5a6a78;">Comunidad <strong style="color:#0F4C81;">{{comunidad}}</strong></p>
+                    <!-- Community slogan -->
+                    <p style="margin:0; font-size:13px; font-style:italic; color:#8a96a3; border-left: 3px solid rgba(15,76,129,0.20); padding-left:12px; line-height:1.6;">
+                      {{slogan}}
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color:#f4f6f9; padding:20px 40px; border-top:1px solid rgba(15,76,129,0.08);">
+              <p style="margin:0; font-size:11px; color:#8a96a3; text-align:center;">
+                Tecnológico de Monterrey &copy; 2026 &nbsp;·&nbsp; faro · ruta guiada de acompañamiento<br/>
+                Recibes este correo porque eres parte del programa de Mentoría Estudiantil.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>
