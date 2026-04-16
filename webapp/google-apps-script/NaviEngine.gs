@@ -127,12 +127,13 @@ function doGet(e) {
     ensureCoreSheets_(ss);
     ensureOperationsSheets_(ss);
 
+    const staffData = parseSheetData(ensureSheetWithHeaders_(ss, 'Staff', STAFF_HEADERS).getDataRange().getValues());
     const payload = {
       status: 'success',
       data: {
         students: parseSheetData(ss.getSheetByName('Students').getDataRange().getValues()),
-        staff: parseSheetData(ensureSheetWithHeaders_(ss, 'Staff', STAFF_HEADERS).getDataRange().getValues()),
-        mentors: parseSheetData(ensureSheetWithHeaders_(ss, 'Staff', STAFF_HEADERS).getDataRange().getValues()),
+        staff: staffData,
+        mentors: staffData,
         goalSelections: parseSheetData(ensureSheetWithHeaders_(ss, 'GoalSelections', ['Timestamp', 'Matrícula', 'Nombre', 'Meta Prioritaria', 'Meta Complementaria', 'Tiempo', 'Obstáculo', 'Plan']).getDataRange().getValues()),
         responses: parseSheetData(ensureSheetWithHeaders_(ss, 'Responses', RESPONSES_HEADERS).getDataRange().getValues()),
       }
