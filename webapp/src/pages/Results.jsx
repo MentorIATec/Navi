@@ -140,7 +140,7 @@ export default function Results() {
           <Card className="overflow-hidden">
             <CardContent className="p-10 sm:p-12">
               <p className={isSessionMode ? 'navi-eyebrow' : 'text-center text-sm font-semibold tracking-[0.02em] text-[var(--ink-600)]'}>
-                {isSessionMode ? 'Tu sesión de hoy' : 'faro · Ruta guiada de acompañamiento'}
+                {isSessionMode ? 'Tu sesión de hoy' : 'faro · ruta guiada de acompañamiento'}
               </p>
               <div className={`mt-5 ${isSessionMode ? 'max-w-2xl' : 'mx-auto max-w-3xl text-center'}`}>
                 {isSessionMode ? (

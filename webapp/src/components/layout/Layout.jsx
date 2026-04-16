@@ -13,9 +13,22 @@ export default function Layout({ children }) {
         <div className="flex items-center justify-between px-6 pb-2 pt-6 sm:px-10">
           <div className="text-left">
             <p className="navi-eyebrow">Mentoría Estudiantil</p>
-            <p className="mt-2 font-display text-[1.5rem] font-semibold tracking-[-0.04em] text-[var(--navy-700)]">
-              Ruta guiada de acompañamiento
-            </p>
+            <div className="mt-2 flex items-center gap-3">
+              <div className="flex items-center gap-2 text-[var(--navy-700)]">
+                <span className="relative flex h-4 w-4 items-center justify-center" aria-hidden="true">
+                  <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                  <span className="absolute h-4 w-0.5 rounded-full bg-current/60" />
+                  <span className="absolute w-4 h-0.5 rounded-full bg-current/60" />
+                  <span className="absolute h-3.5 w-0.5 rotate-45 rounded-full bg-current/35" />
+                  <span className="absolute h-3.5 w-0.5 -rotate-45 rounded-full bg-current/35" />
+                </span>
+                <span className="font-display text-[1.6rem] font-semibold tracking-[-0.04em]">faro</span>
+              </div>
+              <span className="h-4 w-px bg-[rgba(15,76,129,0.18)]" aria-hidden="true" />
+              <p className="text-sm font-medium tracking-[0.01em] text-[var(--ink-700)]">
+                ruta guiada de acompa&ntilde;amiento
+              </p>
+            </div>
           </div>
         </div>
 
