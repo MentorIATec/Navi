@@ -77,33 +77,36 @@ export default function CheckIn() {
       });
 
       const resolvedDisplayName = await registerPresence(student, mentor);
+      localStorage.removeItem('navi_missing_remote_test');
 
-      if (student?.status === 'Test Completado' || student?.status === 'Metas Seleccionadas') {
-        localStorage.removeItem('navi_missing_remote_test');
-        
-        try {
-          const res = await apiClient.post('getTestResponse', { matricula: matricula.toUpperCase() });
-          if (res?.data) {
-             const { etapa, scores } = res.data;
-             const questions = DIAGNOSTIC_BANK[etapa] || [];
-             const answers = {};
-             questions.forEach(q => {
-               answers[q.key] = scores[q.category] || 0;
-             });
-             localStorage.setItem('navi_diagnostic_payload', JSON.stringify({
-               stage: etapa,
-               answers,
-               questions
-             }));
-             localStorage.setItem('navi_diagnostic_answers', JSON.stringify(answers));
-             localStorage.setItem('navi_diagnostic_stage', etapa);
-          }
-        } catch (err) {
-          console.error("Test answers could not be loaded from backend", err);
+      try {
+        const existingResponse = await apiClient.post('getTestResponse', {
+          matricula: matricula.toUpperCase(),
+        });
+        const diagnostic = existingResponse?.data || existingResponse;
+
+        if (diagnostic?.etapa) {
+          const { etapa, scores } = diagnostic;
+          const questions = DIAGNOSTIC_BANK[etapa] || [];
+          const answers = {};
+
+          questions.forEach((question) => {
+            answers[question.key] = scores[question.category] || 0;
+          });
+
+          localStorage.setItem('navi_diagnostic_payload', JSON.stringify({
+            stage: etapa,
+            answers,
+            questions,
+          }));
+          localStorage.setItem('navi_diagnostic_answers', JSON.stringify(answers));
+          localStorage.setItem('navi_diagnostic_stage', etapa);
+
+          navigate('/pre-test');
+          return;
         }
-
-        navigate('/pre-test');
-        return;
+      } catch (err) {
+        console.warn('No se encontraron respuestas previas para esta matrícula durante check-in.', err);
       }
 
       localStorage.setItem('navi_missing_remote_test', 'true');

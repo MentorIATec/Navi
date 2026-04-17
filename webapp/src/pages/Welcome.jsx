@@ -73,9 +73,10 @@ export default function Welcome() {
         const existingResponse = await apiClient.post('getTestResponse', {
           matricula: student.matricula || matricula.toUpperCase(),
         });
+        const diagnostic = existingResponse?.data || existingResponse;
 
-        if (existingResponse?.etapa) {
-          const { etapa, scores } = existingResponse;
+        if (diagnostic?.etapa) {
+          const { etapa, scores } = diagnostic;
           const questions = DIAGNOSTIC_BANK[etapa] || [];
           const answers = {};
 
