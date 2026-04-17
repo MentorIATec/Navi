@@ -1,4 +1,4 @@
-# Navi Webapp
+# faro Webapp
 
 ## Variables de entorno
 
@@ -34,7 +34,7 @@ npm run build
 
 ## Estado beta
 
-- Dominio beta activo: `https://faro-me.vercel.app`
+- Dominio beta activo: `https://ruta-mentoria.vercel.app`
 - Proyecto Vercel enlazado al repositorio `MentorIATec/Navi` con raíz en `webapp/`
 - Commit base de la beta: `2dbb7f9`
 - `VITE_API_URL` configurada en Vercel apuntando al Apps Script activo
@@ -56,6 +56,9 @@ Rutas verificadas con `200`:
 - Permisos resueltos del lado servidor, no solo en cliente
 - Check-in con contexto de sesión/mentor mediante token opaco
 - Reducir duplicación de lógica entre frontend y Apps Script
+- Podar tabs del tablero que duplican operación ya resuelta en Sheets
+- Rediseñar el tablero mentor para documentar sesiones y preparar resumen para CRM
+- Sustituir campañas con HTML libre por plantillas controladas y preview
 
 ## Documentación piloto
 
@@ -64,3 +67,5 @@ Rutas verificadas con `200`:
 - `webapp/docs/pilot-presential-session-guide.md`
 - `webapp/docs/pilot-technical-setup.md`
 - `webapp/docs/pilot-faq.md`
+- `webapp/docs/mentor-dashboard-roadmap.md`
+- `webapp/docs/mentor-dashboard-implementation-backlog.md`

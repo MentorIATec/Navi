@@ -28,10 +28,14 @@ function getLocalDataFallback() {
   const savedStudents = JSON.parse(localStorage.getItem('navi_students') || '[]');
   const savedMentors = JSON.parse(localStorage.getItem('navi_mentors') || '[]');
   const savedResponses = JSON.parse(localStorage.getItem('navi_responses') || '[]');
+  const savedGoalSelections = JSON.parse(localStorage.getItem('navi_goal_selections') || '[]');
+  const savedSessions = JSON.parse(localStorage.getItem('navi_mentoring_sessions') || '[]');
   return {
     students: savedStudents,
     mentors: savedMentors,
     responses: savedResponses,
+    goalSelections: savedGoalSelections,
+    sessions: savedSessions,
   };
 }
 
@@ -406,6 +410,19 @@ export const apiClient = {
           warning: 'Tu plan se guardó solo en este dispositivo. Intenta sincronizarlo otra vez para que mentoría lo reciba.',
         };
       }
+      if (action === 'saveMentoringSession') {
+        const sessions = JSON.parse(localStorage.getItem('navi_mentoring_sessions') || '[]');
+        const nextEntry = {
+          ...data,
+          timestampGuardado: new Date().toISOString(),
+        };
+        localStorage.setItem('navi_mentoring_sessions', JSON.stringify([nextEntry, ...sessions]));
+        return {
+          status: 'success',
+          source: 'fallback',
+          warning: 'La sesión se guardó solo en este dispositivo. Intenta sincronizar de nuevo para dejar el registro compartido.',
+        };
+      }
       if (action === 'saveTestResponse') {
         const savedResponses = JSON.parse(localStorage.getItem('navi_responses') || '[]');
         savedResponses.push({ ...data, fechaTest: new Date().toISOString() });
@@ -460,7 +477,9 @@ export const apiClient = {
             resolve({
               students: savedStudents ? JSON.parse(savedStudents) : [],
               mentors: savedMentors ? JSON.parse(savedMentors) : [],
-              responses: savedResponses ? JSON.parse(savedResponses) : []
+              responses: savedResponses ? JSON.parse(savedResponses) : [],
+              goalSelections: JSON.parse(localStorage.getItem('navi_goal_selections') || '[]'),
+              sessions: JSON.parse(localStorage.getItem('navi_mentoring_sessions') || '[]'),
             });
             break;
           }
@@ -505,6 +524,12 @@ export const apiClient = {
           case 'saveGoalSelection':
             resolve(data);
             break;
+          case 'saveMentoringSession': {
+            const sessions = JSON.parse(localStorage.getItem('navi_mentoring_sessions') || '[]');
+            localStorage.setItem('navi_mentoring_sessions', JSON.stringify([{ ...data, timestampGuardado: new Date().toISOString() }, ...sessions]));
+            resolve({ status: 'success' });
+            break;
+          }
           case 'saveTestResponse': {
             const savedResponses = JSON.parse(localStorage.getItem('navi_responses') || '[]');
             savedResponses.push({ ...data, fechaTest: new Date().toISOString() });

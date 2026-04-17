@@ -21,6 +21,8 @@ const STUDENT_HEADERS = ['Matrícula', 'Nombre', 'NombrePreferido', 'Email', 'Ni
 const LEGACY_STUDENT_HEADERS = ['Matrícula', 'Nombre', 'Email', 'NicknameMentor', 'Comunidad', 'Status', 'Check-in'];
 const STAFF_HEADERS = ['Email', 'PIN', 'Nombre', 'Alias', 'Rol', 'Comunidad', 'Hex', 'Slogan', 'Activo'];
 const RESPONSES_HEADERS = ['Matrícula', 'FechaTest', 'Modalidad', 'Etapa', 'ScorePromedio', 'AreasPrioritarias', 'Claridad_Carrera', 'Desempeno_Academico', 'Plan_Practicas', 'Servicio_Social', 'Decision_SemestreTec', 'Certificacion_Idioma'];
+const GOAL_SELECTION_HEADERS = ['Timestamp', 'Matrícula', 'Nombre', 'Meta Prioritaria', 'Meta Complementaria', 'Tiempo', 'Obstáculo', 'Plan'];
+const SESSIONS_HEADERS = ['Matricula', 'Nombre', 'Mentor', 'Comunidad', 'Fecha_Sesion', 'Modalidad', 'Etapa', 'Areas_Prioritarias', 'Pretest_Resumen', 'Checkin_Resumen', 'Meta_Prioritaria', 'Meta_Complementaria', 'Horizonte', 'Obstaculo', 'Estrategia', 'Notas_Mentor', 'Seguimiento', 'Estado_Documentacion', 'Documentado_CRM', 'Timestamp_Guardado'];
 // Dimension = una sola de las 7 dimensiones del bienestar del modelo Tec.
 // TemaOperativo = agrupador práctico de navegación/curación para mentoría; no reemplaza a la dimensión.
 const GOALS_CATALOG_HEADERS = ['Id', 'TemaOperativo', 'Dimension', 'Etapa', 'MetaBase', 'PasosBase', 'HorizonteSugerido', 'IndicadorLogro', 'CuandoUsarla', 'NivelDificultad', 'FrecuenciaSeguimiento', 'ConexionDiagnostico', 'PreguntasParaAfinar', 'Activa'];
@@ -134,8 +136,9 @@ function doGet(e) {
         students: parseSheetData(ss.getSheetByName('Students').getDataRange().getValues()),
         staff: staffData,
         mentors: staffData,
-        goalSelections: parseSheetData(ensureSheetWithHeaders_(ss, 'GoalSelections', ['Timestamp', 'Matrícula', 'Nombre', 'Meta Prioritaria', 'Meta Complementaria', 'Tiempo', 'Obstáculo', 'Plan']).getDataRange().getValues()),
+        goalSelections: parseSheetData(ensureSheetWithHeaders_(ss, 'GoalSelections', GOAL_SELECTION_HEADERS).getDataRange().getValues()),
         responses: parseSheetData(ensureSheetWithHeaders_(ss, 'Responses', RESPONSES_HEADERS).getDataRange().getValues()),
+        sessions: parseSheetData(ensureSheetWithHeaders_(ss, 'Sesiones', SESSIONS_HEADERS).getDataRange().getValues()),
       }
     };
 
@@ -199,6 +202,9 @@ function doPost(e) {
 
     if (action === 'saveGoalSelection') {
       return saveGoalSelection(ss, params.data);
+    }
+    if (action === 'saveMentoringSession') {
+      return saveMentoringSession(ss, params.data);
     }
 
     if (action === 'saveTestResponse') {
@@ -747,6 +753,8 @@ function ensureCoreSheets_(ss) {
 function ensureOperationsSheets_(ss) {
   const goalsCatalogSheet = ensureSheetWithHeaders_(ss, 'GoalsCatalog', GOALS_CATALOG_HEADERS);
   ensureSheetWithHeaders_(ss, 'Responses', RESPONSES_HEADERS);
+  ensureSheetWithHeaders_(ss, 'GoalSelections', GOAL_SELECTION_HEADERS);
+  ensureSheetWithHeaders_(ss, 'Sesiones', SESSIONS_HEADERS);
   ensureGoalsCatalogSchema_(goalsCatalogSheet);
   applyGoalsCatalogValidation_(goalsCatalogSheet);
 
@@ -1161,7 +1169,7 @@ function getTestResponse(ss, data) {
 }
 
 function saveGoalSelection(ss, data) {
-  const sheet = ensureSheetWithHeaders_(ss, 'GoalSelections', ['Timestamp', 'Matrícula', 'Nombre', 'Meta Prioritaria', 'Meta Complementaria', 'Tiempo', 'Obstáculo', 'Plan']);
+  const sheet = ensureSheetWithHeaders_(ss, 'GoalSelections', GOAL_SELECTION_HEADERS);
   const matricula = String(data && data.matricula ? data.matricula : '').trim().toUpperCase();
 
   if (!matricula) {
@@ -1184,6 +1192,42 @@ function saveGoalSelection(ss, data) {
     status: 'Metas Seleccionadas',
     checkIn: data.checkIn,
   });
+
+  return jsonResponse_({ status: 'success' });
+}
+
+function saveMentoringSession(ss, data) {
+  const sheet = ensureSheetWithHeaders_(ss, 'Sesiones', SESSIONS_HEADERS);
+  const matricula = String(data && data.matricula ? data.matricula : '').trim().toUpperCase();
+
+  if (!matricula) {
+    return jsonResponse_({ status: 'error', message: 'Falta la matrícula del estudiante.' });
+  }
+
+  const fechaSesion = String(data.fechaSesion || '').trim() || new Date().toISOString().slice(0, 10);
+
+  sheet.appendRow([
+    matricula,
+    data.nombre || '',
+    data.mentor || '',
+    data.comunidad || '',
+    fechaSesion,
+    data.modalidad || '',
+    data.etapa || '',
+    data.areasPrioritarias || '',
+    data.pretestResumen || '',
+    data.checkinResumen || '',
+    data.metaPrioritaria || '',
+    data.metaComplementaria || '',
+    data.horizonte || '',
+    data.obstaculo || '',
+    data.estrategia || '',
+    data.notasMentor || '',
+    data.seguimiento || '',
+    data.estadoDocumentacion || 'Borrador',
+    data.documentadoCrm ? 'Si' : 'No',
+    new Date().toISOString(),
+  ]);
 
   return jsonResponse_({ status: 'success' });
 }

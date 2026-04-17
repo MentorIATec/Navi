@@ -1,10 +1,9 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { Mail, Search, Users, Activity, CheckCircle, Upload, ShieldAlert, FileText, Trash2, Send, Beaker, CalendarDays, LayoutDashboard } from 'lucide-react';
+import { Mail, Search, Users, Activity, CheckCircle, Upload, ShieldAlert, Send, Beaker, CalendarDays, LayoutDashboard, RefreshCw } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { cn } from '../utils/cn';
-import GoalManager from '../components/admin/GoalManager';
 import { apiClient } from '../api/client';
 
 const DEFAULT_API_URL = String(import.meta.env.VITE_API_URL || '').trim();
@@ -89,18 +88,18 @@ export default function AdminDashboard() {
     const saved = localStorage.getItem('navi_responses');
     return saved ? JSON.parse(saved) : [];
   });
+  const [goalSelections, setGoalSelections] = useState(() => {
+    const saved = localStorage.getItem('navi_goal_selections');
+    return saved ? JSON.parse(saved) : [];
+  });
 
   // Tab 1: Dashboard
   const [searchTerm, setSearchTerm] = useState('');
   const [isSendingInitial, setIsSendingInitial] = useState(false);
 
-  // Tab 2: Upload
-  const [uploadText, setUploadText] = useState('');
-  
-  // Tab 3: Demo Config
+  // Tab 2: Demo Config
   const [testEmail, setTestEmail] = useState('');
   const [isSendingTest, setIsSendingTest] = useState(false);
-  const [mentorSyncText, setMentorSyncText] = useState('');
   const [apiUrl, setApiUrl] = useState(() => {
     const savedUrl = localStorage.getItem('navi_api_url');
     if (savedUrl) {
@@ -121,6 +120,15 @@ export default function AdminDashboard() {
   const [feedback, setFeedback] = useState(null);
   const [confirmation, setConfirmation] = useState(null);
   const [showCheckInQr, setShowCheckInQr] = useState(false);
+  const [lastSyncAt, setLastSyncAt] = useState(() => localStorage.getItem('navi_last_sync_at') || '');
+  const [mentoringSessionDraft, setMentoringSessionDraft] = useState({
+    fechaSesion: new Date().toISOString().slice(0, 10),
+    notasMentor: '',
+    seguimiento: '',
+    estadoDocumentacion: 'Borrador',
+    documentadoCrm: false,
+  });
+  const [isSavingMentoringSession, setIsSavingMentoringSession] = useState(false);
 
   // Campaign Modal
   const [isCampaignModalOpen, setIsCampaignModalOpen] = useState(false);
@@ -187,6 +195,10 @@ export default function AdminDashboard() {
   }, [responses]);
 
   useEffect(() => {
+    localStorage.setItem('navi_goal_selections', JSON.stringify(goalSelections));
+  }, [goalSelections]);
+
+  useEffect(() => {
     localStorage.setItem('navi_booking_config', JSON.stringify(bookingConfig));
   }, [bookingConfig]);
 
@@ -199,7 +211,7 @@ export default function AdminDashboard() {
     : '/check-in';
   const permissions = isAdmin
     ? {
-        tabs: ['dashboard', 'upload', 'goals', 'settings'],
+        tabs: ['dashboard', 'settings'],
         canPullSheets: true,
         canPushSheets: true,
         canRunCampaigns: true,
@@ -249,6 +261,61 @@ export default function AdminDashboard() {
     (s.preferredName && s.preferredName.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (s.email && s.email.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  const lastSyncLabel = useMemo(() => {
+    if (!lastSyncAt) return '';
+    const parsed = new Date(lastSyncAt);
+    if (Number.isNaN(parsed.getTime())) return '';
+    return parsed.toLocaleString('es-MX', {
+      dateStyle: 'short',
+      timeStyle: 'short',
+    });
+  }, [lastSyncAt]);
+
+  const latestGoalSelectionsByMatricula = useMemo(() => {
+    const map = new Map();
+    [...goalSelections]
+      .sort((a, b) => new Date(b.timestamp || b.Timestamp || 0) - new Date(a.timestamp || a.Timestamp || 0))
+      .forEach((item) => {
+        const key = String(item.matricula || '').trim().toUpperCase();
+        if (key && !map.has(key)) {
+          map.set(key, item);
+        }
+      });
+    return map;
+  }, [goalSelections]);
+
+  const buildMentoringSummary = (student, diag, goalSelection, draft) => {
+    const studentName = student?.preferredName || student?.name || 'Estudiante';
+    const areas = String(diag?.areasprioritarias || '').split(',').map((item) => item.trim()).filter(Boolean).join(', ') || 'Sin áreas prioritarias registradas';
+    const modalidad = diag?.modalidad || (student?.checkIn === 'Si' ? 'presencial' : 'remoto');
+    const metas = [goalSelection?.metaprioritaria, goalSelection?.metacomplementaria].filter(Boolean).join(' | ') || 'Sin metas registradas';
+
+    return [
+      `Sesión de mentoría faro — ${draft.fechaSesion}`,
+      `Estudiante: ${studentName} (${student?.matricula || 'Sin matrícula'})${student?.community ? ` — Comunidad ${student.community}` : ''}`,
+      `Mentor/a: ${student?.mentor || 'Sin mentor asignado'}`,
+      '',
+      `Diagnóstico: ${diag?.etapa || 'General'}, modalidad ${modalidad}`,
+      `Áreas prioritarias: ${areas}`,
+      `Metas acordadas: ${metas}`,
+      '',
+      `Notas del mentor: ${draft.notasMentor || 'Sin notas adicionales.'}`,
+      `Seguimiento: ${draft.seguimiento || 'Sin seguimiento adicional.'}`,
+      `Estado: ${draft.estadoDocumentacion}`,
+    ].join('\n');
+  };
+
+  useEffect(() => {
+    if (!selectedStudentForDiagnostic) return;
+    setMentoringSessionDraft({
+      fechaSesion: new Date().toISOString().slice(0, 10),
+      notasMentor: '',
+      seguimiento: '',
+      estadoDocumentacion: 'Borrador',
+      documentadoCrm: false,
+    });
+  }, [selectedStudentForDiagnostic]);
 
   const StatusBadge = ({ student }) => {
     const { status, checkIn } = student;
@@ -366,45 +433,6 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleParseUpload = () => {
-    if (!uploadText.trim()) return;
-    
-    // Parse Tab-separated or Comma-separated values
-    const lines = uploadText.split('\n').filter(line => line.trim());
-    const skipped = [];
-    const newStudents = lines.map((line, idx) => {
-      const parts = line.split(/\t/).map(p => p.trim());
-      // Expected: Matrícula | Nombre | Correo | NicknameMentor (4 columnas, todas obligatorias)
-      if (parts.length < 4) {
-        skipped.push(idx + 1);
-        return null;
-      }
-      const [matricula, name, email, mentorNick] = parts;
-      const mentor = mentors.find(m => m.nickname === mentorNick || m.name === mentorNick);
-
-      return {
-        id: Date.now() + idx,
-        matricula: matricula || `DESC-${idx}`,
-        name: name || 'Sin Nombre',
-        preferredName: '',
-        email: email || 'sin@correo.com',
-        mentor: mentorNick || 'Sin Asignar',
-        community: mentor?.community || 'N/A',
-        status: 'Pendiente',
-        checkIn: 'No'
-      };
-    }).filter(Boolean);
-
-    setStudents(prev => [...prev, ...newStudents]);
-    setUploadText('');
-    const skippedMsg = skipped.length > 0 ? ` Se omitieron ${skipped.length} líneas por formato incompleto (líneas: ${skipped.join(', ')}).` : '';
-    setFeedback({
-      tone: skipped.length > 0 ? 'error' : 'success',
-      message: `Se cargaron ${newStudents.length} estudiantes al directorio.${skippedMsg}`,
-    });
-    setActiveTab('dashboard');
-  };
-
   const handleFetchFromSheets = async () => {
     if (!apiUrl) {
       setFeedback({ tone: 'error', message: 'Configura primero la URL de Google Sheets en Configuración.' });
@@ -416,7 +444,11 @@ export default function AdminDashboard() {
       if (data.students) setStudents(data.students.map((student, index) => normalizeStudent(student, index)));
       if (data.mentors) setMentors(data.mentors.map(normalizeMentor));
       if (data.responses) setResponses(data.responses);
-      setFeedback({ tone: 'success', message: 'Datos actualizados desde Google Sheets.' });
+      if (data.goalSelections) setGoalSelections(data.goalSelections);
+      const now = new Date().toISOString();
+      localStorage.setItem('navi_last_sync_at', now);
+      setLastSyncAt(now);
+      setFeedback({ tone: 'success', message: 'Directorio actualizado desde Google Sheets.' });
     } catch (err) {
       setFeedback({ tone: 'error', message: `No fue posible sincronizar: ${err.message}` });
     } finally {
@@ -471,25 +503,6 @@ export default function AdminDashboard() {
     window.location.reload(); // Reload to refresh client.js instance
   };
 
-  const handleParseMentors = () => {
-    if (!mentorSyncText.trim()) return;
-    const lines = mentorSyncText.split('\n').filter(line => line.trim());
-    const newMentors = lines.map(line => {
-      const parts = line.split(/[\t|]/).map(p => p.trim());
-      // Format: Comunidad | hex | nombre | nickname | email
-      return {
-        community: parts[0] || 'Sin Comunidad',
-        hex: parts[1] || '#0033A0',
-        name: parts[2] || 'Sin Nombre',
-        nickname: parts[3] || parts[2],
-        email: parts[4] || 'sin@correo.com'
-      };
-    });
-    setMentors(newMentors);
-    setMentorSyncText('');
-    setFeedback({ tone: 'success', message: `Se actualizaron ${newMentors.length} mentores y comunidades.` });
-  };
-
   const handleCopyCheckInLink = async () => {
     try {
       await navigator.clipboard.writeText(checkInLink);
@@ -499,12 +512,61 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleClearStudents = () => {
-    setConfirmation({
-      type: 'clearStudents',
-      title: 'Borrar el directorio actual',
-      message: 'Esta acción vaciará el directorio visible en Navi hasta que vuelvas a importar o sincronizar estudiantes.',
-    });
+  const handleCopyMentoringSummary = async () => {
+    if (!selectedStudentForDiagnostic) return;
+    const matricula = String(selectedStudentForDiagnostic.matricula || '').trim().toUpperCase();
+    const diag = responses.find((r) => String(r.matricula || '').trim().toUpperCase() === matricula);
+    const goalSelection = latestGoalSelectionsByMatricula.get(matricula);
+    const summary = buildMentoringSummary(selectedStudentForDiagnostic, diag, goalSelection, mentoringSessionDraft);
+
+    try {
+      await navigator.clipboard.writeText(summary);
+      setFeedback({ tone: 'success', message: 'Resumen de mentoría copiado para CRM.' });
+    } catch {
+      setFeedback({ tone: 'error', message: 'No fue posible copiar el resumen. Intenta de nuevo.' });
+    }
+  };
+
+  const handleSaveMentoringSession = async () => {
+    if (!selectedStudentForDiagnostic) return;
+
+    const matricula = String(selectedStudentForDiagnostic.matricula || '').trim().toUpperCase();
+    const diag = responses.find((r) => String(r.matricula || '').trim().toUpperCase() === matricula);
+    const goalSelection = latestGoalSelectionsByMatricula.get(matricula);
+
+    setIsSavingMentoringSession(true);
+    try {
+      const result = await apiClient.post('saveMentoringSession', {
+        matricula,
+        nombre: selectedStudentForDiagnostic.preferredName || selectedStudentForDiagnostic.name || '',
+        mentor: selectedStudentForDiagnostic.mentor || '',
+        comunidad: selectedStudentForDiagnostic.community || '',
+        fechaSesion: mentoringSessionDraft.fechaSesion,
+        modalidad: diag?.modalidad || (selectedStudentForDiagnostic.checkIn === 'Si' ? 'presencial' : 'remoto'),
+        etapa: diag?.etapa || '',
+        areasPrioritarias: diag?.areasprioritarias || '',
+        pretestResumen: selectedStudentForDiagnostic.agenciaCheckIn || '',
+        checkinResumen: selectedStudentForDiagnostic.checkIn === 'Si'
+          ? (selectedStudentForDiagnostic.agenciaCheckIn || 'Asistió a sesión presencial.')
+          : 'No asistió a sesión presencial.',
+        metaPrioritaria: goalSelection?.metaprioritaria || '',
+        metaComplementaria: goalSelection?.metacomplementaria || '',
+        horizonte: goalSelection?.tiempo || '',
+        obstaculo: goalSelection?.obstaculo || '',
+        estrategia: goalSelection?.plan || '',
+        notasMentor: mentoringSessionDraft.notasMentor,
+        seguimiento: mentoringSessionDraft.seguimiento,
+        estadoDocumentacion: mentoringSessionDraft.estadoDocumentacion,
+        documentadoCrm: mentoringSessionDraft.documentadoCrm,
+      });
+
+      const warning = result?.warning ? ` ${result.warning}` : '';
+      setFeedback({ tone: result?.source === 'fallback' ? 'error' : 'success', message: `Resultado de mentoría guardado.${warning}` });
+    } catch (err) {
+      setFeedback({ tone: 'error', message: `No fue posible guardar la sesión: ${err.message}` });
+    } finally {
+      setIsSavingMentoringSession(false);
+    }
   };
 
   const handleConfirmAction = async () => {
@@ -513,11 +575,6 @@ export default function AdminDashboard() {
       setConfirmation(null);
       await executePushToSheets();
       return;
-    }
-    if (confirmation.type === 'clearStudents') {
-      setStudents([]);
-      setFeedback({ tone: 'success', message: 'El directorio quedó vacío.' });
-      setConfirmation(null);
     }
   };
 
@@ -565,7 +622,7 @@ export default function AdminDashboard() {
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--navy-600)]">Acceso institucional</p>
             <h1 className="mt-3 font-display text-4xl font-bold tracking-tight text-[var(--ink-900)]">Ingresa con tu correo del Tec</h1>
             <p className="mt-3 max-w-2xl text-[var(--ink-700)]">
-              Usaremos tu correo institucional para determinar si accedes como administración o mentoría dentro de Navi.
+              Usaremos tu correo institucional para determinar si accedes como administración o mentoría dentro de faro.
             </p>
             {feedback ? (
               <div className={cn(
@@ -616,22 +673,29 @@ export default function AdminDashboard() {
           </h1>
           <p className="mt-2 text-[var(--ink-700)]">
             {isAdmin
-              ? 'Seguimiento de cohorte, gestión de campañas y catálogo de metas.'
+              ? 'Seguimiento de estudiantes y documentación de mentoría.'
               : `Seguimiento de ${currentMentor?.community || 'tu comunidad'} y estado de tus estudiantes.`}
           </p>
         </div>
-        <div className="flex gap-2">
-           <Button variant="outline" size="sm" onClick={handleFetchFromSheets} isLoading={isSyncing} disabled={!permissions.canPullSheets}>
-              <Activity className="w-4 h-4 mr-2" /> Traer de Sheets
-           </Button>
-           {permissions.canPushSheets ? (
-           <Button size="sm" onClick={handlePushToSheets} isLoading={isSyncing}>
-              <Upload className="w-4 h-4 mr-2" /> Guardar en Sheets
-           </Button>
-           ) : null}
-           <Button variant="outline" size="sm" onClick={handleLogout}>
+        <div className="flex flex-col items-start gap-2 md:items-end">
+          {permissions.canPullSheets && lastSyncLabel ? (
+            <p className="text-xs text-[var(--ink-600)]">
+              Última actualización: {lastSyncLabel}
+            </p>
+          ) : null}
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={handleFetchFromSheets} isLoading={isSyncing} disabled={!permissions.canPullSheets}>
+              <RefreshCw className="w-4 h-4 mr-2" /> Actualizar directorio
+            </Button>
+            {permissions.canPushSheets ? (
+              <Button size="sm" onClick={handlePushToSheets} isLoading={isSyncing}>
+                <Upload className="w-4 h-4 mr-2" /> Guardar en Sheets
+              </Button>
+            ) : null}
+            <Button variant="outline" size="sm" onClick={handleLogout}>
               Cerrar sesión
-           </Button>
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -679,25 +743,6 @@ export default function AdminDashboard() {
           >
             Vista general
           </button>
-          
-          
-          {userRole === 'admin' && (
-            <>
-              <button
-                onClick={() => setActiveTab('upload')}
-                className={cn("whitespace-nowrap flex items-center py-4 px-1 border-b-2 text-sm transition-colors", activeTab === 'upload' ? currentTabStyle : defaultTabStyle)}
-              >
-                Carga de estudiantes
-              </button>
-              <button
-                onClick={() => setActiveTab('goals')}
-                className={cn("whitespace-nowrap flex items-center py-4 px-1 border-b-2 text-sm transition-colors", activeTab === 'goals' ? currentTabStyle : defaultTabStyle)}
-              >
-                Catálogo de metas
-              </button>
-            </>
-          )}
-
           <button
             onClick={() => setActiveTab('settings')}
             className={cn("whitespace-nowrap flex items-center py-4 px-1 border-b-2 text-sm transition-colors", activeTab === 'settings' ? currentTabStyle : defaultTabStyle)}
@@ -736,7 +781,7 @@ export default function AdminDashboard() {
                   Comparte el acceso con tu estudiante
                 </h3>
                 <p className="mt-1 text-sm text-[var(--ink-700)]">
-                  Usa este enlace o muestra el QR para que el estudiante entre directo a Navi y registre su llegada.
+                  Usa este enlace o muestra el QR para que el estudiante entre directo a faro y registre su llegada.
                 </p>
                 <div className="mt-4 rounded-xl border border-[rgba(15,76,129,0.12)] bg-[rgba(15,76,129,0.04)] px-3 py-2 font-mono text-xs text-[var(--ink-800)] break-all">
                   {checkInLink}
@@ -931,58 +976,13 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* TAB 2: UPLOAD */}
-      {activeTab === 'upload' && (
-        <div className="max-w-3xl animate-in fade-in duration-300">
-          <Card className="shadow-sm border-gray-200">
-            <CardContent className="p-6 md:p-8">
-              <div className="flex items-start gap-4 mb-6">
-                <div className="p-3 bg-brand-100 rounded-xl text-brand-600">
-                  <FileText className="h-6 w-6"/>
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900">Carga masiva de estudiantes</h2>
-                  <p className="text-gray-500 text-sm mt-1">
-                    Copia y pega los datos de tu Excel. El sistema reconoce tabulaciones. <br/>
-                    **Orden esperado:** <code>Matrícula</code> | <code>Nombre</code> | <code>Correo</code> | <code>NicknameMentor</code>
-                  </p>
-                </div>
-              </div>
-
-              <textarea
-                className="w-full rounded-xl border border-gray-300 p-4 text-sm font-mono text-gray-700 shadow-inner focus:border-brand-500 focus:ring-brand-500 transition-all resize-none mb-4"
-                rows="10"
-                placeholder={`A01234567\tJuan Pérez\tA01234567@tec.mx\tJR\nA01998877\tAna Sofía Garza\tA01998877@tec.mx\tKaren`}
-                value={uploadText}
-                onChange={(e) => setUploadText(e.target.value)}
-              />
-
-              <div className="flex justify-between items-center border-t border-gray-100 pt-6">
-                <Button variant="outline" className="text-red-600 hover:text-red-700 hover:bg-red-50" onClick={handleClearStudents}>
-                  <Trash2 className="w-4 h-4 mr-2"/> Borrar directorio actual
-                </Button>
-                <Button onClick={handleParseUpload} disabled={!uploadText.trim()}>
-                  <Upload className="w-4 h-4 mr-2"/> Importar {uploadText.trim() ? uploadText.split('\n').filter(Boolean).length : 0} Registros
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {activeTab === 'goals' && userRole === 'admin' && (
-        <div className="animate-in fade-in duration-300">
-          <GoalManager />
-        </div>
-      )}
-
-      {/* TAB 3: DEMO & SETTINGS */}
+      {/* TAB 2: SETTINGS */}
       {activeTab === 'settings' && (
         <div className="max-w-3xl animate-in fade-in duration-300 space-y-6">
           <div className="rounded-2xl border border-[rgba(15,76,129,0.12)] bg-[rgba(15,76,129,0.04)] px-5 py-4">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--navy-600)]">Solo administración</p>
             <p className="mt-2 text-sm text-[var(--ink-700)]">
-              Aquí se definen conexiones, agenda, simulación y parámetros globales del sistema.
+              Aquí se mantienen solo las conexiones y parámetros operativos mínimos del sistema. El directorio, staff y metas se administran directamente en Sheets.
             </p>
           </div>
           
@@ -1033,34 +1033,6 @@ export default function AdminDashboard() {
           <Card className="shadow-sm border-[rgba(15,76,129,0.12)]">
             <CardContent className="p-6 md:p-8">
               <div className="flex items-start gap-4 mb-6">
-                <div className="p-3 bg-[rgba(15,76,129,0.08)] rounded-xl text-[var(--navy-500)]">
-                  <Users className="h-6 w-6"/>
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-[var(--ink-900)]">Mentores y comunidades</h2>
-                  <p className="text-[var(--ink-700)] text-sm mt-1">
-                    Pega tu lista de mentores para habilitar la asociación automática y los colores por comunidad. <br/>
-                    **Formato:** <code>Comunidad</code> | <code>HexColor</code> | <code>Nombre</code> | <code>Nickname</code> | <code>Email</code>
-                  </p>
-                </div>
-              </div>
-
-              <textarea
-                className="w-full rounded-xl border border-gray-300 p-4 text-sm font-mono text-gray-700 shadow-inner focus:border-brand-500 focus:ring-brand-500 transition-all resize-none mb-4"
-                rows="6"
-                placeholder={`Comunidad A\t#79858B\tNombre Mentor\tMentor\tmentor@tec.mx`}
-                value={mentorSyncText}
-                onChange={(e) => setMentorSyncText(e.target.value)}
-              />
-              <Button onClick={handleParseMentors} disabled={!mentorSyncText.trim()}>
-                    Actualizar mentores
-                  </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-sm border-[rgba(15,76,129,0.12)]">
-            <CardContent className="p-6 md:p-8">
-              <div className="flex items-start gap-4 mb-6">
                 <div className="p-3 bg-[rgba(210,106,92,0.10)] rounded-xl text-[var(--coral-500)]">
                   <Beaker className="h-6 w-6"/>
                 </div>
@@ -1088,38 +1060,6 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="shadow-sm border-gray-200">
-            <CardContent className="p-6 md:p-8">
-              <h2 className="text-xl font-bold text-gray-900 mb-2">Envío de correo de prueba</h2>
-              <p className="text-gray-500 text-sm mb-6">
-                Envía un correo de prueba para revisar cómo luce la invitación en una bandeja real.
-              </p>
-
-              <div className="flex gap-3">
-                <input 
-                  type="email" 
-                  placeholder="tu.correo@tec.mx" 
-                  className="flex-1 rounded-xl border border-gray-300 px-4 py-2 focus:border-brand-500 focus:ring-brand-500"
-                  value={testEmail}
-                  onChange={(e) => setTestEmail(e.target.value)}
-                />
-                <Button 
-                  onClick={() => {
-                    setIsSendingTest(true);
-                    setTimeout(() => {
-                      setFeedback({ tone: 'success', message: `Correo de prueba enviado a ${testEmail}.` });
-                      setIsSendingTest(false);
-                      setTestEmail('');
-                    }, 1200);
-                  }}
-                  disabled={!testEmail.includes('@')}
-                  isLoading={isSendingTest}
-                >
-                  <Send className="w-4 h-4 mr-2"/> Enviar prueba
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
           <Card className="shadow-sm border-[rgba(15,76,129,0.12)]">
             <CardContent className="p-6 md:p-8">
               <div className="flex items-start gap-4 mb-6">
@@ -1387,7 +1327,7 @@ export default function AdminDashboard() {
             <CardContent className="p-6 md:p-8">
               <div className="flex justify-between items-start mb-6 border-b border-[rgba(15,76,129,0.1)] pb-4">
                 <div>
-                  <h3 className="font-display text-2xl font-bold text-[var(--ink-900)]">Diagnóstico Remoto</h3>
+                  <h3 className="font-display text-2xl font-bold text-[var(--ink-900)]">Resultado de mentoría</h3>
                   <p className="text-[var(--ink-700)]">{selectedStudentForDiagnostic.preferredName || selectedStudentForDiagnostic.name} · {selectedStudentForDiagnostic.matricula}</p>
                 </div>
                 <button 
@@ -1406,7 +1346,9 @@ export default function AdminDashboard() {
               ) : null}
 
               {(() => {
-                const diag = responses.find(r => r.matricula && r.matricula.toUpperCase() === selectedStudentForDiagnostic.matricula.toUpperCase());
+                const matricula = String(selectedStudentForDiagnostic.matricula || '').trim().toUpperCase();
+                const diag = responses.find(r => r.matricula && r.matricula.toUpperCase() === matricula);
+                const goalSelection = latestGoalSelectionsByMatricula.get(matricula);
                 if (!diag) return <p className="text-[var(--ink-700)] bg-[rgba(15,76,129,0.04)] p-4 rounded-xl text-center">Aún no hay resultados de test guardados en la base de datos para este estudiante.</p>;
                 return (
                   <div className="space-y-6">
@@ -1454,6 +1396,103 @@ export default function AdminDashboard() {
                             );
                           })}
                         </div>
+                    </div>
+
+                    <div className="rounded-2xl border border-[rgba(15,76,129,0.12)] bg-[rgba(15,76,129,0.04)] p-4">
+                      <h4 className="font-bold text-[var(--ink-900)] mb-3">Metas acordadas</h4>
+                      {goalSelection ? (
+                        <div className="space-y-3 text-sm text-[var(--ink-800)]">
+                          <div>
+                            <p className="text-xs font-semibold uppercase tracking-wider text-[var(--ink-500)]">Meta prioritaria</p>
+                            <p className="mt-1">{goalSelection.metaprioritaria || 'Sin registro'}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs font-semibold uppercase tracking-wider text-[var(--ink-500)]">Meta complementaria</p>
+                            <p className="mt-1">{goalSelection.metacomplementaria || 'Sin registro'}</p>
+                          </div>
+                          <div className="grid gap-3 sm:grid-cols-2">
+                            <div>
+                              <p className="text-xs font-semibold uppercase tracking-wider text-[var(--ink-500)]">Horizonte</p>
+                              <p className="mt-1">{goalSelection.tiempo || 'Sin registro'}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs font-semibold uppercase tracking-wider text-[var(--ink-500)]">Obstáculo principal</p>
+                              <p className="mt-1">{goalSelection.obstaculo || 'Sin registro'}</p>
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-xs font-semibold uppercase tracking-wider text-[var(--ink-500)]">Estrategia si-entonces</p>
+                            <p className="mt-1 whitespace-pre-line">{goalSelection.plan || 'Sin registro'}</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-[var(--ink-700)]">Este estudiante aún no tiene metas guardadas en la plataforma.</p>
+                      )}
+                    </div>
+
+                    <div className="rounded-2xl border border-[rgba(15,76,129,0.12)] bg-white p-4 space-y-4">
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div>
+                          <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--ink-500)]">Fecha de sesión</label>
+                          <input
+                            type="date"
+                            className="mt-2 w-full rounded-xl border border-[rgba(15,76,129,0.12)] px-3 py-2 text-sm focus:border-[var(--navy-500)] focus:outline-none focus:ring-2 focus:ring-[rgba(15,76,129,0.12)]"
+                            value={mentoringSessionDraft.fechaSesion}
+                            onChange={(e) => setMentoringSessionDraft((current) => ({ ...current, fechaSesion: e.target.value }))}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--ink-500)]">Estado de documentación</label>
+                          <select
+                            className="mt-2 w-full rounded-xl border border-[rgba(15,76,129,0.12)] px-3 py-2 text-sm focus:border-[var(--navy-500)] focus:outline-none focus:ring-2 focus:ring-[rgba(15,76,129,0.12)]"
+                            value={mentoringSessionDraft.estadoDocumentacion}
+                            onChange={(e) => setMentoringSessionDraft((current) => ({ ...current, estadoDocumentacion: e.target.value }))}
+                          >
+                            <option value="Borrador">Borrador</option>
+                            <option value="Documentado">Documentado</option>
+                            <option value="Requiere seguimiento">Requiere seguimiento</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--ink-500)]">Observaciones del mentor</label>
+                        <textarea
+                          className="mt-2 w-full rounded-xl border border-[rgba(15,76,129,0.12)] px-3 py-3 text-sm focus:border-[var(--navy-500)] focus:outline-none focus:ring-2 focus:ring-[rgba(15,76,129,0.12)] min-h-[120px] resize-none"
+                          placeholder="Agrega aquí tus notas adicionales, si las hay. P. ej. invité a sesión 1 a 1 para seguimiento particular de un tema."
+                          value={mentoringSessionDraft.notasMentor}
+                          onChange={(e) => setMentoringSessionDraft((current) => ({ ...current, notasMentor: e.target.value }))}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--ink-500)]">Acciones de seguimiento</label>
+                        <textarea
+                          className="mt-2 w-full rounded-xl border border-[rgba(15,76,129,0.12)] px-3 py-3 text-sm focus:border-[var(--navy-500)] focus:outline-none focus:ring-2 focus:ring-[rgba(15,76,129,0.12)] min-h-[88px] resize-none"
+                          placeholder="Ej. seguimiento por mensaje antes de la próxima sesión, canalización o cita 1:1."
+                          value={mentoringSessionDraft.seguimiento}
+                          onChange={(e) => setMentoringSessionDraft((current) => ({ ...current, seguimiento: e.target.value }))}
+                        />
+                      </div>
+
+                      <label className="flex items-center gap-3 text-sm text-[var(--ink-800)]">
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 rounded border-[rgba(15,76,129,0.18)] text-[var(--navy-600)] focus:ring-[rgba(15,76,129,0.16)]"
+                          checked={mentoringSessionDraft.documentadoCrm}
+                          onChange={(e) => setMentoringSessionDraft((current) => ({ ...current, documentadoCrm: e.target.checked }))}
+                        />
+                        Marcar como documentado en CRM
+                      </label>
+
+                      <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+                        <Button variant="outline" onClick={handleCopyMentoringSummary}>
+                          Copiar resumen para CRM
+                        </Button>
+                        <Button onClick={handleSaveMentoringSession} isLoading={isSavingMentoringSession}>
+                          Guardar en Sheets
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 );
