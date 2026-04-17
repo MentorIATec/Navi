@@ -4,6 +4,7 @@ import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { ArrowRight, UserCircle } from 'lucide-react';
 import { apiClient } from '../api/client';
+import { DIAGNOSTIC_BANK } from '../data/diagnosticBank';
 
 export default function Welcome() {
   const navigate = useNavigate();
@@ -66,6 +67,36 @@ export default function Welcome() {
           matricula: student.matricula || matricula.toUpperCase(),
           preferredName: preferredName.trim(),
         });
+      }
+
+      try {
+        const existingResponse = await apiClient.post('getTestResponse', {
+          matricula: student.matricula || matricula.toUpperCase(),
+        });
+
+        if (existingResponse?.data) {
+          const { etapa, scores } = existingResponse.data;
+          const questions = DIAGNOSTIC_BANK[etapa] || [];
+          const answers = {};
+
+          questions.forEach((question) => {
+            answers[question.key] = scores[question.category] || 0;
+          });
+
+          localStorage.setItem('navi_diagnostic_payload', JSON.stringify({
+            stage: etapa,
+            answers,
+            questions,
+          }));
+          localStorage.setItem('navi_diagnostic_answers', JSON.stringify(answers));
+          localStorage.setItem('navi_diagnostic_stage', etapa);
+          localStorage.removeItem('navi_missing_remote_test');
+
+          navigate('/resultados');
+          return;
+        }
+      } catch (responseError) {
+        console.warn('No se encontraron respuestas previas para esta matrícula. Se habilita un diagnóstico nuevo.', responseError);
       }
 
       navigate('/test');
