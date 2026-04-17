@@ -4,7 +4,7 @@ import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { ArrowRight, UserCircle } from 'lucide-react';
 import { apiClient } from '../api/client';
-import { DIAGNOSTIC_BANK } from '../data/diagnosticBank';
+import { fetchAndPersistExistingDiagnostic } from '../utils/diagnosticSession';
 
 export default function Welcome() {
   const navigate = useNavigate();
@@ -70,29 +70,12 @@ export default function Welcome() {
       }
 
       try {
-        const existingResponse = await apiClient.post('getTestResponse', {
-          matricula: student.matricula || matricula.toUpperCase(),
-        });
-        const diagnostic = existingResponse?.data || existingResponse;
+        const hasExistingDiagnostic = await fetchAndPersistExistingDiagnostic(
+          apiClient,
+          student.matricula || matricula.toUpperCase()
+        );
 
-        if (diagnostic?.etapa) {
-          const { etapa, scores } = diagnostic;
-          const questions = DIAGNOSTIC_BANK[etapa] || [];
-          const answers = {};
-
-          questions.forEach((question) => {
-            answers[question.key] = scores[question.category] || 0;
-          });
-
-          localStorage.setItem('navi_diagnostic_payload', JSON.stringify({
-            stage: etapa,
-            answers,
-            questions,
-          }));
-          localStorage.setItem('navi_diagnostic_answers', JSON.stringify(answers));
-          localStorage.setItem('navi_diagnostic_stage', etapa);
-          localStorage.removeItem('navi_missing_remote_test');
-
+        if (hasExistingDiagnostic) {
           navigate('/resultados');
           return;
         }
