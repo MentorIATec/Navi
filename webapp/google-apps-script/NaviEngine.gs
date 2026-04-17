@@ -317,7 +317,7 @@ function findStudent(ss, data) {
   const student = students.find(item => String(item.matricula || item.matrcula || '').toUpperCase() === matricula);
 
   if (!student) {
-    return jsonResponse_({ status: 'error', message: 'Alumno no encontrado' });
+    return jsonResponse_({ status: 'success', data: { student: null, mentor: null } });
   }
 
   const mentor = staff.find(item => item.alias === student.nicknamementor) || null;

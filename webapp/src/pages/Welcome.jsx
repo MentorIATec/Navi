@@ -74,8 +74,8 @@ export default function Welcome() {
           matricula: student.matricula || matricula.toUpperCase(),
         });
 
-        if (existingResponse?.data) {
-          const { etapa, scores } = existingResponse.data;
+        if (existingResponse?.etapa) {
+          const { etapa, scores } = existingResponse;
           const questions = DIAGNOSTIC_BANK[etapa] || [];
           const answers = {};
 
