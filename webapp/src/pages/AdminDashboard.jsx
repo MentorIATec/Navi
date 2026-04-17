@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { Mail, Search, Users, Activity, CheckCircle, Upload, ShieldAlert, Send, Beaker, CalendarDays, LayoutDashboard, RefreshCw } from 'lucide-react';
+import { Mail, Search, Users, Activity, CheckCircle, Upload, ShieldAlert, Send, Beaker, RefreshCw } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { cn } from '../utils/cn';
 import { apiClient } from '../api/client';
@@ -92,6 +92,10 @@ export default function AdminDashboard() {
     const saved = localStorage.getItem('navi_goal_selections');
     return saved ? JSON.parse(saved) : [];
   });
+  const [sessions, setSessions] = useState(() => {
+    const saved = localStorage.getItem('navi_mentoring_sessions');
+    return saved ? JSON.parse(saved) : [];
+  });
 
   // Tab 1: Dashboard
   const [searchTerm, setSearchTerm] = useState('');
@@ -124,8 +128,6 @@ export default function AdminDashboard() {
   const [mentoringSessionDraft, setMentoringSessionDraft] = useState({
     fechaSesion: new Date().toISOString().slice(0, 10),
     notasMentor: '',
-    seguimiento: '',
-    estadoDocumentacion: 'Borrador',
     documentadoCrm: false,
   });
   const [isSavingMentoringSession, setIsSavingMentoringSession] = useState(false);
@@ -197,6 +199,10 @@ export default function AdminDashboard() {
   useEffect(() => {
     localStorage.setItem('navi_goal_selections', JSON.stringify(goalSelections));
   }, [goalSelections]);
+
+  useEffect(() => {
+    localStorage.setItem('navi_mentoring_sessions', JSON.stringify(sessions));
+  }, [sessions]);
 
   useEffect(() => {
     localStorage.setItem('navi_booking_config', JSON.stringify(bookingConfig));
@@ -285,6 +291,40 @@ export default function AdminDashboard() {
     return map;
   }, [goalSelections]);
 
+  const latestResponsesByMatricula = useMemo(() => {
+    const map = new Map();
+    [...responses]
+      .sort((a, b) => {
+        const aDate = new Date(a.fechaTest || a.fechatest || a.timestamp || 0).getTime();
+        const bDate = new Date(b.fechaTest || b.fechatest || b.timestamp || 0).getTime();
+        return bDate - aDate;
+      })
+      .forEach((item) => {
+        const key = String(item.matricula || '').trim().toUpperCase();
+        if (key && !map.has(key)) {
+          map.set(key, item);
+        }
+      });
+    return map;
+  }, [responses]);
+
+  const latestSessionsByMatricula = useMemo(() => {
+    const map = new Map();
+    [...sessions]
+      .sort((a, b) => {
+        const aDate = new Date(a.timestampGuardado || a.timestamp_guardado || a.fechaSesion || a.fecha_sesion || 0).getTime();
+        const bDate = new Date(b.timestampGuardado || b.timestamp_guardado || b.fechaSesion || b.fecha_sesion || 0).getTime();
+        return bDate - aDate;
+      })
+      .forEach((item) => {
+        const key = String(item.matricula || '').trim().toUpperCase();
+        if (key && !map.has(key)) {
+          map.set(key, item);
+        }
+      });
+    return map;
+  }, [sessions]);
+
   const buildMentoringSummary = (student, diag, goalSelection, draft) => {
     const studentName = student?.preferredName || student?.name || 'Estudiante';
     const areas = String(diag?.areasprioritarias || '').split(',').map((item) => item.trim()).filter(Boolean).join(', ') || 'Sin áreas prioritarias registradas';
@@ -301,25 +341,37 @@ export default function AdminDashboard() {
       `Metas acordadas: ${metas}`,
       '',
       `Notas del mentor: ${draft.notasMentor || 'Sin notas adicionales.'}`,
-      `Seguimiento: ${draft.seguimiento || 'Sin seguimiento adicional.'}`,
-      `Estado: ${draft.estadoDocumentacion}`,
+      `Estado: ${draft.documentadoCrm ? 'Documentado en CRM' : 'Pendiente de documentar en CRM'}`,
     ].join('\n');
   };
 
   useEffect(() => {
     if (!selectedStudentForDiagnostic) return;
+    const matricula = String(selectedStudentForDiagnostic.matricula || '').trim().toUpperCase();
+    const draftStore = JSON.parse(localStorage.getItem('navi_mentoring_session_drafts') || '{}');
+    const latestSaved = latestSessionsByMatricula.get(matricula);
+    const persistedDraft = draftStore[matricula];
     setMentoringSessionDraft({
-      fechaSesion: new Date().toISOString().slice(0, 10),
-      notasMentor: '',
-      seguimiento: '',
-      estadoDocumentacion: 'Borrador',
-      documentadoCrm: false,
+      fechaSesion: persistedDraft?.fechaSesion || latestSaved?.fechaSesion || latestSaved?.fecha_sesion || new Date().toISOString().slice(0, 10),
+      notasMentor: persistedDraft?.notasMentor || latestSaved?.notasMentor || latestSaved?.notas_mentor || '',
+      documentadoCrm: Boolean(
+        persistedDraft?.documentadoCrm ??
+        (String(latestSaved?.documentadoCrm || latestSaved?.documentado_crm || '').toLowerCase() === 'si')
+      ),
     });
-  }, [selectedStudentForDiagnostic]);
+  }, [selectedStudentForDiagnostic, latestSessionsByMatricula]);
+
+  useEffect(() => {
+    if (!selectedStudentForDiagnostic) return;
+    const matricula = String(selectedStudentForDiagnostic.matricula || '').trim().toUpperCase();
+    const draftStore = JSON.parse(localStorage.getItem('navi_mentoring_session_drafts') || '{}');
+    draftStore[matricula] = mentoringSessionDraft;
+    localStorage.setItem('navi_mentoring_session_drafts', JSON.stringify(draftStore));
+  }, [mentoringSessionDraft, selectedStudentForDiagnostic]);
 
   const StatusBadge = ({ student }) => {
     const { status, checkIn } = student;
-    const response = responses.find(r => r.matricula && r.matricula.toUpperCase() === student.matricula.toUpperCase());
+    const response = latestResponsesByMatricula.get(String(student.matricula || '').trim().toUpperCase());
     
     // Logic for No-Show according to methodology (Test Done but Check-in No)
     if (status === 'Test Completado' && checkIn === 'No') {
@@ -357,7 +409,7 @@ export default function AdminDashboard() {
     noshow: 'Seguimiento a ausencias',
   };
 
-  const handleOpenCampaignConfig = (type) => {
+  const _handleOpenCampaignConfig = (type) => {
     setCampaignType(type);
     let defaults = {
       invitation: { 
@@ -445,6 +497,7 @@ export default function AdminDashboard() {
       if (data.mentors) setMentors(data.mentors.map(normalizeMentor));
       if (data.responses) setResponses(data.responses);
       if (data.goalSelections) setGoalSelections(data.goalSelections);
+      if (data.sessions) setSessions(data.sessions);
       const now = new Date().toISOString();
       localStorage.setItem('navi_last_sync_at', now);
       setLastSyncAt(now);
@@ -515,7 +568,7 @@ export default function AdminDashboard() {
   const handleCopyMentoringSummary = async () => {
     if (!selectedStudentForDiagnostic) return;
     const matricula = String(selectedStudentForDiagnostic.matricula || '').trim().toUpperCase();
-    const diag = responses.find((r) => String(r.matricula || '').trim().toUpperCase() === matricula);
+    const diag = latestResponsesByMatricula.get(matricula);
     const goalSelection = latestGoalSelectionsByMatricula.get(matricula);
     const summary = buildMentoringSummary(selectedStudentForDiagnostic, diag, goalSelection, mentoringSessionDraft);
 
@@ -531,7 +584,7 @@ export default function AdminDashboard() {
     if (!selectedStudentForDiagnostic) return;
 
     const matricula = String(selectedStudentForDiagnostic.matricula || '').trim().toUpperCase();
-    const diag = responses.find((r) => String(r.matricula || '').trim().toUpperCase() === matricula);
+    const diag = latestResponsesByMatricula.get(matricula);
     const goalSelection = latestGoalSelectionsByMatricula.get(matricula);
 
     setIsSavingMentoringSession(true);
@@ -555,9 +608,40 @@ export default function AdminDashboard() {
         obstaculo: goalSelection?.obstaculo || '',
         estrategia: goalSelection?.plan || '',
         notasMentor: mentoringSessionDraft.notasMentor,
-        seguimiento: mentoringSessionDraft.seguimiento,
-        estadoDocumentacion: mentoringSessionDraft.estadoDocumentacion,
+        estadoDocumentacion: mentoringSessionDraft.documentadoCrm ? 'Documentado' : 'Borrador',
         documentadoCrm: mentoringSessionDraft.documentadoCrm,
+      });
+
+      const nextEntry = {
+        matricula,
+        nombre: selectedStudentForDiagnostic.preferredName || selectedStudentForDiagnostic.name || '',
+        mentor: selectedStudentForDiagnostic.mentor || '',
+        comunidad: selectedStudentForDiagnostic.community || '',
+        fechaSesion: mentoringSessionDraft.fechaSesion,
+        modalidad: diag?.modalidad || (selectedStudentForDiagnostic.checkIn === 'Si' ? 'presencial' : 'remoto'),
+        etapa: diag?.etapa || '',
+        areasPrioritarias: diag?.areasprioritarias || '',
+        pretestResumen: selectedStudentForDiagnostic.agenciaCheckIn || '',
+        checkinResumen: selectedStudentForDiagnostic.checkIn === 'Si'
+          ? (selectedStudentForDiagnostic.agenciaCheckIn || 'Asistió a sesión presencial.')
+          : 'No asistió a sesión presencial.',
+        metaPrioritaria: goalSelection?.metaprioritaria || '',
+        metaComplementaria: goalSelection?.metacomplementaria || '',
+        horizonte: goalSelection?.tiempo || '',
+        obstaculo: goalSelection?.obstaculo || '',
+        estrategia: goalSelection?.plan || '',
+        notasMentor: mentoringSessionDraft.notasMentor,
+        estadoDocumentacion: mentoringSessionDraft.documentadoCrm ? 'Documentado' : 'Borrador',
+        documentadoCrm: mentoringSessionDraft.documentadoCrm ? 'Si' : 'No',
+        timestampGuardado: new Date().toISOString(),
+      };
+      setSessions((current) => {
+        const remaining = current.filter((item) => {
+          const sameMatricula = String(item.matricula || '').trim().toUpperCase() === matricula;
+          const sameFecha = String(item.fechaSesion || item.fecha_sesion || '').trim() === mentoringSessionDraft.fechaSesion;
+          return !(sameMatricula && sameFecha);
+        });
+        return [nextEntry, ...remaining];
       });
 
       const warning = result?.warning ? ` ${result.warning}` : '';
@@ -937,10 +1021,9 @@ export default function AdminDashboard() {
                   <p className="text-sm text-[var(--ink-700)] mb-4 h-10">Envío masivo a estudiantes que aún no completaron el test.</p>
                   <Button
                     className="w-full"
-                    onClick={() => handleOpenCampaignConfig('invitation')}
-                    disabled={stats.pendientes === 0}
+                    onClick={() => setFeedback({ tone: 'error', message: 'Campañas en rediseño. Por ahora no se envían desde este panel.' })}
                   >
-                    Enviar invitación · {stats.pendientes} pendientes
+                    Campañas en rediseño
                   </Button>
                 </CardContent>
               </Card>
@@ -951,9 +1034,9 @@ export default function AdminDashboard() {
                   <p className="text-sm text-[var(--ink-700)] mb-4 h-10">Aviso a estudiantes listos para su sesión presencial.</p>
                   <Button
                     className="w-full"
-                    onClick={() => handleOpenCampaignConfig('session')}
+                    onClick={() => setFeedback({ tone: 'error', message: 'Campañas en rediseño. Por ahora no se envían desde este panel.' })}
                   >
-                    Enviar convocatoria · {stats.sessionReady} listos
+                    Campañas en rediseño
                   </Button>
                 </CardContent>
               </Card>
@@ -964,10 +1047,9 @@ export default function AdminDashboard() {
                   <p className="text-sm text-[var(--ink-700)] mb-4 h-10">Mensaje a estudiantes que no asistieron a su sesión.</p>
                   <Button
                     className="w-full"
-                    onClick={() => handleOpenCampaignConfig('noshow')}
-                    disabled={stats.noShows === 0}
+                    onClick={() => setFeedback({ tone: 'error', message: 'Campañas en rediseño. Por ahora no se envían desde este panel.' })}
                   >
-                    Enviar seguimiento · {stats.noShows} ausentes
+                    Campañas en rediseño
                   </Button>
                 </CardContent>
               </Card>
@@ -1347,7 +1429,7 @@ export default function AdminDashboard() {
 
               {(() => {
                 const matricula = String(selectedStudentForDiagnostic.matricula || '').trim().toUpperCase();
-                const diag = responses.find(r => r.matricula && r.matricula.toUpperCase() === matricula);
+                const diag = latestResponsesByMatricula.get(matricula);
                 const goalSelection = latestGoalSelectionsByMatricula.get(matricula);
                 if (!diag) return <p className="text-[var(--ink-700)] bg-[rgba(15,76,129,0.04)] p-4 rounded-xl text-center">Aún no hay resultados de test guardados en la base de datos para este estudiante.</p>;
                 return (
@@ -1431,47 +1513,26 @@ export default function AdminDashboard() {
                     </div>
 
                     <div className="rounded-2xl border border-[rgba(15,76,129,0.12)] bg-white p-4 space-y-4">
-                      <div className="grid gap-4 sm:grid-cols-2">
-                        <div>
-                          <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--ink-500)]">Fecha de sesión</label>
-                          <input
-                            type="date"
-                            className="mt-2 w-full rounded-xl border border-[rgba(15,76,129,0.12)] px-3 py-2 text-sm focus:border-[var(--navy-500)] focus:outline-none focus:ring-2 focus:ring-[rgba(15,76,129,0.12)]"
-                            value={mentoringSessionDraft.fechaSesion}
-                            onChange={(e) => setMentoringSessionDraft((current) => ({ ...current, fechaSesion: e.target.value }))}
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--ink-500)]">Estado de documentación</label>
-                          <select
-                            className="mt-2 w-full rounded-xl border border-[rgba(15,76,129,0.12)] px-3 py-2 text-sm focus:border-[var(--navy-500)] focus:outline-none focus:ring-2 focus:ring-[rgba(15,76,129,0.12)]"
-                            value={mentoringSessionDraft.estadoDocumentacion}
-                            onChange={(e) => setMentoringSessionDraft((current) => ({ ...current, estadoDocumentacion: e.target.value }))}
-                          >
-                            <option value="Borrador">Borrador</option>
-                            <option value="Documentado">Documentado</option>
-                            <option value="Requiere seguimiento">Requiere seguimiento</option>
-                          </select>
-                        </div>
+                      <div>
+                        <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--ink-500)]">Fecha de sesión</label>
+                        <input
+                          type="date"
+                          className="mt-2 w-full rounded-xl border border-[rgba(15,76,129,0.12)] px-3 py-2 text-sm focus:border-[var(--navy-500)] focus:outline-none focus:ring-2 focus:ring-[rgba(15,76,129,0.12)]"
+                          value={mentoringSessionDraft.fechaSesion}
+                          onChange={(e) => setMentoringSessionDraft((current) => ({ ...current, fechaSesion: e.target.value }))}
+                        />
+                        <p className="mt-2 text-xs text-[var(--ink-600)]">
+                          Este borrador se conserva en este equipo hasta que cierres o guardes la sesión.
+                        </p>
                       </div>
 
                       <div>
                         <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--ink-500)]">Observaciones del mentor</label>
                         <textarea
                           className="mt-2 w-full rounded-xl border border-[rgba(15,76,129,0.12)] px-3 py-3 text-sm focus:border-[var(--navy-500)] focus:outline-none focus:ring-2 focus:ring-[rgba(15,76,129,0.12)] min-h-[120px] resize-none"
-                          placeholder="Agrega aquí tus notas adicionales, si las hay. P. ej. invité a sesión 1 a 1 para seguimiento particular de un tema."
+                          placeholder="Agrega aquí tus notas adicionales, si las hay."
                           value={mentoringSessionDraft.notasMentor}
                           onChange={(e) => setMentoringSessionDraft((current) => ({ ...current, notasMentor: e.target.value }))}
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--ink-500)]">Acciones de seguimiento</label>
-                        <textarea
-                          className="mt-2 w-full rounded-xl border border-[rgba(15,76,129,0.12)] px-3 py-3 text-sm focus:border-[var(--navy-500)] focus:outline-none focus:ring-2 focus:ring-[rgba(15,76,129,0.12)] min-h-[88px] resize-none"
-                          placeholder="Ej. seguimiento por mensaje antes de la próxima sesión, canalización o cita 1:1."
-                          value={mentoringSessionDraft.seguimiento}
-                          onChange={(e) => setMentoringSessionDraft((current) => ({ ...current, seguimiento: e.target.value }))}
                         />
                       </div>
 

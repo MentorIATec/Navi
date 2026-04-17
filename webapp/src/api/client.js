@@ -416,7 +416,15 @@ export const apiClient = {
           ...data,
           timestampGuardado: new Date().toISOString(),
         };
-        localStorage.setItem('navi_mentoring_sessions', JSON.stringify([nextEntry, ...sessions]));
+        const nextSessions = [
+          nextEntry,
+          ...sessions.filter((item) => {
+            const sameMatricula = String(item.matricula || '').trim().toUpperCase() === String(data.matricula || '').trim().toUpperCase();
+            const sameFecha = String(item.fechaSesion || item.fecha_sesion || '').trim() === String(data.fechaSesion || '').trim();
+            return !(sameMatricula && sameFecha);
+          }),
+        ];
+        localStorage.setItem('navi_mentoring_sessions', JSON.stringify(nextSessions));
         return {
           status: 'success',
           source: 'fallback',
@@ -526,7 +534,16 @@ export const apiClient = {
             break;
           case 'saveMentoringSession': {
             const sessions = JSON.parse(localStorage.getItem('navi_mentoring_sessions') || '[]');
-            localStorage.setItem('navi_mentoring_sessions', JSON.stringify([{ ...data, timestampGuardado: new Date().toISOString() }, ...sessions]));
+            const nextEntry = { ...data, timestampGuardado: new Date().toISOString() };
+            const nextSessions = [
+              nextEntry,
+              ...sessions.filter((item) => {
+                const sameMatricula = String(item.matricula || '').trim().toUpperCase() === String(data.matricula || '').trim().toUpperCase();
+                const sameFecha = String(item.fechaSesion || item.fecha_sesion || '').trim() === String(data.fechaSesion || '').trim();
+                return !(sameMatricula && sameFecha);
+              }),
+            ];
+            localStorage.setItem('navi_mentoring_sessions', JSON.stringify(nextSessions));
             resolve({ status: 'success' });
             break;
           }

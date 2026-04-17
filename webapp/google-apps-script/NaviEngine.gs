@@ -1205,8 +1205,7 @@ function saveMentoringSession(ss, data) {
   }
 
   const fechaSesion = String(data.fechaSesion || '').trim() || new Date().toISOString().slice(0, 10);
-
-  sheet.appendRow([
+  var row = [
     matricula,
     data.nombre || '',
     data.mentor || '',
@@ -1223,11 +1222,28 @@ function saveMentoringSession(ss, data) {
     data.obstaculo || '',
     data.estrategia || '',
     data.notasMentor || '',
-    data.seguimiento || '',
+    '',
     data.estadoDocumentacion || 'Borrador',
     data.documentadoCrm ? 'Si' : 'No',
     new Date().toISOString(),
-  ]);
+  ];
+
+  var values = sheet.getDataRange().getValues();
+  var targetRow = 0;
+  for (var i = 1; i < values.length; i++) {
+    var currentMatricula = String(values[i][0] || '').trim().toUpperCase();
+    var currentFecha = String(values[i][4] || '').trim();
+    if (currentMatricula === matricula && currentFecha === fechaSesion) {
+      targetRow = i + 1;
+      break;
+    }
+  }
+
+  if (targetRow > 0) {
+    sheet.getRange(targetRow, 1, 1, row.length).setValues([row]);
+  } else {
+    sheet.appendRow(row);
+  }
 
   return jsonResponse_({ status: 'success' });
 }
