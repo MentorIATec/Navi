@@ -69,19 +69,25 @@ function getMicroPre() {
 function getSessionArrivalCopy(microPre) {
   if (!microPre) return null;
 
-  if (microPre.summary && typeof microPre.summary === 'object') {
-    const arrival = String(microPre.summary.arrival || '').trim();
-    const agency = String(microPre.summary.agency || '').trim();
-    if (arrival && agency) {
-      return `Hoy llegas con la sensación de que ${arrival.toLowerCase()} y ${agency.toLowerCase()}. Tengámoslo en cuenta mientras revisamos tu diagnóstico.`;
-    }
-  }
+  const arrivalCopy = {
+    clear: 'Llegaste con energía y disposición para avanzar.',
+    stress: 'Llegaste con algo de carga hoy.',
+    confused: 'Llegaste con dudas sobre por dónde empezar.',
+    sorting: 'Llegaste queriendo ordenar ideas y ganar claridad.',
+  };
 
-  if (typeof microPre.textSummary === 'string' && microPre.textSummary.trim()) {
-    const parts = microPre.textSummary.split('·').map((part) => part.trim()).filter(Boolean);
-    if (parts.length === 2) {
-      return `Hoy llegas con la sensación de que ${parts[0].toLowerCase()} y ${parts[1].toLowerCase()}. Tengámoslo en cuenta mientras revisamos tu diagnóstico.`;
-    }
+  const agencyCopy = {
+    high: 'Sientes que puedes salir con un paso concreto hoy.',
+    medium: 'Crees que podrías lograrlo si te enfocas en lo que importa.',
+    low: 'Todavía no ves claro cuál sería tu siguiente paso.',
+    blocked: 'Hoy te cuesta imaginar por dónde avanzar. Eso también es información.',
+  };
+
+  const arrival = arrivalCopy[microPre.arrival];
+  const agency = agencyCopy[microPre.agency];
+
+  if (arrival && agency) {
+    return `${arrival} ${agency}`;
   }
 
   return null;
@@ -155,9 +161,6 @@ export default function Results() {
                         </p>
                       </div>
                     ) : null}
-                    <p className="text-lg leading-8 text-[var(--ink-700)]">
-                      Esto es lo que tu diagnóstico muestra hoy sobre tu trayectoria.
-                    </p>
                   </div>
                 ) : (
                   <>
