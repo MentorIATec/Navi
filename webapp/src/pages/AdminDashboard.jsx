@@ -325,24 +325,55 @@ export default function AdminDashboard() {
     return map;
   }, [sessions]);
 
+  const humanizeAreaLabel = (value = '') =>
+    String(value || '')
+      .trim()
+      .replace(/_/g, ' ')
+      .replace(/\s+/g, ' ')
+      .toLowerCase();
+
   const buildMentoringSummary = (student, diag, goalSelection, draft) => {
     const studentName = student?.preferredName || student?.name || 'Estudiante';
-    const areas = String(diag?.areasprioritarias || '').split(',').map((item) => item.trim()).filter(Boolean).join(', ') || 'Sin áreas prioritarias registradas';
-    const modalidad = diag?.modalidad || (student?.checkIn === 'Si' ? 'presencial' : 'remoto');
-    const metas = [goalSelection?.metaprioritaria, goalSelection?.metacomplementaria].filter(Boolean).join(' | ') || 'Sin metas registradas';
-
-    return [
+    const areas = String(diag?.areasprioritarias || '')
+      .split(',')
+      .map((item) => humanizeAreaLabel(item))
+      .filter(Boolean);
+    const summaryBlocks = [
       `Sesión de mentoría faro — ${draft.fechaSesion}`,
-      `Estudiante: ${studentName} (${student?.matricula || 'Sin matrícula'})${student?.community ? ` — Comunidad ${student.community}` : ''}`,
+      `Estudiante: ${studentName} (${student?.matricula || 'Sin matrícula'})${student?.community ? ` · Comunidad ${student.community}` : ''}`,
       `Mentor/a: ${student?.mentor || 'Sin mentor asignado'}`,
-      '',
-      `Diagnóstico: ${diag?.etapa || 'General'}, modalidad ${modalidad}`,
-      `Áreas prioritarias: ${areas}`,
-      `Metas acordadas: ${metas}`,
-      '',
-      `Notas del mentor: ${draft.notasMentor || 'Sin notas adicionales.'}`,
-      `Estado: ${draft.documentadoCrm ? 'Documentado en CRM' : 'Pendiente de documentar en CRM'}`,
-    ].join('\n');
+    ];
+
+    if (student?.agenciaCheckIn) {
+      summaryBlocks.push(
+        '',
+        `${student.agenciaCheckIn}.`
+      );
+    }
+
+    if (areas.length > 0) {
+      summaryBlocks.push(
+        '',
+        `El diagnóstico identificó mayor oportunidad de trabajo en ${areas.join(', ')}.`
+      );
+    }
+
+    const commitments = [];
+    if (goalSelection?.metaprioritaria) commitments.push(`Meta prioritaria: ${goalSelection.metaprioritaria}.`);
+    if (goalSelection?.metacomplementaria) commitments.push(`Meta complementaria: ${goalSelection.metacomplementaria}.`);
+    if (goalSelection?.tiempo) commitments.push(`Horizonte: ${goalSelection.tiempo}.`);
+    if (goalSelection?.obstaculo) commitments.push(`Obstáculo identificado: ${goalSelection.obstaculo}.`);
+    if (goalSelection?.plan) commitments.push(`Estrategia: ${goalSelection.plan}.`);
+
+    if (commitments.length > 0) {
+      summaryBlocks.push('', ...commitments);
+    }
+
+    if (draft.notasMentor) {
+      summaryBlocks.push('', `El mentor o mentora señala: ${draft.notasMentor}`);
+    }
+
+    return summaryBlocks.join('\n');
   };
 
   useEffect(() => {
@@ -371,7 +402,6 @@ export default function AdminDashboard() {
 
   const StatusBadge = ({ student }) => {
     const { status, checkIn } = student;
-    const response = latestResponsesByMatricula.get(String(student.matricula || '').trim().toUpperCase());
     
     // Logic for No-Show according to methodology (Test Done but Check-in No)
     if (status === 'Test Completado' && checkIn === 'No') {
@@ -393,12 +423,9 @@ export default function AdminDashboard() {
       'Metas Seleccionadas': 'Plan definido',
     };
 
-    const isCompleted = status === 'Test Completado' || status === 'Metas Seleccionadas';
-    const modalityLabel = isCompleted && response?.modalidad === 'presencial' ? ' (Presencial)' : isCompleted && response?.modalidad === 'remoto' ? ' (Remoto)' : '';
-
     return (
       <span className={cn('px-2.5 py-1 rounded-full text-xs font-medium border', styles[status] || styles['Pendiente'])}>
-        {labels[status] || labels['Pendiente']}{modalityLabel}
+        {labels[status] || labels['Pendiente']}
       </span>
     );
   };
@@ -595,7 +622,7 @@ export default function AdminDashboard() {
         mentor: selectedStudentForDiagnostic.mentor || '',
         comunidad: selectedStudentForDiagnostic.community || '',
         fechaSesion: mentoringSessionDraft.fechaSesion,
-        modalidad: diag?.modalidad || (selectedStudentForDiagnostic.checkIn === 'Si' ? 'presencial' : 'remoto'),
+        modalidad: '',
         etapa: diag?.etapa || '',
         areasPrioritarias: diag?.areasprioritarias || '',
         pretestResumen: selectedStudentForDiagnostic.agenciaCheckIn || '',
@@ -618,7 +645,7 @@ export default function AdminDashboard() {
         mentor: selectedStudentForDiagnostic.mentor || '',
         comunidad: selectedStudentForDiagnostic.community || '',
         fechaSesion: mentoringSessionDraft.fechaSesion,
-        modalidad: diag?.modalidad || (selectedStudentForDiagnostic.checkIn === 'Si' ? 'presencial' : 'remoto'),
+        modalidad: '',
         etapa: diag?.etapa || '',
         areasPrioritarias: diag?.areasprioritarias || '',
         pretestResumen: selectedStudentForDiagnostic.agenciaCheckIn || '',
@@ -1438,10 +1465,6 @@ export default function AdminDashboard() {
                       <div className="p-4 bg-[rgba(15,76,129,0.04)] rounded-xl">
                         <p className="text-xs font-semibold uppercase text-[var(--ink-500)]">Etapa</p>
                         <p className="font-medium text-[var(--ink-900)] mt-1">{diag.etapa || 'General'}</p>
-                      </div>
-                      <div className="p-4 bg-[rgba(15,76,129,0.04)] rounded-xl">
-                        <p className="text-xs font-semibold uppercase text-[var(--ink-500)]">Modalidad</p>
-                        <p className="font-medium text-[var(--ink-900)] mt-1 capitalize">{diag.modalidad || 'Remoto'}</p>
                       </div>
                     </div>
                     <div>

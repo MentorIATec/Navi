@@ -310,7 +310,6 @@ La siguiente fase no debe crear una pantalla completamente nueva. Debe expandir 
 - mentor o mentora
 - comunidad
 - fecha de sesión
-- modalidad
 
 #### Contexto precargado, solo lectura
 
@@ -361,7 +360,6 @@ Una fila por sesión documentada.
 | `mentor` | directorio | no |
 | `comunidad` | directorio | no |
 | `fecha_sesion` | módulo mentor | sí |
-| `modalidad` | check-in / sesión | no |
 | `etapa` | diagnóstico | no |
 | `areas_prioritarias` | diagnóstico | no |
 | `pretest_resumen` | pre-test | no |
@@ -399,7 +397,7 @@ Sesión de mentoría faro — [fecha]
 Estudiante: [nombre] ([matrícula]) — Comunidad [X]
 Mentor/a: [nombre mentor]
 
-Diagnóstico: [etapa], modalidad [presencial/remoto]
+Diagnóstico: [etapa]
 Áreas prioritarias: [lista]
 Metas acordadas: [lista]
 

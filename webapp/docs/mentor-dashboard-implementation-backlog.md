@@ -134,7 +134,6 @@ Headers:
 - `mentor`
 - `comunidad`
 - `fecha_sesion`
-- `modalidad`
 - `etapa`
 - `areas_prioritarias`
 - `pretest_resumen`
