@@ -7,37 +7,37 @@ import { apiClient } from '../api/client';
 import { cn } from '../utils/cn';
 
 const arrivalOptions = [
-  { id: 'clear', label: 'Con claridad y disposición para avanzar' },
-  { id: 'stress', label: 'Con algo de estrés o cansancio' },
-  { id: 'confused', label: 'Confundido/a sobre qué hacer primero' },
-  { id: 'sorting', label: 'Con ganas de ordenar mis ideas' },
+  { id: 'clear', label: 'Con energía y ganas de avanzar' },
+  { id: 'tired', label: 'Con algo de carga o cansancio' },
+  { id: 'scattered', label: 'Con muchas cosas en la cabeza' },
+  { id: 'uncertain', label: 'Con incertidumbre sobre mis siguientes pasos' },
 ];
 
-const agencyOptions = [
-  { id: 'high', label: 'Sí, siento que puedo salir con un siguiente paso claro' },
-  { id: 'medium', label: 'Creo que sí, si logro enfocarme en lo importante' },
-  { id: 'low', label: 'Todavía no estoy seguro/a de poder verlo con claridad' },
-  { id: 'blocked', label: 'Hoy me cuesta imaginar cuál debería ser ese siguiente paso' },
+const intentOptions = [
+  { id: 'review', label: 'Revisar mis avances y ajustar lo que sigue' },
+  { id: 'prioritize', label: 'Ordenar mis prioridades y saber por dónde empezar' },
+  { id: 'understand', label: 'Entender algo que me tiene confundido/a' },
+  { id: 'plan', label: 'Salir con un paso concreto, aunque sea pequeño' },
 ];
 
 function getMicroPreSummary(answers) {
   const arrivalSummary = {
-    clear: 'Llega con claridad y disposición',
-    stress: 'Llega con algo de estrés o cansancio',
-    confused: 'Llega con dudas o confusión',
-    sorting: 'Llega con ganas de ordenar ideas',
+    clear: 'Llega con energía y ganas de avanzar',
+    tired: 'Llega con algo de carga o cansancio',
+    scattered: 'Llega con muchas cosas en la cabeza',
+    uncertain: 'Llega con incertidumbre sobre sus siguientes pasos',
   };
 
-  const agencySummary = {
-    high: 'Confía en salir con un plan claro',
-    medium: 'Confía en lograrlo si se enfoca',
-    low: 'Con dudas de salir con un plan hoy',
-    blocked: 'Se siente bloqueado/a para ver un paso siguiente',
+  const intentSummary = {
+    review: 'Quiere revisar avances y ajustar lo que sigue',
+    prioritize: 'Quiere ordenar prioridades y saber por dónde empezar',
+    understand: 'Quiere entender algo que hoy le genera confusión',
+    plan: 'Quiere salir con un paso concreto',
   };
 
   return {
     arrival: arrivalSummary[answers.arrival] || '',
-    agency: agencySummary[answers.agency] || '',
+    intent: intentSummary[answers.intent] || '',
   };
 }
 
@@ -49,7 +49,7 @@ export default function PreTest() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isComplete = useMemo(
-    () => Boolean(answers.arrival && answers.agency),
+    () => Boolean(answers.arrival && answers.intent),
     [answers]
   );
 
@@ -60,11 +60,12 @@ export default function PreTest() {
   const handleContinue = async () => {
     setIsSubmitting(true);
     const summary = getMicroPreSummary(answers);
-    const textSummary = `${summary.arrival} · ${summary.agency}`;
+    const textSummary = `${summary.arrival} · ${summary.intent}`;
     
     try {
       if (matricula) {
-        // Enviar la "maleta emocional" al backend para que el mentor la vea
+        // Se mantiene el campo legacy en Sheets, pero el contenido ahora resume
+        // estado de llegada + intención de la sesión.
         await apiClient.post('updateStudent', {
           matricula,
           agenciaCheckIn: textSummary
@@ -74,7 +75,13 @@ export default function PreTest() {
       console.error('Error enviando pre-test:', error);
     } finally {
       setIsSubmitting(false);
-      localStorage.setItem('micro_pre', JSON.stringify({ ...answers, summary, textSummary }));
+      localStorage.setItem('micro_pre', JSON.stringify({
+        ...answers,
+        summary,
+        textSummary,
+        // compatibilidad transitoria para sesiones cacheadas con la key anterior
+        agency: answers.intent,
+      }));
       
       const missingTest = localStorage.getItem('navi_missing_remote_test');
       if (missingTest === 'true') {
@@ -105,7 +112,7 @@ export default function PreTest() {
         <CardContent className="space-y-8 p-8 sm:p-12">
           <div className="space-y-4">
             <h3 className="font-display text-2xl font-semibold leading-tight text-[var(--ink-900)] sm:text-[2rem]">
-              Hoy llego a esta sesión sintiéndome...
+              Hoy llego a esta sesión...
             </h3>
             <div className="grid gap-3">
               {arrivalOptions.map((option) => (
@@ -129,18 +136,18 @@ export default function PreTest() {
 
           <div className="space-y-4">
             <h3 className="font-display text-2xl font-semibold leading-tight text-[var(--ink-900)] sm:text-[2rem]">
-              Hoy siento que puedo salir de esta sesión con un siguiente paso claro.
+              Lo que más me gustaría que pasara en esta sesión es...
             </h3>
             <div className="grid gap-3">
-              {agencyOptions.map((option) => (
+              {intentOptions.map((option) => (
                 <button
                   key={option.id}
                   type="button"
-                  onClick={() => handleSelect('agency', option.id)}
+                  onClick={() => handleSelect('intent', option.id)}
                   disabled={isSubmitting}
                   className={cn(
                     'answer-shift stage-card-lift w-full rounded-[22px] border px-5 py-4 text-left transition-all active:scale-[0.99]',
-                    answers.agency === option.id
+                    answers.intent === option.id
                       ? 'border-[rgba(15,76,129,0.35)] bg-[linear-gradient(180deg,rgba(240,245,252,0.96)_0%,rgba(228,236,247,0.92)_100%)] shadow-[0_16px_38px_rgba(15,76,129,0.12)]'
                       : 'border-[rgba(15,76,129,0.10)] bg-white/72 hover:border-[rgba(15,76,129,0.22)] hover:bg-white hover:shadow-[0_14px_34px_rgba(17,36,66,0.10)]'
                   )}

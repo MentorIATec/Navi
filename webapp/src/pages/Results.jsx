@@ -59,7 +59,20 @@ function getMicroPre() {
   try {
     const raw = localStorage.getItem('micro_pre');
     if (!raw) return null;
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    if (!parsed.intent && parsed.agency) {
+      return { ...parsed, intent: parsed.agency };
+    }
+    if (parsed.summary && typeof parsed.summary === 'object' && !parsed.summary.intent && parsed.summary.agency) {
+      return {
+        ...parsed,
+        summary: {
+          ...parsed.summary,
+          intent: parsed.summary.agency,
+        },
+      };
+    }
+    return parsed;
   } catch (error) {
     console.error('No se pudo leer el micro check-in de sesión:', error);
     return null;
@@ -71,23 +84,23 @@ function getSessionArrivalCopy(microPre) {
 
   const arrivalCopy = {
     clear: 'Llegaste con energía y disposición para avanzar.',
-    stress: 'Llegaste con algo de carga hoy.',
-    confused: 'Llegaste con dudas sobre por dónde empezar.',
-    sorting: 'Llegaste queriendo ordenar ideas y ganar claridad.',
+    tired: 'Llegaste con algo de carga hoy.',
+    scattered: 'Llegaste con muchas cosas en la cabeza.',
+    uncertain: 'Llegaste con incertidumbre sobre tus siguientes pasos.',
   };
 
-  const agencyCopy = {
-    high: 'Sientes que puedes salir con un paso concreto hoy.',
-    medium: 'Crees que podrías lograrlo si te enfocas en lo que importa.',
-    low: 'Todavía no ves claro cuál sería tu siguiente paso.',
-    blocked: 'Hoy te cuesta imaginar por dónde avanzar. Eso también es información.',
+  const intentCopy = {
+    review: 'Hoy te ayudaría revisar avances y ajustar lo que sigue.',
+    prioritize: 'Hoy te ayudaría ordenar prioridades y saber por dónde empezar.',
+    understand: 'Hoy te ayudaría entender algo que todavía te genera confusión.',
+    plan: 'Hoy te ayudaría salir con un paso concreto, aunque sea pequeño.',
   };
 
   const arrival = arrivalCopy[microPre.arrival];
-  const agency = agencyCopy[microPre.agency];
+  const intent = intentCopy[microPre.intent];
 
-  if (arrival && agency) {
-    return `${arrival} ${agency}`;
+  if (arrival && intent) {
+    return `${arrival} ${intent}`;
   }
 
   return null;

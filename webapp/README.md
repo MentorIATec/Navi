@@ -69,3 +69,4 @@ Rutas verificadas con `200`:
 - `webapp/docs/pilot-faq.md`
 - `webapp/docs/mentor-dashboard-roadmap.md`
 - `webapp/docs/mentor-dashboard-implementation-backlog.md`
+- `webapp/docs/pretest-presential-rationale.md`
