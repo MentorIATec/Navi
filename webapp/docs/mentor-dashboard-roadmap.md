@@ -351,29 +351,42 @@ Nueva hoja:
 
 Una fila por sesión documentada.
 
-### Columnas sugeridas
+### Criterio estructural
+
+`Sesiones` debe funcionar como bitácora histórica, no como estado actual del caso.
+
+Reglas:
+
+- permitir múltiples sesiones por matrícula;
+- usar `session_id` como llave estable;
+- distinguir creación de edición;
+- derivar la vista actual del tablero a partir de la sesión con `fecha_sesion` más reciente;
+- no usar `timestamp_guardado` como señal de “última sesión”.
+
+### Estructura sugerida
 
 | Campo | Fuente | Editable |
 | --- | --- | --- |
+| `session_id` | sistema / frontend | no |
 | `matricula` | directorio | no |
 | `nombre` | directorio | no |
 | `mentor` | directorio | no |
 | `comunidad` | directorio | no |
+| `periodo` | sistema / operación | no |
 | `fecha_sesion` | módulo mentor | sí |
 | `etapa` | diagnóstico | no |
 | `areas_prioritarias` | diagnóstico | no |
 | `pretest_resumen` | pre-test | no |
-| `checkin_resumen` | check-in | no |
 | `meta_prioritaria` | selección de metas | no |
 | `meta_complementaria` | selección de metas | no |
 | `horizonte` | plan | no |
 | `obstaculo` | plan | no |
 | `estrategia` | plan | no |
 | `notas_mentor` | módulo mentor | sí |
-| `seguimiento` | módulo mentor | sí |
 | `estado_documentacion` | módulo mentor | sí |
 | `documentado_crm` | módulo mentor | sí |
-| `timestamp_guardado` | sistema | no |
+| `timestamp_creacion` | sistema | no |
+| `timestamp_actualizado` | sistema | no |
 
 ### Regla de snapshot
 
@@ -407,6 +420,16 @@ Estado: [estado_documentacion]
 ```
 
 Esto evita que el mentor tenga que reconstruir manualmente el caso antes de pegarlo en el CRM institucional.
+
+## Regla de vista actual en tablero
+
+El tablero mentor no debe usar “último guardado” como criterio principal.
+
+Decisión:
+
+- mostrar la sesión con `fecha_sesion` más reciente por matrícula;
+- usar `timestamp_actualizado` solo para auditoría;
+- tratar `Sesiones` como histórico y no como tabla de estado actual.
 
 ## Campañas y plantillas
 

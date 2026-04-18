@@ -129,25 +129,26 @@ Nueva hoja:
 
 Headers:
 
+- `session_id`
 - `matricula`
 - `nombre`
 - `mentor`
 - `comunidad`
+- `periodo`
 - `fecha_sesion`
 - `etapa`
 - `areas_prioritarias`
 - `pretest_resumen`
-- `checkin_resumen`
 - `meta_prioritaria`
 - `meta_complementaria`
 - `horizonte`
 - `obstaculo`
 - `estrategia`
 - `notas_mentor`
-- `seguimiento`
 - `estado_documentacion`
 - `documentado_crm`
-- `timestamp_guardado`
+- `timestamp_creacion`
+- `timestamp_actualizado`
 
 ### Cambios en Apps Script
 
@@ -168,6 +169,8 @@ Reglas:
 - validar `matricula`
 - validar `fecha_sesion`
 - permitir guardar borrador/documentado
+- distinguir creación vs edición por `session_id`
+- hacer upsert por `session_id`, no por `matricula + fecha_sesion`
 
 ### Cambios de frontend
 
@@ -185,7 +188,6 @@ Ampliar el modal `selectedStudentForDiagnostic`:
 3. bloque `Documentación del mentor`
    - textarea `notas_mentor`
    - selector `estado_documentacion`
-   - campo `seguimiento`
 
 4. acciones:
    - `Copiar resumen para CRM`
@@ -206,6 +208,9 @@ Agregar soporte para:
 - agregar notas
 - copiar un resumen usable
 - guardar la sesión en `Sesiones`
+- editar una sesión existente sin crear duplicado
+- crear una sesión nueva sin sobrescribir una anterior
+- el tablero muestra la sesión con `fecha_sesion` más reciente, no la última editada
 
 ## Fase 3: campañas sostenibles
 
