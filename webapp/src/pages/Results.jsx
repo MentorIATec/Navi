@@ -219,7 +219,7 @@ export default function Results() {
 
                 {isSessionMode ? (
                   <p className="mt-6 text-sm text-[var(--ink-500)]">
-                    Usa esta lectura para llegar con más claridad a la elección de tus metas.
+                    Revisa nuevamente tus respuestas del test y avancemos a definir las mejores metas.
                   </p>
                 ) : null}
               </div>

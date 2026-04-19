@@ -103,7 +103,7 @@ export default function PreTest() {
             Cuéntanos cómo llegas hoy
           </h2>
           <p className="navi-prose mt-3 max-w-2xl text-sm sm:text-base">
-            Dos preguntas muy breves para que la sesión empiece con más foco y empatía.
+            Antes de continuar, cuéntanos cómo llegas hoy.
           </p>
         </div>
       </div>

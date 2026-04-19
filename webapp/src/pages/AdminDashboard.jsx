@@ -85,6 +85,20 @@ function createSessionId(matricula, fechaSesion) {
   return `${normalizedMatricula}-${normalizedFecha}-${normalizedTimestamp.slice(-10)}`;
 }
 
+function getAcademicPeriod(value = '') {
+  const parsed = new Date(value || new Date().toISOString().slice(0, 10));
+  if (Number.isNaN(parsed.getTime())) return '';
+  const year = parsed.getFullYear();
+  const month = parsed.getMonth() + 1;
+  return `${year}-${month <= 6 ? '1' : '2'}`;
+}
+
+function ensureSentence(value = '') {
+  const trimmed = String(value || '').trim();
+  if (!trimmed) return '';
+  return /[.!?]$/.test(trimmed) ? trimmed : `${trimmed}.`;
+}
+
 export default function AdminDashboard() {
   const [accessEmail, setAccessEmail] = useState(() => localStorage.getItem('navi_admin_email') || '');
   const [accessPin, setAccessPin] = useState('');
@@ -241,6 +255,21 @@ export default function AdminDashboard() {
   const isMentorView = userRole.startsWith('mentor:');
   const currentMentorEmail = isMentorView ? userRole.split(':')[1] : null;
   const currentMentor = currentMentorEmail ? mentors.find((mentor) => mentor.email === currentMentorEmail) : null;
+  const mentorByNickname = useMemo(() => {
+    const map = new Map();
+    mentors.forEach((mentor) => {
+      const key = String(mentor.nickname || '').trim();
+      if (key) map.set(key, mentor);
+    });
+    return map;
+  }, [mentors]);
+  const studentsWithContext = useMemo(
+    () => students.map((student) => ({
+      ...student,
+      community: student.community || mentorByNickname.get(student.mentor)?.community || '',
+    })),
+    [students, mentorByNickname]
+  );
   const checkInLink = typeof window !== 'undefined'
     ? `${window.location.origin}/check-in`
     : '/check-in';
@@ -267,8 +296,8 @@ export default function AdminDashboard() {
   const stats = useMemo(() => {
     // Filter students by current mentor if applicable
     const scopeStudents = isAdmin
-      ? students 
-      : students.filter(s => {
+      ? studentsWithContext 
+      : studentsWithContext.filter(s => {
           const mentorEmail = userRole.split(':')[1];
           const mentor = mentors.find(m => m.email === mentorEmail);
           return s.mentor === mentor?.nickname;
@@ -288,13 +317,13 @@ export default function AdminDashboard() {
       pendientes: total - testCompletado,
       scopeStudents // include for the table
     };
-  }, [students, userRole, mentors, isAdmin]);
+  }, [studentsWithContext, userRole, mentors, isAdmin]);
 
   const filteredStudents = stats.scopeStudents.filter(s => 
-    s.matricula.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (s.preferredName && s.preferredName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (s.email && s.email.toLowerCase().includes(searchTerm.toLowerCase()))
+    String(s.matricula || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+    String(s.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (s.preferredName && String(s.preferredName).toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (s.email && String(s.email).toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const lastSyncLabel = useMemo(() => {
@@ -391,11 +420,11 @@ export default function AdminDashboard() {
     }
 
     const commitments = [];
-    if (goalSelection?.metaprioritaria) commitments.push(`Meta prioritaria: ${goalSelection.metaprioritaria}.`);
-    if (goalSelection?.metacomplementaria) commitments.push(`Meta complementaria: ${goalSelection.metacomplementaria}.`);
-    if (goalSelection?.tiempo) commitments.push(`Horizonte: ${goalSelection.tiempo}.`);
-    if (goalSelection?.obstaculo) commitments.push(`Obstáculo identificado: ${goalSelection.obstaculo}.`);
-    if (goalSelection?.plan) commitments.push(`Estrategia: ${goalSelection.plan}.`);
+    if (goalSelection?.metaprioritaria) commitments.push(`Meta prioritaria: ${ensureSentence(goalSelection.metaprioritaria)}`);
+    if (goalSelection?.metacomplementaria) commitments.push(`Meta complementaria: ${ensureSentence(goalSelection.metacomplementaria)}`);
+    if (goalSelection?.tiempo) commitments.push(`Horizonte: ${ensureSentence(goalSelection.tiempo)}`);
+    if (goalSelection?.obstaculo) commitments.push(`Obstáculo identificado: ${ensureSentence(goalSelection.obstaculo)}`);
+    if (goalSelection?.plan) commitments.push(`Estrategia: ${ensureSentence(goalSelection.plan)}`);
 
     if (commitments.length > 0) {
       summaryBlocks.push('', ...commitments);
@@ -657,6 +686,8 @@ export default function AdminDashboard() {
     const goalSelection = latestGoalSelectionsByMatricula.get(matricula);
     const sessionId = mentoringSessionDraft.sessionId || createSessionId(matricula, mentoringSessionDraft.fechaSesion);
     const timestampCreacion = mentoringSessionDraft.timestampCreacion || new Date().toISOString();
+    const resolvedCommunity = selectedStudentForDiagnostic.community || mentorByNickname.get(selectedStudentForDiagnostic.mentor)?.community || '';
+    const periodo = getAcademicPeriod(mentoringSessionDraft.fechaSesion);
 
     setIsSavingMentoringSession(true);
     try {
@@ -665,8 +696,8 @@ export default function AdminDashboard() {
         matricula,
         nombre: selectedStudentForDiagnostic.preferredName || selectedStudentForDiagnostic.name || '',
         mentor: selectedStudentForDiagnostic.mentor || '',
-        comunidad: selectedStudentForDiagnostic.community || '',
-        periodo: '',
+        comunidad: resolvedCommunity,
+        periodo,
         fechaSesion: mentoringSessionDraft.fechaSesion,
         etapa: diag?.etapa || '',
         areasPrioritarias: diag?.areasprioritarias || '',
@@ -699,8 +730,8 @@ export default function AdminDashboard() {
         matricula,
         nombre: selectedStudentForDiagnostic.preferredName || selectedStudentForDiagnostic.name || '',
         mentor: selectedStudentForDiagnostic.mentor || '',
-        comunidad: selectedStudentForDiagnostic.community || '',
-        periodo: '',
+        comunidad: resolvedCommunity,
+        periodo,
         fechaSesion: mentoringSessionDraft.fechaSesion,
         etapa: diag?.etapa || '',
         areasPrioritarias: diag?.areasprioritarias || '',
