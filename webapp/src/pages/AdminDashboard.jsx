@@ -58,22 +58,22 @@ function normalizeUser(raw) {
   };
 }
 
-function getSessionId(item = {}) {
-  return String(item.sessionId || item.sessionid || '').trim();
+function getSessionId(item) {
+  return String(item?.sessionId || item?.sessionid || '').trim();
 }
 
-function getSessionDate(item = {}) {
-  return String(item.fechaSesion || item.fecha_sesion || '').trim();
+function getSessionDate(item) {
+  return String(item?.fechaSesion || item?.fecha_sesion || '').trim();
 }
 
-function getSessionUpdatedAt(item = {}) {
+function getSessionUpdatedAt(item) {
   return String(
-    item.timestampActualizado ||
-    item.timestamp_actualizado ||
-    item.timestampGuardado ||
-    item.timestamp_guardado ||
-    item.timestampCreacion ||
-    item.timestamp_creacion ||
+    item?.timestampActualizado ||
+    item?.timestamp_actualizado ||
+    item?.timestampGuardado ||
+    item?.timestamp_guardado ||
+    item?.timestampCreacion ||
+    item?.timestamp_creacion ||
     ''
   ).trim();
 }
