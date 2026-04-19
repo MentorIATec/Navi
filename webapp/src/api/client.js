@@ -39,6 +39,17 @@ function getLocalDataFallback() {
   };
 }
 
+function getSessionId(item = {}) {
+  return String(item.sessionId || item.sessionid || '').trim();
+}
+
+function upsertSessionsById(items = [], nextEntry = {}) {
+  const sessionId = getSessionId(nextEntry);
+  if (!sessionId) return items;
+  const remaining = items.filter((item) => getSessionId(item) !== sessionId);
+  return [nextEntry, ...remaining];
+}
+
 function normalizeCatalogItem(item = {}) {
   const rawTopic = String(item.temaoperativo || item.temaOperativo || item.TemaOperativo || '').trim().toLowerCase();
   const temaoperativo = rawTopic === 'servicio' ? 'servicio social' : rawTopic;
@@ -412,22 +423,23 @@ export const apiClient = {
       }
       if (action === 'saveMentoringSession') {
         const sessions = JSON.parse(localStorage.getItem('navi_mentoring_sessions') || '[]');
+        const timestampCreacion = String(data.timestampCreacion || '').trim() || new Date().toISOString();
+        const timestampActualizado = new Date().toISOString();
         const nextEntry = {
           ...data,
-          timestampGuardado: new Date().toISOString(),
+          timestampCreacion,
+          timestampActualizado,
         };
-        const nextSessions = [
-          nextEntry,
-          ...sessions.filter((item) => {
-            const sameMatricula = String(item.matricula || '').trim().toUpperCase() === String(data.matricula || '').trim().toUpperCase();
-            const sameFecha = String(item.fechaSesion || item.fecha_sesion || '').trim() === String(data.fechaSesion || '').trim();
-            return !(sameMatricula && sameFecha);
-          }),
-        ];
+        const nextSessions = upsertSessionsById(sessions, nextEntry);
         localStorage.setItem('navi_mentoring_sessions', JSON.stringify(nextSessions));
         return {
           status: 'success',
           source: 'fallback',
+          data: {
+            sessionId: getSessionId(nextEntry),
+            timestampCreacion,
+            timestampActualizado,
+          },
           warning: 'La sesión se guardó solo en este dispositivo. Intenta sincronizar de nuevo para dejar el registro compartido.',
         };
       }
@@ -534,17 +546,19 @@ export const apiClient = {
             break;
           case 'saveMentoringSession': {
             const sessions = JSON.parse(localStorage.getItem('navi_mentoring_sessions') || '[]');
-            const nextEntry = { ...data, timestampGuardado: new Date().toISOString() };
-            const nextSessions = [
-              nextEntry,
-              ...sessions.filter((item) => {
-                const sameMatricula = String(item.matricula || '').trim().toUpperCase() === String(data.matricula || '').trim().toUpperCase();
-                const sameFecha = String(item.fechaSesion || item.fecha_sesion || '').trim() === String(data.fechaSesion || '').trim();
-                return !(sameMatricula && sameFecha);
-              }),
-            ];
+            const timestampCreacion = String(data.timestampCreacion || '').trim() || new Date().toISOString();
+            const timestampActualizado = new Date().toISOString();
+            const nextEntry = { ...data, timestampCreacion, timestampActualizado };
+            const nextSessions = upsertSessionsById(sessions, nextEntry);
             localStorage.setItem('navi_mentoring_sessions', JSON.stringify(nextSessions));
-            resolve({ status: 'success' });
+            resolve({
+              status: 'success',
+              data: {
+                sessionId: getSessionId(nextEntry),
+                timestampCreacion,
+                timestampActualizado,
+              },
+            });
             break;
           }
           case 'saveTestResponse': {

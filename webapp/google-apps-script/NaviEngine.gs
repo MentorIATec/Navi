@@ -22,7 +22,7 @@ const LEGACY_STUDENT_HEADERS = ['Matrícula', 'Nombre', 'Email', 'NicknameMentor
 const STAFF_HEADERS = ['Email', 'PIN', 'Nombre', 'Alias', 'Rol', 'Comunidad', 'Hex', 'Slogan', 'Activo'];
 const RESPONSES_HEADERS = ['Matrícula', 'FechaTest', 'Modalidad', 'Etapa', 'ScorePromedio', 'AreasPrioritarias', 'Claridad_Carrera', 'Desempeno_Academico', 'Plan_Practicas', 'Servicio_Social', 'Decision_SemestreTec', 'Certificacion_Idioma'];
 const GOAL_SELECTION_HEADERS = ['Timestamp', 'Matrícula', 'Nombre', 'Meta Prioritaria', 'Meta Complementaria', 'Tiempo', 'Obstáculo', 'Plan'];
-const SESSIONS_HEADERS = ['Matricula', 'Nombre', 'Mentor', 'Comunidad', 'Fecha_Sesion', 'Modalidad', 'Etapa', 'Areas_Prioritarias', 'Pretest_Resumen', 'Checkin_Resumen', 'Meta_Prioritaria', 'Meta_Complementaria', 'Horizonte', 'Obstaculo', 'Estrategia', 'Notas_Mentor', 'Seguimiento', 'Estado_Documentacion', 'Documentado_CRM', 'Timestamp_Guardado'];
+const SESSIONS_HEADERS = ['Session_ID', 'Matricula', 'Nombre', 'Mentor', 'Comunidad', 'Periodo', 'Fecha_Sesion', 'Etapa', 'Areas_Prioritarias', 'Pretest_Resumen', 'Meta_Prioritaria', 'Meta_Complementaria', 'Horizonte', 'Obstaculo', 'Estrategia', 'Notas_Mentor', 'Estado_Documentacion', 'Documentado_CRM', 'Timestamp_Creacion', 'Timestamp_Actualizado'];
 // Dimension = una sola de las 7 dimensiones del bienestar del modelo Tec.
 // TemaOperativo = agrupador práctico de navegación/curación para mentoría; no reemplaza a la dimensión.
 const GOALS_CATALOG_HEADERS = ['Id', 'TemaOperativo', 'Dimension', 'Etapa', 'MetaBase', 'PasosBase', 'HorizonteSugerido', 'IndicadorLogro', 'CuandoUsarla', 'NivelDificultad', 'FrecuenciaSeguimiento', 'ConexionDiagnostico', 'PreguntasParaAfinar', 'Activa'];
@@ -138,7 +138,7 @@ function doGet(e) {
         mentors: staffData,
         goalSelections: parseSheetData(ensureSheetWithHeaders_(ss, 'GoalSelections', GOAL_SELECTION_HEADERS).getDataRange().getValues()),
         responses: parseSheetData(ensureSheetWithHeaders_(ss, 'Responses', RESPONSES_HEADERS).getDataRange().getValues()),
-        sessions: parseSheetData(ensureSheetWithHeaders_(ss, 'Sesiones', SESSIONS_HEADERS).getDataRange().getValues()),
+        sessions: parseSheetData(ensureSessionsSheet_(ss).getDataRange().getValues()),
       }
     };
 
@@ -754,7 +754,7 @@ function ensureOperationsSheets_(ss) {
   const goalsCatalogSheet = ensureSheetWithHeaders_(ss, 'GoalsCatalog', GOALS_CATALOG_HEADERS);
   ensureSheetWithHeaders_(ss, 'Responses', RESPONSES_HEADERS);
   ensureSheetWithHeaders_(ss, 'GoalSelections', GOAL_SELECTION_HEADERS);
-  ensureSheetWithHeaders_(ss, 'Sesiones', SESSIONS_HEADERS);
+  ensureSessionsSheet_(ss);
   ensureGoalsCatalogSchema_(goalsCatalogSheet);
   applyGoalsCatalogValidation_(goalsCatalogSheet);
 
@@ -937,6 +937,83 @@ function ensureSheetWithHeaders_(ss, name, headers) {
 
   if (sheet.getLastRow() === 0) {
     sheet.appendRow(headers);
+  }
+
+  return sheet;
+}
+
+function normalizeHeaderKey_(header) {
+  return String(header || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+}
+
+function buildLegacySessionId_(matricula, fechaSesion, fallbackTimestamp) {
+  const normalizedMatricula = String(matricula || '').trim().toUpperCase() || 'SINMATRICULA';
+  const normalizedFecha = String(fechaSesion || '').trim() || 'sin-fecha';
+  const normalizedTimestamp = String(fallbackTimestamp || '').trim() || new Date().toISOString();
+  return normalizedMatricula + '-' + normalizedFecha + '-' + normalizedTimestamp.replace(/[^0-9]/g, '').slice(-12);
+}
+
+function ensureSessionsSheet_(ss) {
+  const sheet = ensureSheetWithHeaders_(ss, 'Sesiones', SESSIONS_HEADERS);
+  const lastColumn = Math.max(sheet.getLastColumn(), 1);
+  const currentHeaders = sheet.getRange(1, 1, 1, lastColumn).getValues()[0];
+  const currentNormalized = currentHeaders.map(normalizeHeaderKey_);
+  const targetNormalized = SESSIONS_HEADERS.map(normalizeHeaderKey_);
+
+  if (currentNormalized.join('|') === targetNormalized.join('|')) {
+    return sheet;
+  }
+
+  const values = sheet.getDataRange().getValues();
+  const rows = values.slice(1).map(function(row) {
+    const record = {};
+    currentHeaders.forEach(function(header, index) {
+      record[normalizeHeaderKey_(header)] = row[index];
+    });
+    return record;
+  }).filter(function(record) {
+    return Object.keys(record).some(function(key) {
+      return record[key] !== '' && record[key] !== null && record[key] !== undefined;
+    });
+  });
+
+  const migratedRows = rows.map(function(record) {
+    const matricula = String(record.matricula || '').trim().toUpperCase();
+    const fechaSesion = String(record.fechasesion || '').trim();
+    const timestampCreacion = String(record.timestampcreacion || record.timestampguardado || '').trim() || new Date().toISOString();
+    const timestampActualizado = String(record.timestampactualizado || record.timestampguardado || timestampCreacion).trim() || timestampCreacion;
+    return [
+      String(record.sessionid || '').trim() || buildLegacySessionId_(matricula, fechaSesion, timestampCreacion),
+      matricula,
+      record.nombre || '',
+      record.mentor || '',
+      record.comunidad || '',
+      record.periodo || '',
+      fechaSesion,
+      record.etapa || '',
+      record.areasprioritarias || '',
+      record.pretestresumen || record.checkinresumen || '',
+      record.metaprioritaria || '',
+      record.metacomplementaria || '',
+      record.horizonte || '',
+      record.obstaculo || '',
+      record.estrategia || '',
+      record.notasmentor || '',
+      record.estadodocumentacion || 'Borrador',
+      record.documentadocrm || 'No',
+      timestampCreacion,
+      timestampActualizado,
+    ];
+  });
+
+  sheet.clearContents();
+  sheet.getRange(1, 1, 1, SESSIONS_HEADERS.length).setValues([SESSIONS_HEADERS]);
+  if (migratedRows.length > 0) {
+    sheet.getRange(2, 1, migratedRows.length, SESSIONS_HEADERS.length).setValues(migratedRows);
   }
 
   return sheet;
@@ -1197,43 +1274,45 @@ function saveGoalSelection(ss, data) {
 }
 
 function saveMentoringSession(ss, data) {
-  const sheet = ensureSheetWithHeaders_(ss, 'Sesiones', SESSIONS_HEADERS);
+  const sheet = ensureSessionsSheet_(ss);
   const matricula = String(data && data.matricula ? data.matricula : '').trim().toUpperCase();
 
   if (!matricula) {
     return jsonResponse_({ status: 'error', message: 'Falta la matrícula del estudiante.' });
   }
 
+  const sessionId = String(data.sessionId || '').trim() || buildLegacySessionId_(matricula, data.fechaSesion, data.timestampCreacion);
   const fechaSesion = String(data.fechaSesion || '').trim() || new Date().toISOString().slice(0, 10);
+  const timestampCreacion = String(data.timestampCreacion || '').trim() || new Date().toISOString();
+  const timestampActualizado = new Date().toISOString();
   var row = [
+    sessionId,
     matricula,
     data.nombre || '',
     data.mentor || '',
     data.comunidad || '',
+    data.periodo || '',
     fechaSesion,
-    data.modalidad || '',
     data.etapa || '',
     data.areasPrioritarias || '',
     data.pretestResumen || '',
-    data.checkinResumen || '',
     data.metaPrioritaria || '',
     data.metaComplementaria || '',
     data.horizonte || '',
     data.obstaculo || '',
     data.estrategia || '',
     data.notasMentor || '',
-    '',
     data.estadoDocumentacion || 'Borrador',
     data.documentadoCrm ? 'Si' : 'No',
-    new Date().toISOString(),
+    timestampCreacion,
+    timestampActualizado,
   ];
 
   var values = sheet.getDataRange().getValues();
   var targetRow = 0;
   for (var i = 1; i < values.length; i++) {
-    var currentMatricula = String(values[i][0] || '').trim().toUpperCase();
-    var currentFecha = String(values[i][4] || '').trim();
-    if (currentMatricula === matricula && currentFecha === fechaSesion) {
+    var currentSessionId = String(values[i][0] || '').trim();
+    if (currentSessionId === sessionId) {
       targetRow = i + 1;
       break;
     }
@@ -1245,7 +1324,14 @@ function saveMentoringSession(ss, data) {
     sheet.appendRow(row);
   }
 
-  return jsonResponse_({ status: 'success' });
+  return jsonResponse_({
+    status: 'success',
+    data: {
+      sessionId: sessionId,
+      timestampCreacion: timestampCreacion,
+      timestampActualizado: timestampActualizado,
+    },
+  });
 }
 
 function seedStaffSheet_(sheet) {

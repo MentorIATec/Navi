@@ -58,6 +58,33 @@ function normalizeUser(raw) {
   };
 }
 
+function getSessionId(item = {}) {
+  return String(item.sessionId || item.sessionid || '').trim();
+}
+
+function getSessionDate(item = {}) {
+  return String(item.fechaSesion || item.fecha_sesion || '').trim();
+}
+
+function getSessionUpdatedAt(item = {}) {
+  return String(
+    item.timestampActualizado ||
+    item.timestamp_actualizado ||
+    item.timestampGuardado ||
+    item.timestamp_guardado ||
+    item.timestampCreacion ||
+    item.timestamp_creacion ||
+    ''
+  ).trim();
+}
+
+function createSessionId(matricula, fechaSesion) {
+  const normalizedMatricula = String(matricula || '').trim().toUpperCase() || 'SINMATRICULA';
+  const normalizedFecha = String(fechaSesion || '').trim() || new Date().toISOString().slice(0, 10);
+  const normalizedTimestamp = Date.now().toString();
+  return `${normalizedMatricula}-${normalizedFecha}-${normalizedTimestamp.slice(-10)}`;
+}
+
 export default function AdminDashboard() {
   const [accessEmail, setAccessEmail] = useState(() => localStorage.getItem('navi_admin_email') || '');
   const [accessPin, setAccessPin] = useState('');
@@ -126,9 +153,11 @@ export default function AdminDashboard() {
   const [showCheckInQr, setShowCheckInQr] = useState(false);
   const [lastSyncAt, setLastSyncAt] = useState(() => localStorage.getItem('navi_last_sync_at') || '');
   const [mentoringSessionDraft, setMentoringSessionDraft] = useState({
+    sessionId: '',
     fechaSesion: new Date().toISOString().slice(0, 10),
     notasMentor: '',
     documentadoCrm: false,
+    timestampCreacion: '',
   });
   const [isSavingMentoringSession, setIsSavingMentoringSession] = useState(false);
 
@@ -312,9 +341,12 @@ export default function AdminDashboard() {
     const map = new Map();
     [...sessions]
       .sort((a, b) => {
-        const aDate = new Date(a.timestampGuardado || a.timestamp_guardado || a.fechaSesion || a.fecha_sesion || 0).getTime();
-        const bDate = new Date(b.timestampGuardado || b.timestamp_guardado || b.fechaSesion || b.fecha_sesion || 0).getTime();
-        return bDate - aDate;
+        const aSessionDate = new Date(getSessionDate(a) || 0).getTime();
+        const bSessionDate = new Date(getSessionDate(b) || 0).getTime();
+        if (bSessionDate !== aSessionDate) return bSessionDate - aSessionDate;
+        const aUpdatedAt = new Date(getSessionUpdatedAt(a) || 0).getTime();
+        const bUpdatedAt = new Date(getSessionUpdatedAt(b) || 0).getTime();
+        return bUpdatedAt - aUpdatedAt;
       })
       .forEach((item) => {
         const key = String(item.matricula || '').trim().toUpperCase();
@@ -379,16 +411,22 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (!selectedStudentForDiagnostic) return;
     const matricula = String(selectedStudentForDiagnostic.matricula || '').trim().toUpperCase();
+    const today = new Date().toISOString().slice(0, 10);
     const draftStore = JSON.parse(localStorage.getItem('navi_mentoring_session_drafts') || '{}');
     const latestSaved = latestSessionsByMatricula.get(matricula);
     const persistedDraft = draftStore[matricula];
+    const latestSavedDate = getSessionDate(latestSaved);
+    const canResumeLatestSession = latestSaved && latestSavedDate === today;
+    const baseDraft = persistedDraft || (canResumeLatestSession ? latestSaved : null);
     setMentoringSessionDraft({
-      fechaSesion: persistedDraft?.fechaSesion || latestSaved?.fechaSesion || latestSaved?.fecha_sesion || new Date().toISOString().slice(0, 10),
-      notasMentor: persistedDraft?.notasMentor || latestSaved?.notasMentor || latestSaved?.notas_mentor || '',
+      sessionId: getSessionId(baseDraft),
+      fechaSesion: baseDraft?.fechaSesion || baseDraft?.fecha_sesion || today,
+      notasMentor: baseDraft?.notasMentor || baseDraft?.notas_mentor || '',
       documentadoCrm: Boolean(
-        persistedDraft?.documentadoCrm ??
-        (String(latestSaved?.documentadoCrm || latestSaved?.documentado_crm || '').toLowerCase() === 'si')
+        baseDraft?.documentadoCrm ??
+        (String(baseDraft?.documentado_crm || '').toLowerCase() === 'si')
       ),
+      timestampCreacion: String(baseDraft?.timestampCreacion || baseDraft?.timestamp_creacion || '').trim(),
     });
   }, [selectedStudentForDiagnostic, latestSessionsByMatricula]);
 
@@ -396,7 +434,11 @@ export default function AdminDashboard() {
     if (!selectedStudentForDiagnostic) return;
     const matricula = String(selectedStudentForDiagnostic.matricula || '').trim().toUpperCase();
     const draftStore = JSON.parse(localStorage.getItem('navi_mentoring_session_drafts') || '{}');
-    draftStore[matricula] = mentoringSessionDraft;
+    if (mentoringSessionDraft.sessionId) {
+      delete draftStore[matricula];
+    } else {
+      draftStore[matricula] = mentoringSessionDraft;
+    }
     localStorage.setItem('navi_mentoring_session_drafts', JSON.stringify(draftStore));
   }, [mentoringSessionDraft, selectedStudentForDiagnostic]);
 
@@ -613,22 +655,22 @@ export default function AdminDashboard() {
     const matricula = String(selectedStudentForDiagnostic.matricula || '').trim().toUpperCase();
     const diag = latestResponsesByMatricula.get(matricula);
     const goalSelection = latestGoalSelectionsByMatricula.get(matricula);
+    const sessionId = mentoringSessionDraft.sessionId || createSessionId(matricula, mentoringSessionDraft.fechaSesion);
+    const timestampCreacion = mentoringSessionDraft.timestampCreacion || new Date().toISOString();
 
     setIsSavingMentoringSession(true);
     try {
       const result = await apiClient.post('saveMentoringSession', {
+        sessionId,
         matricula,
         nombre: selectedStudentForDiagnostic.preferredName || selectedStudentForDiagnostic.name || '',
         mentor: selectedStudentForDiagnostic.mentor || '',
         comunidad: selectedStudentForDiagnostic.community || '',
+        periodo: '',
         fechaSesion: mentoringSessionDraft.fechaSesion,
-        modalidad: '',
         etapa: diag?.etapa || '',
         areasPrioritarias: diag?.areasprioritarias || '',
         pretestResumen: selectedStudentForDiagnostic.agenciaCheckIn || '',
-        checkinResumen: selectedStudentForDiagnostic.checkIn === 'Si'
-          ? (selectedStudentForDiagnostic.agenciaCheckIn || 'Asistió a sesión presencial.')
-          : 'No asistió a sesión presencial.',
         metaPrioritaria: goalSelection?.metaprioritaria || '',
         metaComplementaria: goalSelection?.metacomplementaria || '',
         horizonte: goalSelection?.tiempo || '',
@@ -637,21 +679,32 @@ export default function AdminDashboard() {
         notasMentor: mentoringSessionDraft.notasMentor,
         estadoDocumentacion: mentoringSessionDraft.documentadoCrm ? 'Documentado' : 'Borrador',
         documentadoCrm: mentoringSessionDraft.documentadoCrm,
+        timestampCreacion,
       });
 
+      const savedSessionId = String(result?.sessionId || result?.data?.sessionId || sessionId).trim() || sessionId;
+      const savedTimestampCreacion = String(
+        result?.timestampCreacion ||
+        result?.data?.timestampCreacion ||
+        timestampCreacion
+      ).trim() || timestampCreacion;
+      const savedTimestampActualizado = String(
+        result?.timestampActualizado ||
+        result?.data?.timestampActualizado ||
+        new Date().toISOString()
+      ).trim();
+
       const nextEntry = {
+        sessionId: savedSessionId,
         matricula,
         nombre: selectedStudentForDiagnostic.preferredName || selectedStudentForDiagnostic.name || '',
         mentor: selectedStudentForDiagnostic.mentor || '',
         comunidad: selectedStudentForDiagnostic.community || '',
+        periodo: '',
         fechaSesion: mentoringSessionDraft.fechaSesion,
-        modalidad: '',
         etapa: diag?.etapa || '',
         areasPrioritarias: diag?.areasprioritarias || '',
         pretestResumen: selectedStudentForDiagnostic.agenciaCheckIn || '',
-        checkinResumen: selectedStudentForDiagnostic.checkIn === 'Si'
-          ? (selectedStudentForDiagnostic.agenciaCheckIn || 'Asistió a sesión presencial.')
-          : 'No asistió a sesión presencial.',
         metaPrioritaria: goalSelection?.metaprioritaria || '',
         metaComplementaria: goalSelection?.metacomplementaria || '',
         horizonte: goalSelection?.tiempo || '',
@@ -660,15 +713,23 @@ export default function AdminDashboard() {
         notasMentor: mentoringSessionDraft.notasMentor,
         estadoDocumentacion: mentoringSessionDraft.documentadoCrm ? 'Documentado' : 'Borrador',
         documentadoCrm: mentoringSessionDraft.documentadoCrm ? 'Si' : 'No',
-        timestampGuardado: new Date().toISOString(),
+        timestampCreacion: savedTimestampCreacion,
+        timestampActualizado: savedTimestampActualizado,
       };
       setSessions((current) => {
-        const remaining = current.filter((item) => {
-          const sameMatricula = String(item.matricula || '').trim().toUpperCase() === matricula;
-          const sameFecha = String(item.fechaSesion || item.fecha_sesion || '').trim() === mentoringSessionDraft.fechaSesion;
-          return !(sameMatricula && sameFecha);
-        });
+        const remaining = current.filter((item) => getSessionId(item) !== savedSessionId);
         return [nextEntry, ...remaining];
+      });
+
+      const draftStore = JSON.parse(localStorage.getItem('navi_mentoring_session_drafts') || '{}');
+      delete draftStore[matricula];
+      localStorage.setItem('navi_mentoring_session_drafts', JSON.stringify(draftStore));
+      setMentoringSessionDraft({
+        sessionId: savedSessionId,
+        fechaSesion: mentoringSessionDraft.fechaSesion,
+        notasMentor: mentoringSessionDraft.notasMentor,
+        documentadoCrm: mentoringSessionDraft.documentadoCrm,
+        timestampCreacion: savedTimestampCreacion,
       });
 
       const warning = result?.warning ? ` ${result.warning}` : '';
