@@ -135,17 +135,17 @@ function getCampaignTemplate(type, options = {}) {
 
   const templates = {
     invitation: {
-      subject: 'Tu diagnóstico de trayectoria te espera en faro',
+      subject: 'Este es un buen momento para revisar cómo va tu semestre',
       helper: 'Invita a estudiantes pendientes a completar su diagnóstico remoto antes de la sesión.',
       htmlBody: renderCampaignTemplate(invitationCampaignTemplate, { app_url: `${appUrl}/` }),
     },
     session: {
-      subject: 'Tu sesión de mentoría ya puede agendarse',
+      subject: 'Ya puedes agendar tu espacio de mentoría',
       helper: 'Convoca a estudiantes con diagnóstico completo para que aparten su sesión de mentoría.',
       htmlBody: renderCampaignTemplate(sessionCampaignTemplate, { booking_url: bookingUrl }),
     },
     noshow: {
-      subject: 'Aún puedes retomar tu sesión de mentoría',
+      subject: 'Tu espacio de mentoría sigue disponible',
       helper: 'Da seguimiento a estudiantes que no asistieron a la sesión para recuperar el proceso.',
       htmlBody: renderCampaignTemplate(noshowCampaignTemplate, { booking_url: bookingUrl }),
     },

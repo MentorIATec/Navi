@@ -1142,7 +1142,10 @@ function sendCampaignHandler(ss, data) {
       .replace(/\{\{comunidad\}\}/g, comunidad);
 
     try {
-      GmailApp.sendEmail(email, subjectFinal, '', { htmlBody: htmlFinal });
+      GmailApp.sendEmail(email, subjectFinal, '', {
+        htmlBody: htmlFinal,
+        name: 'Mentoría Estudiantil',
+      });
       enviados.push(estudiante.matricula);
       markUltimoAviso_(ss, estudiante.matricula, data.tipo || 'campaña');
     } catch (err) {

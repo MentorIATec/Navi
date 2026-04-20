@@ -18,15 +18,6 @@ Plantillas HTML controladas para campañas enviadas desde administración.
 | `campaign-noshow-v1.html` | Seguimiento a ausencias | Activa |
 | `invitacion-diagnostico.html` | Referencia editorial anterior | Archivo legado |
 
-## Mockups
-
-Las propuestas en evaluación viven en `webapp/email-templates/mockups/`.
-
-Usa:
-- `mockups/claude-super-prompt.md` para generar nuevas variantes
-- `mockups/campaign-briefs.md` para mantener el criterio editorial
-- `mockups/README.md` para el flujo de revisión antes de aprobar una plantilla
-
 ## Placeholders soportados
 
 ### Reemplazados por el backend al enviar
@@ -76,53 +67,12 @@ Usa:
    - revisión editorial
    - aprobación final
 
-## Prompt maestro para diseñar nuevas plantillas
-
-```text
-Diseña una plantilla HTML de correo para faro, ruta guiada de acompañamiento.
-
-Contexto:
-- La plantilla será usada en campañas institucionales de mentoría estudiantil.
-- Debe verse bien en correo, no en web.
-- Debe ser clara, sobria y útil.
-- No usar tono promocional ni grandilocuente.
-- La audiencia son estudiantes del Tec.
-- El objetivo es mover al estudiante a una acción concreta.
-
-Restricciones:
-- Entregar HTML completo.
-- Usar solo estos placeholders:
-  - {{nombre}}
-  - {{mentor}}
-  - {{comunidad}}
-  - {{app_url}} o {{booking_url}} si aplica
-- No usar JavaScript.
-- No depender de fuentes externas.
-- Mantener compatibilidad razonable con clientes de correo.
-- Usar una sola columna y CTA claro.
-
-La plantilla debe incluir:
-- encabezado con identidad de faro
-- saludo
-- contexto breve
-- CTA principal
-- cierre breve institucional
-
-El tono debe ser:
-- humano
-- claro
-- orientado a acción
-- institucionalmente usable
-
-Entrega:
-1. asunto sugerido
-2. HTML completo
-3. nota breve de cuándo usar esta plantilla
-```
-
 ## Criterio editorial
 
 - cada campaña debe explicar por qué llega ese correo
 - el CTA debe ser único y evidente
 - el mensaje debe conectar el diagnóstico o la sesión con el siguiente paso
 - si la plantilla no aporta contexto suficiente, no entra al catálogo
+- no asumir hechos no confirmados, salvo en la convocatoria a sesión
+- la voz visible del correo representa a `Mentoría Estudiantil`
+- el cuerpo puede aclarar quién acompaña el proceso mediante nombre y comunidad
