@@ -18,6 +18,15 @@ Plantillas HTML controladas para campañas enviadas desde administración.
 | `campaign-noshow-v1.html` | Seguimiento a ausencias | Activa |
 | `invitacion-diagnostico.html` | Referencia editorial anterior | Archivo legado |
 
+## Mockups
+
+Las propuestas en evaluación viven en `webapp/email-templates/mockups/`.
+
+Usa:
+- `mockups/claude-super-prompt.md` para generar nuevas variantes
+- `mockups/campaign-briefs.md` para mantener el criterio editorial
+- `mockups/README.md` para el flujo de revisión antes de aprobar una plantilla
+
 ## Placeholders soportados
 
 ### Reemplazados por el backend al enviar
