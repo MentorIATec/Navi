@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { Mail, Search, Users, Activity, CheckCircle, Upload, ShieldAlert, Send, Beaker, RefreshCw } from 'lucide-react';
+import { Mail, Search, Users, Activity, CheckCircle, Upload, ShieldAlert, Send, Beaker, RefreshCw, LayoutDashboard, CalendarDays, X } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { cn } from '../utils/cn';
 import { apiClient } from '../api/client';
@@ -115,6 +115,71 @@ function ensureSentence(value = '') {
   return /[.!?]$/.test(trimmed) ? trimmed : `${trimmed}.`;
 }
 
+function getAppBaseUrl() {
+  return typeof window !== 'undefined' ? window.location.origin : 'https://faro-me.vercel.app';
+}
+
+function getCampaignTemplate(type, options = {}) {
+  const appUrl = options.appUrl || 'https://faro-me.vercel.app';
+  const bookingUrl = options.bookingUrl || DEFAULT_BOOKING_CONFIG.url;
+
+  const templates = {
+    invitation: {
+      subject: 'Tu diagnóstico de trayectoria te espera en faro',
+      helper: 'Invita a estudiantes pendientes a completar su diagnóstico remoto antes de la sesión.',
+      htmlBody: `
+        <div style="font-family:Arial,sans-serif;color:#16314f;line-height:1.6;padding:24px;background:#f7fafc;">
+          <div style="max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #dbe5f0;border-radius:18px;padding:32px;">
+            <p style="margin:0 0 12px;font-size:12px;letter-spacing:0.2em;text-transform:uppercase;color:#d26a5c;font-weight:700;">faro · ruta guiada de acompañamiento</p>
+            <h1 style="margin:0 0 16px;font-size:30px;line-height:1.15;color:#16314f;">Hola {{nombre}}, tu diagnóstico ya está disponible.</h1>
+            <p style="margin:0 0 14px;font-size:16px;">Soy <strong>{{mentor}}</strong>, de la comunidad <strong>{{comunidad}}</strong>.</p>
+            <p style="margin:0 0 14px;font-size:16px;">Antes de tu sesión, entra a faro y responde tu diagnóstico. Esto nos ayudará a llegar con más claridad a la conversación.</p>
+            <p style="margin:24px 0 0;">
+              <a href="${appUrl}/" style="display:inline-block;background:#163f73;color:#ffffff;text-decoration:none;padding:14px 22px;border-radius:12px;font-weight:700;">Responder diagnóstico</a>
+            </p>
+          </div>
+        </div>
+      `,
+    },
+    session: {
+      subject: 'Tu sesión de mentoría ya puede agendarse',
+      helper: 'Convoca a estudiantes con diagnóstico completo para que aparten su sesión de mentoría.',
+      htmlBody: `
+        <div style="font-family:Arial,sans-serif;color:#16314f;line-height:1.6;padding:24px;background:#f7fafc;">
+          <div style="max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #dbe5f0;border-radius:18px;padding:32px;">
+            <p style="margin:0 0 12px;font-size:12px;letter-spacing:0.2em;text-transform:uppercase;color:#d26a5c;font-weight:700;">faro · ruta guiada de acompañamiento</p>
+            <h1 style="margin:0 0 16px;font-size:30px;line-height:1.15;color:#16314f;">Hola {{nombre}}, es momento de apartar tu sesión.</h1>
+            <p style="margin:0 0 14px;font-size:16px;">Tu mentor o mentora asignada es <strong>{{mentor}}</strong>, de la comunidad <strong>{{comunidad}}</strong>.</p>
+            <p style="margin:0 0 14px;font-size:16px;">Ya tienes tu diagnóstico listo. El siguiente paso es agendar la sesión para convertirlo en metas y acuerdos concretos.</p>
+            <p style="margin:24px 0 0;">
+              <a href="${bookingUrl}" style="display:inline-block;background:#163f73;color:#ffffff;text-decoration:none;padding:14px 22px;border-radius:12px;font-weight:700;">Agendar sesión</a>
+            </p>
+          </div>
+        </div>
+      `,
+    },
+    noshow: {
+      subject: 'Aún puedes retomar tu sesión de mentoría',
+      helper: 'Da seguimiento a estudiantes que no asistieron a la sesión para recuperar el proceso.',
+      htmlBody: `
+        <div style="font-family:Arial,sans-serif;color:#16314f;line-height:1.6;padding:24px;background:#f7fafc;">
+          <div style="max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #dbe5f0;border-radius:18px;padding:32px;">
+            <p style="margin:0 0 12px;font-size:12px;letter-spacing:0.2em;text-transform:uppercase;color:#d26a5c;font-weight:700;">faro · ruta guiada de acompañamiento</p>
+            <h1 style="margin:0 0 16px;font-size:30px;line-height:1.15;color:#16314f;">Hola {{nombre}}, todavía estás a tiempo de retomar tu sesión.</h1>
+            <p style="margin:0 0 14px;font-size:16px;">Sabemos que no pudiste asistir a tu sesión con <strong>{{mentor}}</strong> de <strong>{{comunidad}}</strong>.</p>
+            <p style="margin:0 0 14px;font-size:16px;">Si quieres continuar tu proceso, vuelve a agendar tu espacio para definir metas y pasos concretos.</p>
+            <p style="margin:24px 0 0;">
+              <a href="${bookingUrl}" style="display:inline-block;background:#163f73;color:#ffffff;text-decoration:none;padding:14px 22px;border-radius:12px;font-weight:700;">Retomar sesión</a>
+            </p>
+          </div>
+        </div>
+      `,
+    },
+  };
+
+  return templates[type] || templates.invitation;
+}
+
 export default function AdminDashboard() {
   const [accessEmail, setAccessEmail] = useState(() => localStorage.getItem('navi_admin_email') || '');
   const [accessPin, setAccessPin] = useState('');
@@ -198,7 +263,8 @@ export default function AdminDashboard() {
   const [campaignConfig, setCampaignConfig] = useState({
     subject: '¡Bienvenido a Navi!',
     htmlBody: '<p>Hola {{nombre}},</p><p>Te invito a realizar tu diagnóstico Brújula.</p>',
-    selectedMentorEmails: [] // Array of mentor emails
+    selectedMentorEmails: [], // Array of mentor emails
+    helper: '',
   });
 
   // Sync to localstorage
@@ -525,47 +591,31 @@ export default function AdminDashboard() {
     noshow: 'Seguimiento a ausencias',
   };
 
-  const _handleOpenCampaignConfig = (type) => {
-    setCampaignType(type);
-    let defaults = {
-      invitation: { 
-        subject: 'Tu diagnóstico de trayectoria te espera', 
-        body: '<div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 12px;">' +
-              '<h2 style="color: #0033A0;">Hola {{nombre}}!</h2>' +
-              '<p>Soy <b>{{mentor}}</b> de la comunidad <b>{{comunidad}}</b>.</p>' +
-              '<p>Te invito a entrar a <b>Navi</b> para comenzar tu diagnóstico de este semestre.</p>' +
-              '<a href="#" style="background: #0033A0; color: white; padding: 10px 20px; text-decoration: none; border-radius: 8px;">Comenzar Ahora</a>' +
-              '</div>' 
-      },
-      session: { 
-        subject: 'Es momento de agendar tu sesión de mentoría', 
-        body: '<div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 12px;">' +
-              '<h2 style="color: #6366f1;">Sesión de Metas</h2>' +
-              '<p>Hola {{nombre}}, ya hiciste tu test. Ahora es momento de vernos presencialmente para definir tus metas.</p>' +
-              '<p>Te espera tu mentor(a): <b>{{mentor}}</b></p>' +
-              '</div>' 
-      },
-      noshow: { 
-        subject: 'Aún puedes retomar tu plan de mentoría', 
-        body: '<div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 12px;">' +
-              '<h2 style="color: #f97316;">¡Te extrañamos en la sesión!</h2>' +
-              '<p>{{nombre}}, notamos que no pudiste asistir a la sesión presencial con <b>{{mentor}}</b>.</p>' +
-              '<p>No te preocupes, aún puedes completar tu plan de acción desde la App.</p>' +
-              '</div>' 
-      }
-    };
+  const campaignStats = useMemo(() => ({
+    invitation: studentsWithContext.filter((student) => student.status === 'Pendiente').length,
+    session: studentsWithContext.filter((student) => student.status === 'Test Completado').length,
+    noshow: studentsWithContext.filter((student) => student.status === 'Test Completado' && student.checkIn === 'No').length,
+  }), [studentsWithContext]);
 
-    setCampaignConfig({
-      subject: defaults[type].subject,
-      htmlBody: defaults[type].body,
-      selectedMentorEmails: mentors.map(m => m.email) // Todas las comunidades participan por defecto
+  const handleOpenCampaignConfig = (type) => {
+    const defaults = getCampaignTemplate(type, {
+      bookingUrl: bookingConfig.url,
+      appUrl: getAppBaseUrl(),
     });
+    setCampaignConfig({
+      subject: defaults.subject,
+      htmlBody: defaults.htmlBody,
+      helper: defaults.helper,
+      selectedMentorEmails: mentors.map((mentor) => mentor.email),
+    });
+    setTestEmail('');
+    setCampaignType(type);
     setIsCampaignModalOpen(true);
   };
 
   const handleExecuteCampaign = async () => {
     const selectedMentorsData = mentors.filter(m => campaignConfig.selectedMentorEmails.includes(m.email));
-    const destinatarios = students.filter(s => {
+    const destinatarios = studentsWithContext.filter(s => {
       if (campaignType === 'invitation') return s.status === 'Pendiente';
       if (campaignType === 'session') return s.status === 'Test Completado';
       if (campaignType === 'noshow') return s.status === 'Test Completado' && s.checkIn === 'No';
@@ -783,12 +833,12 @@ export default function AdminDashboard() {
       setSessionSaveFeedback({
         tone: result?.source === 'fallback' ? 'warning' : 'success',
         message: result?.source === 'fallback'
-          ? 'La sesión se guardó localmente. Revisa la conexión antes de asumir que llegó a Sheets.'
-          : `La sesión quedó guardada en Sheets${savedTimestampActualizado ? ` · ${formatLocalTimestamp(savedTimestampActualizado)}` : ''}.`,
+          ? 'La sesión se guardó localmente. Revisa la conexión antes de asumir que quedó registrada.'
+          : `La sesión quedó guardada en el registro${savedTimestampActualizado ? ` · ${formatLocalTimestamp(savedTimestampActualizado)}` : ''}.`,
       });
 
       const warning = result?.warning ? ` ${result.warning}` : '';
-      setFeedback({ tone: result?.source === 'fallback' ? 'error' : 'success', message: `Resultado de mentoría guardado.${warning}` });
+      setFeedback({ tone: result?.source === 'fallback' ? 'error' : 'success', message: `Sesión guardada.${warning}` });
     } catch (err) {
       setFeedback({ tone: 'error', message: `No fue posible guardar la sesión: ${err.message}` });
     } finally {
@@ -1164,9 +1214,9 @@ export default function AdminDashboard() {
                   <p className="text-sm text-[var(--ink-700)] mb-4 h-10">Envío masivo a estudiantes que aún no completaron el test.</p>
                   <Button
                     className="w-full"
-                    onClick={() => setFeedback({ tone: 'error', message: 'Campañas en rediseño. Por ahora no se envían desde este panel.' })}
+                    onClick={() => handleOpenCampaignConfig('invitation')}
                   >
-                    Campañas en rediseño
+                    Preparar envío · {campaignStats.invitation} pendientes
                   </Button>
                 </CardContent>
               </Card>
@@ -1177,9 +1227,9 @@ export default function AdminDashboard() {
                   <p className="text-sm text-[var(--ink-700)] mb-4 h-10">Aviso a estudiantes listos para su sesión presencial.</p>
                   <Button
                     className="w-full"
-                    onClick={() => setFeedback({ tone: 'error', message: 'Campañas en rediseño. Por ahora no se envían desde este panel.' })}
+                    onClick={() => handleOpenCampaignConfig('session')}
                   >
-                    Campañas en rediseño
+                    Preparar envío · {campaignStats.session} listos
                   </Button>
                 </CardContent>
               </Card>
@@ -1190,9 +1240,9 @@ export default function AdminDashboard() {
                   <p className="text-sm text-[var(--ink-700)] mb-4 h-10">Mensaje a estudiantes que no asistieron a su sesión.</p>
                   <Button
                     className="w-full"
-                    onClick={() => setFeedback({ tone: 'error', message: 'Campañas en rediseño. Por ahora no se envían desde este panel.' })}
+                    onClick={() => handleOpenCampaignConfig('noshow')}
                   >
-                    Campañas en rediseño
+                    Preparar envío · {campaignStats.noshow} ausentes
                   </Button>
                 </CardContent>
               </Card>
@@ -1411,16 +1461,21 @@ export default function AdminDashboard() {
                 <h2 className="text-xl font-bold text-gray-900 flex items-center">
                   <Mail className="w-5 h-5 mr-2 text-[var(--navy-500)]" /> Preparar campaña
                 </h2>
-                <p className="text-sm text-gray-500">{campaignLabels[campaignType]}. Ajusta el contenido y define a quién se enviará.</p>
+                <p className="text-sm text-gray-500">{campaignLabels[campaignType]}. Plantilla controlada, prueba y envío desde administración.</p>
               </div>
               <button onClick={() => setIsCampaignModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                <Trash2 className="w-5 h-5 text-gray-400" />
+                <X className="w-5 h-5 text-gray-400" />
               </button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-6 md:p-8 flex flex-col md:flex-row gap-8">
               {/* Left Column: Config */}
               <div className="w-full md:w-1/2 space-y-6">
+                <div className="rounded-xl border border-[rgba(15,76,129,0.12)] bg-[rgba(15,76,129,0.04)] px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--navy-600)]">Gestión desde admin</p>
+                  <p className="mt-2 text-sm text-[var(--ink-700)]">{campaignConfig.helper}</p>
+                </div>
+
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wider">Asunto del correo</label>
                   <input 
@@ -1432,13 +1487,11 @@ export default function AdminDashboard() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wider">Cuerpo HTML</label>
-                  <div className="text-xs text-[var(--navy-600)] mb-2 font-mono">Tags: {'{{nombre}} | {{mentor}} | {{comunidad}}'}</div>
-                  <textarea 
-                    className="w-full rounded-xl border border-gray-300 p-4 text-sm font-mono text-gray-700 shadow-inner focus:border-brand-500 focus:ring-brand-500 h-64 resize-none"
-                    value={campaignConfig.htmlBody}
-                    onChange={(e) => setCampaignConfig({...campaignConfig, htmlBody: e.target.value})}
-                  />
+                  <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wider">Plantilla</label>
+                  <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-4 text-sm text-[var(--ink-700)]">
+                    Esta campaña usa una plantilla controlada. El contenido visual se gestiona desde el producto, no con HTML libre.
+                  </div>
+                  <p className="mt-2 text-xs text-[var(--navy-600)] font-mono">Variables activas: {'{{nombre}} | {{mentor}} | {{comunidad}}'}</p>
                 </div>
 
                 <div>
@@ -1482,7 +1535,7 @@ export default function AdminDashboard() {
                         }} 
                       />
                    </div>
-                   <p className="text-[10px] text-gray-400 mt-4 text-center italic">Vista de referencia del mensaje que recibirá el estudiante.</p>
+                   <p className="text-[10px] text-gray-400 mt-4 text-center italic">Vista de referencia del mensaje. La plantilla es controlada para evitar errores de formato.</p>
                 </div>
               </div>
             </div>
@@ -1503,6 +1556,7 @@ export default function AdminDashboard() {
                       setFeedback({ tone: 'error', message: 'Ingresa un correo de prueba antes de enviarlo.' });
                       return;
                     }
+                    const selectedMentor = mentors.find((mentor) => campaignConfig.selectedMentorEmails.includes(mentor.email)) || mentors[0];
                     setIsSendingTest(true);
                     try {
                       await apiClient.post('sendCampaign', {
@@ -1512,8 +1566,8 @@ export default function AdminDashboard() {
                         destinatarios: [{
                           email: testEmail,
                           name: 'Prueba',
-                          mentor: 'Tu Mentor',
-                          community: 'Tu Comunidad',
+                          mentor: selectedMentor?.nickname || 'Tu mentor o mentora',
+                          community: selectedMentor?.community || 'Tu comunidad',
                           matricula: 'TEST',
                         }],
                       });
