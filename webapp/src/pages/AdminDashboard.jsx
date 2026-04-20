@@ -540,7 +540,6 @@ export default function AdminDashboard() {
       ),
       timestampCreacion: String(baseDraft?.timestampCreacion || baseDraft?.timestamp_creacion || '').trim(),
     });
-    setSessionSaveFeedback(null);
   }, [selectedStudentForDiagnostic, latestSessionsByMatricula]);
 
   useEffect(() => {
@@ -1184,7 +1183,10 @@ export default function AdminDashboard() {
                             <StatusBadge student={student} />
                             {(student.status === 'Test Completado' || student.status === 'Metas Seleccionadas') && (
                               <button 
-                                onClick={() => setSelectedStudentForDiagnostic(student)}
+                                onClick={() => {
+                                  setSessionSaveFeedback(null);
+                                  setSelectedStudentForDiagnostic(student);
+                                }}
                                 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--navy-600)] hover:text-[var(--navy-700)] hover:underline"
                               >
                                 Abrir sesión
@@ -1610,7 +1612,10 @@ export default function AdminDashboard() {
                   <p className="text-[var(--ink-700)]">{selectedStudentForDiagnostic.preferredName || selectedStudentForDiagnostic.name} · {selectedStudentForDiagnostic.matricula}</p>
                 </div>
                 <button 
-                  onClick={() => setSelectedStudentForDiagnostic(null)} 
+                  onClick={() => {
+                    setSessionSaveFeedback(null);
+                    setSelectedStudentForDiagnostic(null);
+                  }} 
                   className="px-3 py-1 bg-[rgba(15,76,129,0.06)] hover:bg-[rgba(15,76,129,0.12)] text-[var(--ink-900)] rounded-full text-sm font-semibold transition-colors"
                 >
                   Cerrar
