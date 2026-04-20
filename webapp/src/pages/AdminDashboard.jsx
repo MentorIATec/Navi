@@ -5,6 +5,9 @@ import { Mail, Search, Users, Activity, CheckCircle, Upload, ShieldAlert, Send, 
 import { QRCodeSVG } from 'qrcode.react';
 import { cn } from '../utils/cn';
 import { apiClient } from '../api/client';
+import invitationCampaignTemplate from '../../email-templates/campaign-invitation-v1.html?raw';
+import sessionCampaignTemplate from '../../email-templates/campaign-session-v1.html?raw';
+import noshowCampaignTemplate from '../../email-templates/campaign-noshow-v1.html?raw';
 
 const DEFAULT_API_URL = String(import.meta.env.VITE_API_URL || '').trim();
 const DEFAULT_BOOKING_CONFIG = {
@@ -119,6 +122,13 @@ function getAppBaseUrl() {
   return typeof window !== 'undefined' ? window.location.origin : 'https://faro-me.vercel.app';
 }
 
+function renderCampaignTemplate(template, replacements = {}) {
+  return Object.entries(replacements).reduce((html, [key, value]) => {
+    const safeValue = String(value ?? '');
+    return html.replaceAll(`{{${key}}}`, safeValue);
+  }, template);
+}
+
 function getCampaignTemplate(type, options = {}) {
   const appUrl = options.appUrl || 'https://faro-me.vercel.app';
   const bookingUrl = options.bookingUrl || DEFAULT_BOOKING_CONFIG.url;
@@ -127,53 +137,17 @@ function getCampaignTemplate(type, options = {}) {
     invitation: {
       subject: 'Tu diagnóstico de trayectoria te espera en faro',
       helper: 'Invita a estudiantes pendientes a completar su diagnóstico remoto antes de la sesión.',
-      htmlBody: `
-        <div style="font-family:Arial,sans-serif;color:#16314f;line-height:1.6;padding:24px;background:#f7fafc;">
-          <div style="max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #dbe5f0;border-radius:18px;padding:32px;">
-            <p style="margin:0 0 12px;font-size:12px;letter-spacing:0.2em;text-transform:uppercase;color:#d26a5c;font-weight:700;">faro · ruta guiada de acompañamiento</p>
-            <h1 style="margin:0 0 16px;font-size:30px;line-height:1.15;color:#16314f;">Hola {{nombre}}, tu diagnóstico ya está disponible.</h1>
-            <p style="margin:0 0 14px;font-size:16px;">Soy <strong>{{mentor}}</strong>, de la comunidad <strong>{{comunidad}}</strong>.</p>
-            <p style="margin:0 0 14px;font-size:16px;">Antes de tu sesión, entra a faro y responde tu diagnóstico. Esto nos ayudará a llegar con más claridad a la conversación.</p>
-            <p style="margin:24px 0 0;">
-              <a href="${appUrl}/" style="display:inline-block;background:#163f73;color:#ffffff;text-decoration:none;padding:14px 22px;border-radius:12px;font-weight:700;">Responder diagnóstico</a>
-            </p>
-          </div>
-        </div>
-      `,
+      htmlBody: renderCampaignTemplate(invitationCampaignTemplate, { app_url: `${appUrl}/` }),
     },
     session: {
       subject: 'Tu sesión de mentoría ya puede agendarse',
       helper: 'Convoca a estudiantes con diagnóstico completo para que aparten su sesión de mentoría.',
-      htmlBody: `
-        <div style="font-family:Arial,sans-serif;color:#16314f;line-height:1.6;padding:24px;background:#f7fafc;">
-          <div style="max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #dbe5f0;border-radius:18px;padding:32px;">
-            <p style="margin:0 0 12px;font-size:12px;letter-spacing:0.2em;text-transform:uppercase;color:#d26a5c;font-weight:700;">faro · ruta guiada de acompañamiento</p>
-            <h1 style="margin:0 0 16px;font-size:30px;line-height:1.15;color:#16314f;">Hola {{nombre}}, es momento de apartar tu sesión.</h1>
-            <p style="margin:0 0 14px;font-size:16px;">Tu mentor o mentora asignada es <strong>{{mentor}}</strong>, de la comunidad <strong>{{comunidad}}</strong>.</p>
-            <p style="margin:0 0 14px;font-size:16px;">Ya tienes tu diagnóstico listo. El siguiente paso es agendar la sesión para convertirlo en metas y acuerdos concretos.</p>
-            <p style="margin:24px 0 0;">
-              <a href="${bookingUrl}" style="display:inline-block;background:#163f73;color:#ffffff;text-decoration:none;padding:14px 22px;border-radius:12px;font-weight:700;">Agendar sesión</a>
-            </p>
-          </div>
-        </div>
-      `,
+      htmlBody: renderCampaignTemplate(sessionCampaignTemplate, { booking_url: bookingUrl }),
     },
     noshow: {
       subject: 'Aún puedes retomar tu sesión de mentoría',
       helper: 'Da seguimiento a estudiantes que no asistieron a la sesión para recuperar el proceso.',
-      htmlBody: `
-        <div style="font-family:Arial,sans-serif;color:#16314f;line-height:1.6;padding:24px;background:#f7fafc;">
-          <div style="max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #dbe5f0;border-radius:18px;padding:32px;">
-            <p style="margin:0 0 12px;font-size:12px;letter-spacing:0.2em;text-transform:uppercase;color:#d26a5c;font-weight:700;">faro · ruta guiada de acompañamiento</p>
-            <h1 style="margin:0 0 16px;font-size:30px;line-height:1.15;color:#16314f;">Hola {{nombre}}, todavía estás a tiempo de retomar tu sesión.</h1>
-            <p style="margin:0 0 14px;font-size:16px;">Sabemos que no pudiste asistir a tu sesión con <strong>{{mentor}}</strong> de <strong>{{comunidad}}</strong>.</p>
-            <p style="margin:0 0 14px;font-size:16px;">Si quieres continuar tu proceso, vuelve a agendar tu espacio para definir metas y pasos concretos.</p>
-            <p style="margin:24px 0 0;">
-              <a href="${bookingUrl}" style="display:inline-block;background:#163f73;color:#ffffff;text-decoration:none;padding:14px 22px;border-radius:12px;font-weight:700;">Retomar sesión</a>
-            </p>
-          </div>
-        </div>
-      `,
+      htmlBody: renderCampaignTemplate(noshowCampaignTemplate, { booking_url: bookingUrl }),
     },
   };
 

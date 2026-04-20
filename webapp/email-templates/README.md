@@ -1,36 +1,119 @@
 # Email Templates — faro
 
-Templates HTML para las campañas de correo enviadas desde el panel de administración.
+Plantillas HTML controladas para campañas enviadas desde administración.
 
-## Archivos
+## Regla de producto
 
-| Archivo | Campaña | Cuándo usar |
+- las plantillas viven versionadas en el repo
+- el panel de admin no permite HTML libre
+- las campañas se prueban desde admin y luego se envían
+- `faro` no expone a mentores la gestión técnica de plantillas
+
+## Catálogo actual
+
+| Archivo | Campaña | Estado |
 |---|---|---|
-| `invitacion-diagnostico.html` | Invitación al diagnóstico | Inicio de campaña o retoma de semestre |
+| `campaign-invitation-v1.html` | Invitación al diagnóstico | Activa |
+| `campaign-session-v1.html` | Convocatoria a sesión | Activa |
+| `campaign-noshow-v1.html` | Seguimiento a ausencias | Activa |
+| `invitacion-diagnostico.html` | Referencia editorial anterior | Archivo legado |
 
-## Tags disponibles
+## Placeholders soportados
 
-Estos tags se reemplazan dinámicamente al momento de enviar:
+### Reemplazados por el backend al enviar
 
-| Tag | Valor |
+| Placeholder | Fuente |
 |---|---|
 | `{{nombre}}` | Nombre preferido del estudiante |
-| `{{mentor}}` | Nombre del mentor asignado |
-| `{{comunidad}}` | Nombre de la comunidad |
-| `{{slogan}}` | Slogan de la comunidad (viene del Sheet de mentores) |
-| `{{whatsapp}}` | Número de WhatsApp del mentor (ej. `5218001234567`) |
+| `{{mentor}}` | Mentor/a asignado |
+| `{{comunidad}}` | Comunidad derivada del estudiante/mentor |
 
-## Datos de mentor/comunidad/WhatsApp
+### Reemplazados por el frontend al preparar la campaña
 
-La fuente de verdad es el **Sheet de mentores** en Google Sheets.
-Columnas actuales: `name`, `nickname`, `email`, `community`, `hex`, `slogan`
+| Placeholder | Fuente |
+|---|---|
+| `{{app_url}}` | URL base pública de `faro` |
+| `{{booking_url}}` | URL activa de agenda |
 
-**Pendiente:** agregar columna `whatsapp` al Sheet para habilitar el botón de contacto en los correos.
-El formato recomendado es número internacional sin `+` ni espacios: `5218001234567`
+## Pipeline para nuevas plantillas
 
-## Cómo usar un template en el panel
+1. Definir el brief de campaña.
+   - objetivo
+   - audiencia
+   - momento del flujo
+   - CTA esperado
 
-1. Abrir el HTML en cualquier editor o navegador
-2. Copiar el contenido del `<body>` (o el HTML completo)
-3. Pegarlo en el campo **Cuerpo HTML** del panel de Preparar campaña
-4. Los tags `{{nombre}}`, `{{mentor}}`, etc. se reemplazan automáticamente al enviar
+2. Aprobar copy base.
+   - asunto
+   - título
+   - contexto
+   - CTA
+   - placeholders
+
+3. Diseñar la plantilla como archivo nuevo.
+   - nombrar con versión: `campaign-<tipo>-vN.html`
+   - mantener solo placeholders soportados
+   - no introducir HTML libre en runtime
+
+4. Conectar la plantilla al catálogo controlado del producto.
+   - subject por defecto
+   - helper de admin
+   - preview local
+   - prueba de envío
+
+5. Validar.
+   - preview en modal
+   - correo de prueba
+   - revisión editorial
+   - aprobación final
+
+## Prompt maestro para diseñar nuevas plantillas
+
+```text
+Diseña una plantilla HTML de correo para faro, ruta guiada de acompañamiento.
+
+Contexto:
+- La plantilla será usada en campañas institucionales de mentoría estudiantil.
+- Debe verse bien en correo, no en web.
+- Debe ser clara, sobria y útil.
+- No usar tono promocional ni grandilocuente.
+- La audiencia son estudiantes del Tec.
+- El objetivo es mover al estudiante a una acción concreta.
+
+Restricciones:
+- Entregar HTML completo.
+- Usar solo estos placeholders:
+  - {{nombre}}
+  - {{mentor}}
+  - {{comunidad}}
+  - {{app_url}} o {{booking_url}} si aplica
+- No usar JavaScript.
+- No depender de fuentes externas.
+- Mantener compatibilidad razonable con clientes de correo.
+- Usar una sola columna y CTA claro.
+
+La plantilla debe incluir:
+- encabezado con identidad de faro
+- saludo
+- contexto breve
+- CTA principal
+- cierre breve institucional
+
+El tono debe ser:
+- humano
+- claro
+- orientado a acción
+- institucionalmente usable
+
+Entrega:
+1. asunto sugerido
+2. HTML completo
+3. nota breve de cuándo usar esta plantilla
+```
+
+## Criterio editorial
+
+- cada campaña debe explicar por qué llega ese correo
+- el CTA debe ser único y evidente
+- el mensaje debe conectar el diagnóstico o la sesión con el siguiente paso
+- si la plantilla no aporta contexto suficiente, no entra al catálogo
