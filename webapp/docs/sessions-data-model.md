@@ -11,6 +11,16 @@ Este documento fija la base para:
 - evitar duplicados por llave débil;
 - derivar una vista actual consistente en el tablero mentor.
 
+## Regla de producto
+
+El histórico de `Sesiones` existe para dar continuidad al trabajo del mentor dentro de `faro`, no para construir un sustituto del CRM institucional.
+
+### Decisión
+
+- `Sesiones` conserva trazabilidad y contexto de mentoría;
+- el registro formal del caso sigue ocurriendo en CRM;
+- cualquier vista de histórico en la webapp debe ser ligera y centrada en continuidad, no en administración pesada.
+
 ## Problema del modelo actual
 
 La implementación actual mezcla dos funciones en la misma lógica:

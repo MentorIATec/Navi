@@ -11,6 +11,22 @@ La prioridad ya no es agregar más branding ni destrabar campañas puntuales. La
 - preparar un resumen listo para CRM institucional
 - mantener a Google Sheets como fuente de verdad operativa
 
+## Regla de negocio
+
+Este tablero no pretende sustituir el CRM institucional ni transformarse en la herramienta principal de gestión de casos del mentor o mentora.
+
+Su papel es:
+
+- reunir el contexto mínimo útil para la sesión;
+- facilitar acuerdos y documentación;
+- acelerar el paso de la conversación al registro formal en CRM.
+
+### Implicación de diseño
+
+- evitar vistas pesadas tipo Airtable como centro del producto;
+- priorizar una vista clara del caso actual y un histórico ligero por estudiante;
+- no agregar carga administrativa paralela a la documentación oficial.
+
 ## Decisiones base
 
 ### Fuente de verdad

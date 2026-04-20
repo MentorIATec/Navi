@@ -1137,7 +1137,7 @@ export default function AdminDashboard() {
                                 onClick={() => setSelectedStudentForDiagnostic(student)}
                                 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--navy-600)] hover:text-[var(--navy-700)] hover:underline"
                               >
-                                Ver Diagnóstico
+                                Abrir sesión
                               </button>
                             )}
                           </div>
@@ -1712,7 +1712,7 @@ export default function AdminDashboard() {
                           Copiar resumen para CRM
                         </Button>
                         <Button onClick={handleSaveMentoringSession} isLoading={isSavingMentoringSession}>
-                          Guardar en Sheets
+                          Guardar sesión
                         </Button>
                       </div>
                     </div>

@@ -10,6 +10,22 @@ Su función es:
 - ayudar al mentor o mentora a documentar la sesión con menos fricción;
 - preservar acuerdos y contexto útil sin convertir la herramienta en un evaluador del estudiante.
 
+## Regla de producto
+
+`faro` no sustituye el CRM institucional ni debe convertirse en un tablero de gestión integral de casos.
+
+Su papel es más acotado:
+
+- consolidar contexto útil antes de la conversación;
+- facilitar la documentación posterior;
+- reducir el tiempo que el mentor invierte en reconstruir lo que pasó.
+
+### Decisión
+
+- el registro oficial del caso sigue viviendo en el CRM institucional;
+- `faro` actúa como facilitador de captura y síntesis;
+- no se debe ampliar el tablero hasta volverlo una consola pesada de seguimiento administrativo.
+
 ## Riesgo principal
 
 El mayor riesgo es presentar datos crudos con apariencia de resumen humano.
@@ -134,3 +150,5 @@ El resumen debe ser claro y pegable. No necesita exponer todos los metadatos del
 - `faro` sugiere un resumen; no genera un informe definitivo;
 - el mentor revisa y ajusta antes de documentar en CRM;
 - `Documentado en CRM` es estado operativo, no parte del texto narrativo.
+- el tablero no reemplaza el seguimiento formal del CRM;
+- cualquier acceso a histórico dentro de `faro` debe servir a la continuidad de la mentoría, no a crear una segunda herramienta de gestión de casos.

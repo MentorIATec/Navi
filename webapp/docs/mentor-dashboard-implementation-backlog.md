@@ -19,6 +19,7 @@ Este documento no redefine producto. Baja a tareas concretas:
 - mantener Google Sheets como fuente de verdad
 - reducir duplicidad entre lo que se administra en Sheets y lo que se intenta administrar en la webapp
 - priorizar la utilidad real del mentor sobre la sofisticación del panel
+- no convertir el tablero en un reemplazo del CRM ni en una consola pesada de gestión de casos
 
 ## Estado actual relevante
 
