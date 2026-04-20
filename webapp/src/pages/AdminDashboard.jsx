@@ -1706,6 +1706,38 @@ export default function AdminDashboard() {
                     </div>
 
                     <div className="rounded-2xl border border-[rgba(15,76,129,0.12)] bg-white p-4 space-y-4">
+                      {sessionSaveFeedback ? (
+                        <div
+                          className={cn(
+                            "rounded-2xl border px-4 py-4",
+                            sessionSaveFeedback.tone === 'success'
+                              ? "border-[rgba(30,120,79,0.22)] bg-[rgba(30,120,79,0.08)]"
+                              : "border-[rgba(210,106,92,0.18)] bg-[rgba(210,106,92,0.08)]"
+                          )}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div
+                              className={cn(
+                                "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
+                                sessionSaveFeedback.tone === 'success'
+                                  ? "bg-[rgba(30,120,79,0.14)] text-[rgb(30,120,79)]"
+                                  : "bg-[rgba(210,106,92,0.12)] text-[var(--coral-600)]"
+                              )}
+                            >
+                              <CheckCircle className="h-4 w-4" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-[var(--ink-900)]">
+                                {sessionSaveFeedback.tone === 'success' ? 'Sesión guardada' : 'Guardado pendiente de confirmar'}
+                              </p>
+                              <p className="mt-1 text-sm text-[var(--ink-800)]">
+                                {sessionSaveFeedback.message}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ) : null}
+
                       <div>
                         <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--ink-500)]">Fecha de sesión</label>
                         <input
@@ -1748,25 +1780,12 @@ export default function AdminDashboard() {
                         Marcar como documentado en CRM
                       </label>
 
-                      {sessionSaveFeedback ? (
-                        <div
-                          className={cn(
-                            "rounded-xl border px-3 py-3 text-sm",
-                            sessionSaveFeedback.tone === 'success'
-                              ? "border-[rgba(30,120,79,0.18)] bg-[rgba(30,120,79,0.08)] text-[rgb(30,120,79)]"
-                              : "border-[rgba(210,106,92,0.18)] bg-[rgba(210,106,92,0.08)] text-[var(--ink-900)]"
-                          )}
-                        >
-                          {sessionSaveFeedback.message}
-                        </div>
-                      ) : null}
-
                       <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
                         <Button variant="outline" onClick={handleCopyMentoringSummary}>
                           Copiar resumen para CRM
                         </Button>
                         <Button onClick={handleSaveMentoringSession} isLoading={isSavingMentoringSession}>
-                          Guardar sesión
+                          {sessionSaveFeedback?.tone === 'success' ? 'Sesión guardada' : 'Guardar sesión'}
                         </Button>
                       </div>
                     </div>
