@@ -78,15 +78,31 @@ function getSessionUpdatedAt(item) {
   ).trim();
 }
 
+function getLocalDateInputValue(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function formatLocalTimestamp(value = new Date()) {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return new Intl.DateTimeFormat('es-MX', {
+    dateStyle: 'short',
+    timeStyle: 'short',
+  }).format(date);
+}
+
 function createSessionId(matricula, fechaSesion) {
   const normalizedMatricula = String(matricula || '').trim().toUpperCase() || 'SINMATRICULA';
-  const normalizedFecha = String(fechaSesion || '').trim() || new Date().toISOString().slice(0, 10);
+  const normalizedFecha = String(fechaSesion || '').trim() || getLocalDateInputValue();
   const normalizedTimestamp = Date.now().toString();
   return `${normalizedMatricula}-${normalizedFecha}-${normalizedTimestamp.slice(-10)}`;
 }
 
 function getAcademicPeriod(value = '') {
-  const parsed = new Date(value || new Date().toISOString().slice(0, 10));
+  const parsed = new Date(value || getLocalDateInputValue());
   if (Number.isNaN(parsed.getTime())) return '';
   const year = parsed.getFullYear();
   const month = parsed.getMonth() + 1;
@@ -166,9 +182,10 @@ export default function AdminDashboard() {
   const [confirmation, setConfirmation] = useState(null);
   const [showCheckInQr, setShowCheckInQr] = useState(false);
   const [lastSyncAt, setLastSyncAt] = useState(() => localStorage.getItem('navi_last_sync_at') || '');
+  const [sessionSaveFeedback, setSessionSaveFeedback] = useState(null);
   const [mentoringSessionDraft, setMentoringSessionDraft] = useState({
     sessionId: '',
-    fechaSesion: new Date().toISOString().slice(0, 10),
+    fechaSesion: getLocalDateInputValue(),
     notasMentor: '',
     documentadoCrm: false,
     timestampCreacion: '',
@@ -440,7 +457,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (!selectedStudentForDiagnostic) return;
     const matricula = String(selectedStudentForDiagnostic.matricula || '').trim().toUpperCase();
-    const today = new Date().toISOString().slice(0, 10);
+    const today = getLocalDateInputValue();
     const draftStore = JSON.parse(localStorage.getItem('navi_mentoring_session_drafts') || '{}');
     const latestSaved = latestSessionsByMatricula.get(matricula);
     const persistedDraft = draftStore[matricula];
@@ -457,6 +474,7 @@ export default function AdminDashboard() {
       ),
       timestampCreacion: String(baseDraft?.timestampCreacion || baseDraft?.timestamp_creacion || '').trim(),
     });
+    setSessionSaveFeedback(null);
   }, [selectedStudentForDiagnostic, latestSessionsByMatricula]);
 
   useEffect(() => {
@@ -761,6 +779,12 @@ export default function AdminDashboard() {
         notasMentor: mentoringSessionDraft.notasMentor,
         documentadoCrm: mentoringSessionDraft.documentadoCrm,
         timestampCreacion: savedTimestampCreacion,
+      });
+      setSessionSaveFeedback({
+        tone: result?.source === 'fallback' ? 'warning' : 'success',
+        message: result?.source === 'fallback'
+          ? 'La sesión se guardó localmente. Revisa la conexión antes de asumir que llegó a Sheets.'
+          : `La sesión quedó guardada en Sheets${savedTimestampActualizado ? ` · ${formatLocalTimestamp(savedTimestampActualizado)}` : ''}.`,
       });
 
       const warning = result?.warning ? ` ${result.warning}` : '';
@@ -1634,7 +1658,10 @@ export default function AdminDashboard() {
                           type="date"
                           className="mt-2 w-full rounded-xl border border-[rgba(15,76,129,0.12)] px-3 py-2 text-sm focus:border-[var(--navy-500)] focus:outline-none focus:ring-2 focus:ring-[rgba(15,76,129,0.12)]"
                           value={mentoringSessionDraft.fechaSesion}
-                          onChange={(e) => setMentoringSessionDraft((current) => ({ ...current, fechaSesion: e.target.value }))}
+                          onChange={(e) => {
+                            setSessionSaveFeedback(null);
+                            setMentoringSessionDraft((current) => ({ ...current, fechaSesion: e.target.value }));
+                          }}
                         />
                         <p className="mt-2 text-xs text-[var(--ink-600)]">
                           Este borrador se conserva en este equipo hasta que cierres o guardes la sesión.
@@ -1647,7 +1674,10 @@ export default function AdminDashboard() {
                           className="mt-2 w-full rounded-xl border border-[rgba(15,76,129,0.12)] px-3 py-3 text-sm focus:border-[var(--navy-500)] focus:outline-none focus:ring-2 focus:ring-[rgba(15,76,129,0.12)] min-h-[120px] resize-none"
                           placeholder="Agrega aquí tus notas adicionales, si las hay."
                           value={mentoringSessionDraft.notasMentor}
-                          onChange={(e) => setMentoringSessionDraft((current) => ({ ...current, notasMentor: e.target.value }))}
+                          onChange={(e) => {
+                            setSessionSaveFeedback(null);
+                            setMentoringSessionDraft((current) => ({ ...current, notasMentor: e.target.value }));
+                          }}
                         />
                       </div>
 
@@ -1656,10 +1686,26 @@ export default function AdminDashboard() {
                           type="checkbox"
                           className="h-4 w-4 rounded border-[rgba(15,76,129,0.18)] text-[var(--navy-600)] focus:ring-[rgba(15,76,129,0.16)]"
                           checked={mentoringSessionDraft.documentadoCrm}
-                          onChange={(e) => setMentoringSessionDraft((current) => ({ ...current, documentadoCrm: e.target.checked }))}
+                          onChange={(e) => {
+                            setSessionSaveFeedback(null);
+                            setMentoringSessionDraft((current) => ({ ...current, documentadoCrm: e.target.checked }));
+                          }}
                         />
                         Marcar como documentado en CRM
                       </label>
+
+                      {sessionSaveFeedback ? (
+                        <div
+                          className={cn(
+                            "rounded-xl border px-3 py-3 text-sm",
+                            sessionSaveFeedback.tone === 'success'
+                              ? "border-[rgba(30,120,79,0.18)] bg-[rgba(30,120,79,0.08)] text-[rgb(30,120,79)]"
+                              : "border-[rgba(210,106,92,0.18)] bg-[rgba(210,106,92,0.08)] text-[var(--ink-900)]"
+                          )}
+                        >
+                          {sessionSaveFeedback.message}
+                        </div>
+                      ) : null}
 
                       <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
                         <Button variant="outline" onClick={handleCopyMentoringSummary}>
