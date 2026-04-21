@@ -398,7 +398,17 @@ export default function ActionPlan() {
                 className="w-full text-base sm:text-lg"
                 onClick={handleCopyAndMiTec}
               >
-                {copied ? 'Copiado. Abriendo MiVidaTec...' : 'Abrir MiVidaTec y copiar mi plan'}
+                {copied ? (
+                  <>
+                    <span className="sm:hidden">Copiado. Abriendo...</span>
+                    <span className="hidden sm:inline">Copiado. Abriendo MiVidaTec...</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="sm:hidden">Abrir MiVidaTec</span>
+                    <span className="hidden sm:inline">Abrir MiVidaTec y copiar mi plan</span>
+                  </>
+                )}
               </Button>
               <Button
                 variant="outline"
