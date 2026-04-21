@@ -52,6 +52,7 @@ Rutas verificadas con `200`:
 
 ### Pendientes de la siguiente fase
 
+- Priorizar estabilidad para prueba piloto y transferencia al equipo de 5 mentores de Comunidad Krei
 - Autenticación institucional real para mentoría y administración
 - Permisos resueltos del lado servidor, no solo en cliente
 - Check-in con contexto de sesión/mentor mediante token opaco
@@ -67,6 +68,7 @@ Rutas verificadas con `200`:
 - `webapp/docs/pilot-presential-session-guide.md`
 - `webapp/docs/pilot-technical-setup.md`
 - `webapp/docs/pilot-faq.md`
+- `webapp/docs/krei-pilot-students.csv`
 - `webapp/docs/mentor-dashboard-roadmap.md`
 - `webapp/docs/mentor-dashboard-implementation-backlog.md`
 - `webapp/docs/pretest-presential-rationale.md`

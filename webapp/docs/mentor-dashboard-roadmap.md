@@ -75,6 +75,23 @@ Decisión:
 
 El panel no debe ser un editor técnico. Debe ser un flujo controlado de selección, revisión y envío.
 
+#### Alcance del piloto
+
+Para la prueba piloto:
+
+- se mantienen tres campañas activas
+- el modal sirve para preparar, probar y enviar
+- no se abre todavía un selector de múltiples plantillas por campaña
+- el preview puede revisarse o simplificarse después del piloto si no aporta valor operativo real
+
+#### Escala futura
+
+Si el alcance crece a operación campus completa:
+
+- la selección manual de mentores debe migrar a búsqueda, filtros o agrupación por comunidad
+- puede añadirse un catálogo visible de campañas aprobadas con versión activa
+- esa ampliación no forma parte del piloto
+
 ### Poda del tablero actual
 
 No todo lo que hoy aparece en el panel justifica seguir viviendo en la webapp.
@@ -121,6 +138,15 @@ Capacidades deseables de esa herramienta:
 - manejar estados como `propuesta`, `aprobada`, `archivada`
 
 Esa herramienta no entra en esta fase.
+
+### Adiciones futuras ya identificadas
+
+Quedan fuera del piloto, pero sí están documentadas como posibles siguientes versiones:
+
+- chip o columna visible en el directorio para indicar si la sesión ya quedó documentada en CRM
+- historial ligero por estudiante dentro del contexto del caso
+- búsqueda de metas por palabra clave o filtros en `/seleccion-metas`
+- evolución a `Goal Manager` para diseño y gobierno de metas por mentores o mentoras
 
 ## Problema que resuelve esta fase
 
@@ -556,6 +582,25 @@ Columnas:
 - refinamiento de preview y validación de campañas
 - evaluación posterior de auto-refresh suave, sin eliminar control manual
 
+### Adición futura: historial ligero por estudiante
+
+No entra en la preparación del piloto.
+
+Queda documentado para una versión posterior:
+
+- mostrar dentro del contexto del estudiante un historial ligero de sesiones;
+- incluir solo datos útiles para continuidad:
+  - fecha
+  - estado de documentación
+  - meta prioritaria
+  - acción para ver resumen o retomar
+
+Decisión:
+
+- no construir una vista pesada tipo Airtable;
+- no convertir el tablero en un segundo CRM;
+- usar el histórico solo como apoyo a la continuidad de la mentoría.
+
 ## Qué no entra en esta fase
 
 - integración directa con CRM
@@ -565,6 +610,7 @@ Columnas:
 - automatización agresiva de sincronización
 - edición libre de HTML en frontend
 - Goal Manager separado para gobierno del catálogo de metas
+- historial completo de sesiones como vista administrativa central
 
 ## Recomendación principal
 

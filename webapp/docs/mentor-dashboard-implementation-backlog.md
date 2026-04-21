@@ -219,6 +219,13 @@ Agregar soporte para:
 
 Reemplazar edición libre de HTML por plantillas controladas.
 
+### Alcance del piloto
+
+- mantener tres campañas oficiales activas
+- usar el modal para preparar, probar y enviar
+- no abrir todavía selector de múltiples plantillas por campaña
+- dejar el modelo de preview sujeto a revisión después del piloto
+
 ### Cambios en frontend
 
 #### [AdminDashboard.jsx](/Users/karenguzman/BrujulApp/webapp/src/pages/AdminDashboard.jsx)
@@ -233,6 +240,23 @@ Reemplazar por:
 2. preview no editable
 3. subject editable solo si se aprueba esa flexibilidad
 4. lista explícita de variables disponibles
+
+### Trabajo diferido
+
+No entra en esta fase:
+
+- selector de múltiples plantillas HTML por campaña
+- catálogo navegable de campañas aprobadas
+- grilla escalable de mentores para operación campus completa
+- búsqueda o filtros de metas en `/seleccion-metas`
+- historial completo de sesiones como vista principal
+
+Sí queda documentado para una siguiente fase:
+
+1. agregar chip de `Documentado en CRM` en el directorio
+2. permitir búsqueda por palabra clave de metas
+3. sustituir la selección visual simple de mentores por búsqueda o filtro por comunidad
+4. reevaluar si el preview de campañas debe mantenerse o reducirse a ficha de campaña + versión activa
 
 ### Cambios en plantillas
 
@@ -315,6 +339,23 @@ Reducir riesgos operativos y endurecer el modelo.
 4. archivar o remover código ya retirado de tabs inactivas
 5. mover gestión de metas a proyecto separado `Goal Manager`
 
+### Adición futura fuera del piloto
+
+Historial ligero de sesiones por estudiante:
+
+- visible dentro del contexto del estudiante, no como nueva pantalla principal;
+- mostrar últimas sesiones con:
+  - fecha
+  - estado
+  - meta prioritaria
+  - acción para ver resumen o retomar
+
+No incluye:
+
+- grilla administrativa completa;
+- vista tipo Airtable;
+- reemplazo del CRM institucional.
+
 ## Dependencias y riesgos
 
 ### Dependencias
@@ -329,6 +370,7 @@ Reducir riesgos operativos y endurecer el modelo.
 2. seguir manteniendo demasiada configuración en el tablero
 3. mezclar esta fase con rebranding o rediseño visual
 4. depender de índices de columna en Sheets
+5. intentar abrir una vista histórica pesada antes del piloto
 
 ## Orden recomendado de ejecución
 
@@ -336,6 +378,7 @@ Reducir riesgos operativos y endurecer el modelo.
 2. Fase 2: `Resultado de mentoría`
 3. Fase 3: campañas sostenibles
 4. Fase 4: consolidación
+5. después del piloto: evaluar historial ligero por estudiante
 
 ## Definición de listo por fase
 
