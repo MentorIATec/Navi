@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>faro · guía rápida para mentores Krei</title>
+    <style>
+      :root {
+        --bg: #eef3fb;
+        --surface: #ffffff;
+        --ink: #183153;
+        --muted: #5d6c84;
+        --line: #d9e4f2;
+        --accent: #d56d5d;
+        --accent-soft: #fbe7e1;
+        --navy: #204a82;
+        --mint: #e6f6ea;
+        --mint-ink: #26754b;
+        --shadow: 0 18px 40px rgba(24, 49, 83, 0.08);
+        --radius: 24px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: Inter, "Segoe UI", sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at top left, rgba(213, 109, 93, 0.12), transparent 24%),
+          linear-gradient(180deg, #f8fbff 0%, var(--bg) 100%);
+      }
+
+      .page {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 40px 28px 56px;
+      }
+
+      .hero,
+      .card,
+      .panel {
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid rgba(217, 228, 242, 0.95);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+      }
+
+      .hero {
+        padding: 36px 38px;
+        margin-bottom: 24px;
+      }
+
+      .eyebrow {
+        margin: 0 0 14px;
+        font-size: 0.95rem;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--accent);
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(2.2rem, 4vw, 4rem);
+        line-height: 0.98;
+        letter-spacing: -0.04em;
+      }
+
+      .hero p {
+        max-width: 760px;
+        margin: 22px 0 0;
+        font-size: 1.28rem;
+        line-height: 1.55;
+        color: var(--muted);
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 24px;
+        margin-bottom: 24px;
+      }
+
+      .card,
+      .panel {
+        padding: 28px 30px;
+      }
+
+      h2 {
+        margin: 0 0 16px;
+        font-size: 1.5rem;
+        line-height: 1.15;
+        letter-spacing: -0.03em;
+      }
+
+      h3 {
+        margin: 0 0 12px;
+        font-size: 1.05rem;
+        line-height: 1.2;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+      }
+
+      p,
+      li {
+        font-size: 1rem;
+        line-height: 1.65;
+        color: var(--muted);
+      }
+
+      ul,
+      ol {
+        margin: 0;
+        padding-left: 1.2rem;
+      }
+
+      .stack {
+        display: grid;
+        gap: 18px;
+      }
+
+      .pill-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        min-height: 38px;
+        padding: 0 14px;
+        border-radius: 999px;
+        background: var(--accent-soft);
+        color: var(--ink);
+        font-size: 0.96rem;
+        font-weight: 600;
+      }
+
+      .pill.mint {
+        background: var(--mint);
+        color: var(--mint-ink);
+      }
+
+      .callout {
+        padding: 18px 20px;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: #f9fbfe;
+      }
+
+      .callout strong {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 0.98rem;
+      }
+
+      .link-list {
+        display: grid;
+        gap: 12px;
+      }
+
+      .link-item {
+        padding: 16px 18px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: #fbfdff;
+      }
+
+      .label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 0.83rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      code {
+        font-family: "SF Mono", "Roboto Mono", monospace;
+        font-size: 0.92rem;
+        color: var(--navy);
+        word-break: break-all;
+      }
+
+      .two-col {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+      }
+
+      .section {
+        margin-bottom: 24px;
+      }
+
+      .footer {
+        margin-top: 12px;
+        padding: 18px 4px 0;
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      @media (max-width: 920px) {
+        .grid,
+        .two-col {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media print {
+        body {
+          background: #fff;
+        }
+
+        .page {
+          max-width: none;
+          padding: 16mm;
+        }
+
+        .hero,
+        .card,
+        .panel {
+          box-shadow: none;
+          background: #fff;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <section class="hero">
+        <p class="eyebrow">faro · ruta guiada de acompañamiento</p>
+        <h1>Guía rápida para mentores Krei</h1>
+        <p>
+          Esta guía resume cómo usar <strong>faro</strong> durante la prueba
+          piloto. El objetivo no es sustituir el CRM ni agregar carga de
+          gestión, sino dar contexto, facilitar acuerdos y respaldar la
+          documentación de cada sesión.
+        </p>
+        <div class="pill-row">
+          <span class="pill">Piloto Krei</span>
+          <span class="pill mint">Mentoría Estudiantil</span>
+          <span class="pill">Flujo estudiante + mentor</span>
+        </div>
+      </section>
+
+      <section class="grid">
+        <article class="card stack">
+          <div>
+            <h2>Qué sí hace faro</h2>
+            <ul>
+              <li>Invitar al estudiante a revisar cómo va su semestre.</li>
+              <li>Recuperar resultados del diagnóstico antes de la sesión.</li>
+              <li>Apoyar la elección de metas y el plan de acción.</li>
+              <li>Generar un resumen útil para documentar en CRM.</li>
+              <li>Guardar un registro operativo de la sesión.</li>
+            </ul>
+          </div>
+          <div>
+            <h2>Qué no hace</h2>
+            <ul>
+              <li>No reemplaza el CRM institucional.</li>
+              <li>No es el tablero principal de gestión de casos.</li>
+              <li>No sustituye el criterio del mentor.</li>
+              <li>No interpreta por sí solo el contexto del estudiante.</li>
+            </ul>
+          </div>
+        </article>
+
+        <aside class="panel">
+          <h2>URLs clave</h2>
+          <div class="link-list">
+            <div class="link-item">
+              <span class="label">App pública</span>
+              <code>https://faro-me.vercel.app</code>
+            </div>
+            <div class="link-item">
+              <span class="label">Panel mentor/admin</span>
+              <code>https://faro-me.vercel.app/admin</code>
+            </div>
+            <div class="link-item">
+              <span class="label">Check-in estudiantil</span>
+              <code>https://faro-me.vercel.app/check-in</code>
+            </div>
+          </div>
+        </aside>
+      </section>
+
+      <section class="card section">
+        <h2>Flujo del estudiante</h2>
+        <div class="two-col">
+          <div class="callout">
+            <strong>Antes de la sesión</strong>
+            <ol>
+              <li>Recibe la campaña de invitación al diagnóstico.</li>
+              <li>Ingresa con su matrícula y responde el test.</li>
+              <li>Revisa resultados y define metas.</li>
+              <li>Genera su plan de acción.</li>
+            </ol>
+          </div>
+          <div class="callout">
+            <strong>El día de la sesión</strong>
+            <ol>
+              <li>Entra a <code>/check-in</code> desde el QR o enlace.</li>
+              <li>Confirma matrícula y responde el micro pre-test.</li>
+              <li>Retoma diagnóstico y metas si ya existen.</li>
+              <li>Cierra con un plan y una estrategia si-entonces.</li>
+            </ol>
+          </div>
+        </div>
+      </section>
+
+      <section class="card section">
+        <h2>Flujo del mentor</h2>
+        <div class="two-col">
+          <div class="callout">
+            <strong>Antes de la sesión</strong>
+            <ol>
+              <li>Entrar a <code>/admin</code>.</li>
+              <li>Usar <strong>Actualizar directorio</strong>.</li>
+              <li>Verificar el estado del estudiante en el directorio.</li>
+              <li>Tener visible el acceso a <code>/check-in</code>.</li>
+            </ol>
+          </div>
+          <div class="callout">
+            <strong>Durante y después</strong>
+            <ol>
+              <li>Abrir sesión y revisar el contexto del estudiante.</li>
+              <li>Copiar el resumen sugerido para CRM.</li>
+              <li>Documentar formalmente en CRM.</li>
+              <li>Guardar sesión en faro y verificar el estado CRM.</li>
+            </ol>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid">
+        <article class="card">
+          <h2>Checklist operativo</h2>
+          <div class="stack">
+            <div class="callout">
+              <strong>Antes de empezar</strong>
+              <ul>
+                <li>Confirma que el estudiante aparece en el directorio.</li>
+                <li>Verifica si su estado es Pendiente o Plan definido.</li>
+                <li>Ten listo el acceso a <code>/check-in</code>.</li>
+              </ul>
+            </div>
+            <div class="callout">
+              <strong>Durante la conversación</strong>
+              <ul>
+                <li>Usa el diagnóstico como contexto, no como sentencia.</li>
+                <li>Ayuda a definir una meta prioritaria y otra complementaria.</li>
+                <li>Trabaja obstáculo principal y respuesta concreta.</li>
+              </ul>
+            </div>
+            <div class="callout">
+              <strong>Al cerrar</strong>
+              <ul>
+                <li>Documenta el caso en CRM.</li>
+                <li>Marca si quedó documentado en CRM.</li>
+                <li>Guarda sesión y confirma el estado en el directorio.</li>
+              </ul>
+            </div>
+          </div>
+        </article>
+
+        <aside class="panel stack">
+          <div>
+            <h2>Incidencias comunes</h2>
+            <div class="callout">
+              <strong>La matrícula no aparece</strong>
+              <p>Verifica escritura exacta. Si persiste, escalar a coordinación.</p>
+            </div>
+          </div>
+          <div class="callout">
+            <strong>No ves cambios recientes</strong>
+            <p>Usa <strong>Actualizar directorio</strong> antes de abrir sesión.</p>
+          </div>
+          <div class="callout">
+            <strong>El estudiante no tiene diagnóstico</strong>
+            <p>
+              Decidir si responde el test en ese momento o si continúa con apoyo
+              del mentor.
+            </p>
+          </div>
+          <div class="callout">
+            <strong>faro y CRM no coinciden</strong>
+            <p>
+              El registro formal sigue siendo CRM. faro sirve como respaldo
+              operativo y contexto de sesión.
+            </p>
+          </div>
+        </aside>
+      </section>
+
+      <footer class="footer">
+        Material de transferencia piloto · Comunidad Krei · Mentoría Estudiantil
+      </footer>
+    </main>
+  </body>
+  </html>

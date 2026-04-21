@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>faro · guion operativo del piloto Krei</title>
+    <style>
+      :root {
+        --bg: #eef3fb;
+        --surface: #ffffff;
+        --ink: #183153;
+        --muted: #5d6c84;
+        --line: #d9e4f2;
+        --accent: #d56d5d;
+        --navy: #204a82;
+        --accent-soft: #fbe7e1;
+        --shadow: 0 18px 40px rgba(24, 49, 83, 0.08);
+        --radius: 24px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: Inter, "Segoe UI", sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at top left, rgba(213, 109, 93, 0.12), transparent 24%),
+          linear-gradient(180deg, #f8fbff 0%, var(--bg) 100%);
+      }
+
+      .page {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 40px 28px 56px;
+      }
+
+      .hero,
+      .card {
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid rgba(217, 228, 242, 0.95);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+      }
+
+      .hero {
+        padding: 36px 38px;
+        margin-bottom: 24px;
+      }
+
+      .eyebrow {
+        margin: 0 0 14px;
+        font-size: 0.95rem;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--accent);
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(2.15rem, 4vw, 3.9rem);
+        line-height: 0.98;
+        letter-spacing: -0.04em;
+      }
+
+      .hero p {
+        max-width: 780px;
+        margin: 20px 0 0;
+        font-size: 1.2rem;
+        line-height: 1.55;
+        color: var(--muted);
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 24px;
+        margin-bottom: 24px;
+      }
+
+      .card {
+        padding: 28px 30px;
+      }
+
+      h2 {
+        margin: 0 0 14px;
+        font-size: 1.45rem;
+        line-height: 1.15;
+        letter-spacing: -0.03em;
+      }
+
+      h3 {
+        margin: 0 0 12px;
+        font-size: 1rem;
+        line-height: 1.2;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+      }
+
+      p,
+      li,
+      td,
+      th {
+        font-size: 1rem;
+        line-height: 1.65;
+        color: var(--muted);
+      }
+
+      ul,
+      ol {
+        margin: 0;
+        padding-left: 1.2rem;
+      }
+
+      .stack {
+        display: grid;
+        gap: 18px;
+      }
+
+      .callout {
+        padding: 18px 20px;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: #f9fbfe;
+      }
+
+      .callout strong {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--ink);
+      }
+
+      .two-col {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      thead th {
+        padding: 12px 14px;
+        text-align: left;
+        font-size: 0.84rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+        border-bottom: 1px solid var(--line);
+      }
+
+      tbody td {
+        padding: 12px 14px;
+        border-bottom: 1px solid #edf2f8;
+        vertical-align: top;
+      }
+
+      tbody tr:last-child td {
+        border-bottom: none;
+      }
+
+      .mono {
+        font-family: "SF Mono", "Roboto Mono", monospace;
+        font-size: 0.92rem;
+        color: var(--navy);
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        min-height: 34px;
+        padding: 0 12px;
+        border-radius: 999px;
+        background: var(--accent-soft);
+        color: var(--ink);
+        font-size: 0.94rem;
+        font-weight: 600;
+      }
+
+      .footer {
+        margin-top: 12px;
+        padding: 18px 4px 0;
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      @media (max-width: 980px) {
+        .grid,
+        .two-col {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media print {
+        body {
+          background: #fff;
+        }
+
+        .page {
+          max-width: none;
+          padding: 16mm;
+        }
+
+        .hero,
+        .card {
+          box-shadow: none;
+          background: #fff;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <section class="hero">
+        <p class="eyebrow">faro · piloto krei</p>
+        <h1>Guion operativo de prueba</h1>
+        <p>
+          Este material organiza la prueba de extremo a extremo con estudiantes
+          ficticios. Cada mentor validará el flujo desde la perspectiva del
+          estudiante y desde la perspectiva del mentor, sin usar casos reales.
+        </p>
+      </section>
+
+      <section class="grid">
+        <article class="card">
+          <h2>Objetivo de la prueba</h2>
+          <div class="stack">
+            <div class="callout">
+              <strong>Qué queremos confirmar</strong>
+              <ul>
+                <li>Que las campañas lleguen al destinatario correcto.</li>
+                <li>Que el estudiante complete el test y seleccione metas.</li>
+                <li>Que el mentor pueda abrir sesión y documentar en CRM.</li>
+                <li>Que el registro quede guardado correctamente en faro.</li>
+              </ul>
+            </div>
+            <div class="callout">
+              <strong>Qué no estamos probando aquí</strong>
+              <ul>
+                <li>No estamos evaluando desempeño pedagógico real.</li>
+                <li>No estamos usando estudiantes reales.</li>
+                <li>No estamos validando un uso masivo fuera de Krei.</li>
+              </ul>
+            </div>
+          </div>
+        </article>
+
+        <aside class="card">
+          <h2>Rutas clave</h2>
+          <div class="stack">
+            <div class="callout">
+              <strong>Como estudiante</strong>
+              <p class="mono">https://faro-me.vercel.app</p>
+            </div>
+            <div class="callout">
+              <strong>Como mentor</strong>
+              <p class="mono">https://faro-me.vercel.app/admin</p>
+            </div>
+            <div class="callout">
+              <strong>Check-in</strong>
+              <p class="mono">https://faro-me.vercel.app/check-in</p>
+            </div>
+          </div>
+        </aside>
+      </section>
+
+      <section class="card" style="margin-bottom: 24px;">
+        <h2>Pasos como estudiante</h2>
+        <div class="two-col">
+          <div class="callout">
+            <strong>Flujo mínimo</strong>
+            <ol>
+              <li>Recibir la campaña por correo.</li>
+              <li>Abrir el enlace y entrar con la matrícula asignada.</li>
+              <li>Responder el diagnóstico.</li>
+              <li>Revisar resultados.</li>
+              <li>Elegir metas.</li>
+              <li>Cerrar en plan de acción.</li>
+            </ol>
+          </div>
+          <div class="callout">
+            <strong>Qué validar</strong>
+            <ul>
+              <li>El correo llega y el CTA funciona.</li>
+              <li>La matrícula es reconocida.</li>
+              <li>El diagnóstico se guarda correctamente.</li>
+              <li>La comunidad y el mentor aparecen bien.</li>
+              <li>El plan final refleja metas y horizonte correctos.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="card" style="margin-bottom: 24px;">
+        <h2>Pasos como mentor</h2>
+        <div class="two-col">
+          <div class="callout">
+            <strong>Flujo mínimo</strong>
+            <ol>
+              <li>Entrar a <span class="mono">/admin</span>.</li>
+              <li>Usar <strong>Actualizar directorio</strong>.</li>
+              <li>Ubicar al estudiante ficticio.</li>
+              <li>Abrir sesión.</li>
+              <li>Copiar resumen para CRM.</li>
+              <li>Marcar si quedó documentado en CRM.</li>
+              <li>Guardar sesión.</li>
+            </ol>
+          </div>
+          <div class="callout">
+            <strong>Qué validar</strong>
+            <ul>
+              <li>El estudiante aparece en el directorio correcto.</li>
+              <li>El estado evoluciona de Pendiente a Plan definido.</li>
+              <li>El resumen CRM se personaliza con mentor y comunidad.</li>
+              <li>La sesión queda guardada sin romper el modal.</li>
+              <li>El chip de CRM refleja el estado esperado.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="card" style="margin-bottom: 24px;">
+        <h2>Casos ficticios del piloto</h2>
+        <p>
+          Cada mentor puede usar su propio correo en los registros asignados para
+          vivir el flujo completo. Esta tabla resume la distribución actual del
+          CSV de prueba.
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>Mentor</th>
+              <th>Matrículas sugeridas</th>
+              <th>Comunidad</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Karen</td>
+              <td>A10984011, A10984016</td>
+              <td>Krei</td>
+            </tr>
+            <tr>
+              <td>JR</td>
+              <td>A10984012, A10984017</td>
+              <td>Krei</td>
+            </tr>
+            <tr>
+              <td>Karla</td>
+              <td>A10984013, A10984018</td>
+              <td>Krei</td>
+            </tr>
+            <tr>
+              <td>Angélica</td>
+              <td>A10984014, A10984019</td>
+              <td>Krei</td>
+            </tr>
+            <tr>
+              <td>Juanjo</td>
+              <td>A10984015, A10984020</td>
+              <td>Krei</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="grid">
+        <article class="card">
+          <h2>Cómo registrar observaciones</h2>
+          <div class="stack">
+            <div class="callout">
+              <strong>Registrar hallazgos útiles</strong>
+              <ul>
+                <li>Qué intentabas hacer.</li>
+                <li>En qué paso ocurrió el problema.</li>
+                <li>Qué esperabas ver.</li>
+                <li>Qué viste realmente.</li>
+                <li>Captura de pantalla si aplica.</li>
+              </ul>
+            </div>
+            <div class="callout">
+              <strong>Ejemplos de observaciones valiosas</strong>
+              <ul>
+                <li>El correo llegó pero el enlace falló.</li>
+                <li>La matrícula no fue reconocida.</li>
+                <li>El resumen CRM omitió la comunidad.</li>
+                <li>El directorio no cambió de estado tras guardar.</li>
+              </ul>
+            </div>
+          </div>
+        </article>
+
+        <aside class="card">
+          <h2>Criterios para reportar incidencia</h2>
+          <div class="stack">
+            <div class="callout">
+              <strong>Reportar de inmediato</strong>
+              <ul>
+                <li>No llega la campaña al destinatario esperado.</li>
+                <li>El estudiante no puede entrar con matrícula válida.</li>
+                <li>El plan no se guarda.</li>
+                <li>El panel se rompe o se queda en blanco.</li>
+              </ul>
+            </div>
+            <div class="callout">
+              <strong>Registrar como mejora</strong>
+              <ul>
+                <li>Un copy confunde.</li>
+                <li>Un chip podría verse mejor.</li>
+                <li>Un orden de pasos podría ser más claro.</li>
+              </ul>
+            </div>
+            <div class="callout">
+              <strong>Recordatorio</strong>
+              <p>
+                El objetivo del piloto es validar uso real. No hace falta rediseñar
+                el sistema sobre la marcha por cada observación menor.
+              </p>
+            </div>
+          </div>
+        </aside>
+      </section>
+
+      <footer class="footer">
+        Material de transferencia piloto · Comunidad Krei · Mentoría Estudiantil
+      </footer>
+    </main>
+  </body>
+  </html>

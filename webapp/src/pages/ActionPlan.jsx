@@ -235,7 +235,7 @@ export default function ActionPlan() {
         </div>
       ) : null}
       <div className="mb-10 grid gap-8 lg:grid-cols-[0.8fr_1.2fr]">
-        <section className="shell-panel rounded-[30px] border border-[rgba(15,76,129,0.12)] px-7 py-8 sm:px-8 sm:py-10">
+        <section className="shell-panel rounded-[30px] border border-[rgba(15,76,129,0.12)] px-6 py-7 sm:px-8 sm:py-10">
           <p className="navi-eyebrow" style={{ color: 'var(--coral-500)' }}>faro · ruta guiada de acompa&ntilde;amiento</p>
           <h2 className="mt-4 font-display text-4xl font-bold tracking-tight text-[var(--ink-900)] sm:text-5xl">
             Tu faro está trazado
@@ -243,7 +243,7 @@ export default function ActionPlan() {
           <p className="navi-prose mt-4 text-sm sm:text-base">
             Cerraste el recorrido con dos compromisos concretos y una estrategia para sostener tu avance cuando el semestre se complique.
           </p>
-          <div className="mt-8 flex items-start gap-4 rounded-[22px] border border-[rgba(210,106,92,0.16)] bg-[rgba(249,236,232,0.5)] px-5 py-5">
+          <div className="mt-8 flex items-start gap-4 rounded-[22px] border border-[rgba(210,106,92,0.16)] bg-[rgba(249,236,232,0.5)] px-4 py-4 sm:px-5 sm:py-5">
             <div>
               <p className="font-display text-xl font-semibold text-[var(--ink-900)]">Ya tienes una ruta clara</p>
               <p className="mt-2 text-sm text-[var(--ink-700)]">
@@ -252,7 +252,7 @@ export default function ActionPlan() {
             </div>
           </div>
 
-          <div className="mt-6 rounded-[22px] border border-[rgba(15,76,129,0.1)] bg-white/70 px-5 py-5">
+          <div className="mt-6 rounded-[22px] border border-[rgba(15,76,129,0.1)] bg-white/70 px-4 py-5 sm:px-5">
             <p className="navi-eyebrow text-[var(--navy-500)]">Lo que ya cerraste hoy</p>
             <div className="mt-4 space-y-3 text-sm text-[var(--ink-700)]">
               <div className="flex items-start gap-3">
@@ -275,7 +275,7 @@ export default function ActionPlan() {
           <div className="absolute inset-x-8 top-6 h-24 rounded-full bg-[rgba(210,106,92,0.12)] blur-3xl" />
           <div
             ref={badgeRef}
-            className="relative overflow-hidden rounded-[32px] border border-[rgba(255,255,255,0.16)] p-8 text-white shadow-[0_30px_70px_rgba(16,28,48,0.28)] transition-all duration-700 ease-out"
+            className="relative overflow-hidden rounded-[28px] border border-[rgba(255,255,255,0.16)] p-6 text-white shadow-[0_30px_70px_rgba(16,28,48,0.28)] transition-all duration-700 ease-out sm:rounded-[32px] sm:p-8"
             style={{
               background: `radial-gradient(circle at 52% 42%, color-mix(in srgb, ${communityTheme.accent} 26%, transparent) 0%, transparent 42%), radial-gradient(circle at 18% 14%, color-mix(in srgb, ${communityTheme.accent} 18%, transparent) 0%, transparent 28%), linear-gradient(180deg, color-mix(in srgb, ${communityTheme.accent} 16%, var(--navy-700)) 0%, color-mix(in srgb, ${communityTheme.accent} 24%, var(--navy-600)) 100%)`,
               transform: showClosureLine ? 'translateY(0) scale(1)' : 'translateY(18px) scale(0.97)',
@@ -302,14 +302,14 @@ export default function ActionPlan() {
 
             <div className="relative z-10">
               <div
-                className="-mx-8 -mt-8 mb-7 px-8 py-5"
+                className="-mx-6 -mt-6 mb-6 px-6 py-4 sm:-mx-8 sm:-mt-8 sm:mb-7 sm:px-8 sm:py-5"
               >
                 <p
-                  className="font-display text-base font-semibold uppercase tracking-[0.26em] text-white"
+                  className="font-display text-sm font-semibold uppercase tracking-[0.22em] text-white sm:text-base sm:tracking-[0.26em]"
                 >
                   COMUNIDAD {communityTheme.label}
                 </p>
-                <p className="mt-1.5 max-w-2xl font-editorial text-lg italic text-[rgba(255,255,255,0.94)]">
+                <p className="mt-1.5 max-w-2xl font-editorial text-base italic text-[rgba(255,255,255,0.94)] sm:text-lg">
                   {communityTheme.slogan}
                 </p>
               </div>
@@ -324,21 +324,21 @@ export default function ActionPlan() {
                 <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[rgba(255,255,255,0.58)]">
                   Me comprometí a
                 </p>
-                <p className="mt-4 max-w-3xl font-editorial text-[2rem] leading-[1.22] text-white sm:text-[2.35rem]">
+                <p className="mt-4 max-w-3xl font-editorial text-[1.7rem] leading-[1.16] text-white sm:text-[2.35rem] sm:leading-[1.22]">
                   {metaPrioritaria}
                 </p>
               </div>
 
-              <div className="mt-10 border-t border-[rgba(255,255,255,0.12)] pt-7">
+              <div className="mt-8 border-t border-[rgba(255,255,255,0.12)] pt-6 sm:mt-10 sm:pt-7">
                 <div className="grid gap-8 sm:grid-cols-[1.15fr_0.85fr] sm:items-end">
                   <div>
-                    <p className="max-w-2xl text-lg leading-relaxed text-[rgba(255,255,255,0.88)]">
+                    <p className="max-w-2xl text-base leading-relaxed text-[rgba(255,255,255,0.88)] sm:text-lg">
                       {metaComplementaria}
                     </p>
                   </div>
                   <div className="sm:text-right">
-                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[rgba(255,255,255,0.66)]">
-                      Por los próximos <span className="ml-2 text-2xl tracking-normal text-white">{metaTiempo}</span>
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[rgba(255,255,255,0.66)] sm:text-sm sm:tracking-[0.18em]">
+                      Por los próximos <span className="ml-2 text-xl tracking-normal text-white sm:text-2xl">{metaTiempo}</span>
                     </p>
                   </div>
                 </div>
@@ -350,8 +350,8 @@ export default function ActionPlan() {
             </div>
           </div>
 
-          <div className="mt-5 rounded-[22px] border border-[rgba(15,76,129,0.1)] bg-white/70 px-5 py-4 text-center shadow-[0_14px_30px_rgba(15,76,129,0.08)]">
-            <p className="text-sm text-[var(--ink-700)]">
+          <div className="mt-5 rounded-[22px] border border-[rgba(15,76,129,0.1)] bg-white/70 px-4 py-4 text-center shadow-[0_14px_30px_rgba(15,76,129,0.08)] sm:px-5">
+            <p className="text-sm leading-6 text-[var(--ink-700)] sm:text-sm">
               Guarda esta versión para consultarla después o compartirla con tu mentor o mentora.
             </p>
             <div className="mt-3 overflow-hidden">
@@ -380,13 +380,13 @@ export default function ActionPlan() {
       </div>
       <Card className="border-[rgba(15,76,129,0.12)]">
         <CardContent className="p-8 sm:p-10">
-          <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+          <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:gap-8">
             <div>
               <p className="navi-eyebrow">El siguiente paso</p>
-              <h3 className="mt-3 font-display text-3xl font-semibold text-[var(--ink-900)]">
+              <h3 className="mt-3 font-display text-[2rem] font-semibold leading-tight text-[var(--ink-900)] sm:text-3xl">
                 Registra este plan en MiVidaTec
               </h3>
-              <p className="mt-4 text-sm leading-relaxed text-[var(--ink-700)] sm:text-base">
+              <p className="mt-4 text-sm leading-7 text-[var(--ink-700)] sm:text-base">
                 Copia este plan y pégalo en <strong>MiVidaTec &gt; Metas de Plan de Vida</strong>.
                 Así tu compromiso queda registrado también en tu ruta institucional.
               </p>
@@ -395,7 +395,7 @@ export default function ActionPlan() {
             <div className="flex flex-col gap-4">
               <Button
                 size="lg"
-                className="w-full"
+                className="w-full text-base sm:text-lg"
                 onClick={handleCopyAndMiTec}
               >
                 {copied ? 'Copiado. Abriendo MiVidaTec...' : 'Abrir MiVidaTec y copiar mi plan'}
@@ -404,7 +404,7 @@ export default function ActionPlan() {
                 variant="outline"
                 size="lg"
                 onClick={() => navigate('/seleccion-metas')}
-                className="w-full"
+                className="w-full text-base sm:text-lg"
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Editar mis metas
