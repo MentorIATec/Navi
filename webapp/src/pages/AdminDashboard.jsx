@@ -558,6 +558,30 @@ export default function AdminDashboard() {
     );
   };
 
+  const CrmBadge = ({ student }) => {
+    const matricula = String(student?.matricula || '').trim().toUpperCase();
+    const latestSession = latestSessionsByMatricula.get(matricula);
+    if (!latestSession) return null;
+
+    const documentado = Boolean(
+      latestSession?.documentadoCrm ??
+      (String(latestSession?.documentado_crm || '').toLowerCase() === 'si')
+    );
+
+    return (
+      <span
+        className={cn(
+          'px-2.5 py-1 rounded-full text-[11px] font-medium border',
+          documentado
+            ? 'bg-[rgba(15,76,129,0.08)] text-[var(--navy-700)] border-[rgba(15,76,129,0.12)]'
+            : 'bg-[rgba(210,106,92,0.08)] text-[var(--coral-500)] border-[rgba(210,106,92,0.16)]'
+        )}
+      >
+        {documentado ? 'CRM documentado' : 'Pendiente CRM'}
+      </span>
+    );
+  };
+
   const campaignLabels = {
     invitation: 'Invitación al diagnóstico',
     session: 'Convocatoria a sesión',
@@ -1155,6 +1179,7 @@ export default function AdminDashboard() {
                         <td className="px-6 py-4">
                           <div className="flex flex-col gap-2 items-start">
                             <StatusBadge student={student} />
+                            <CrmBadge student={student} />
                             {(student.status === 'Test Completado' || student.status === 'Metas Seleccionadas') && (
                               <button 
                                 onClick={() => {
