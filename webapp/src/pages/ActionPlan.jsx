@@ -128,7 +128,12 @@ export default function ActionPlan() {
 
       try {
         const { student, mentor } = await apiClient.post('findStudent', { matricula });
-        const nextCommunity = student?.community || student?.comunidad || '';
+        const nextCommunity =
+          student?.community ||
+          student?.comunidad ||
+          mentor?.community ||
+          mentor?.comunidad ||
+          '';
         const nextColor = mentor?.hex || '';
 
         if (nextCommunity) {
