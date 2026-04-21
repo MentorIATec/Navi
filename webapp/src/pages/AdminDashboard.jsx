@@ -44,7 +44,7 @@ function normalizeMentor(raw) {
     community: raw.community || raw.comunidad || 'Sin Comunidad',
     hex: raw.hex || raw['#hex'] || '#0033A0',
     name: raw.name || raw.nombre || 'Sin Nombre',
-    nickname: raw.nickname || raw.apodo || raw.name || raw.nombre || 'Sin Nombre',
+    nickname: raw.nickname || raw.alias || raw.apodo || raw.name || raw.nombre || 'Sin Nombre',
     email: raw.email || 'sin@correo.com',
   };
 }
