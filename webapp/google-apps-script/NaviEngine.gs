@@ -1332,6 +1332,17 @@ function startNewMentoringEncounter(ss, data, timing) {
   return registerCheckIn(ss, { matricula: data.matricula, requestId: data.requestId, modality: 'presencial' }, timing, { newEncounter: true, validate: function() {
     var fresh = JSON.parse(getMentorDashboard(ss, data, timing).getContent()).data;
     if (!fresh || !fresh.students.some(function(student) { return String(student.matricula) === String(data.matricula || '').trim().toUpperCase(); })) throw new Error('No tienes permisos para iniciar esta sesión.');
+    var cycle = getActiveOperationalCycle_();
+    var latest = latestStudentRecordForClosure_(ss, 'CheckIns', data.matricula, cycle);
+    var requestCheckInId = String(data.matricula || '').trim().toUpperCase() + ':' + String(data.requestId || '');
+    // An identical retry acknowledges the already-created encounter, never
+    // creates another one. A different request must reference the closed plan.
+    if (latest && (latest.checkinid === requestCheckInId || latest.checkinid === requestCheckInId + ':' + cycle)) return;
+    var continuation = currentStudentContinuation_(ss, data.matricula, cycle, timing);
+    if (!continuation || !continuation.plan) throw new Error('El recorrido actual sigue abierto. Continúa este encuentro antes de iniciar otro.');
+    if (!data.previousSelectionId || data.previousSelectionId !== continuation.plan.selectionId) {
+      throw new Error('El encuentro cambió. Actualiza el directorio y revisa el plan antes de iniciar otra sesión.');
+    }
   } });
 }
 

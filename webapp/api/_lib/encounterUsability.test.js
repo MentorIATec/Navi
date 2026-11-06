@@ -5,6 +5,7 @@ import { createGoogleBridgeJourney } from './testing/googleBridgeJourney.js';
 import { getCrmStatus } from '../../src/utils/crmStatus.js';
 import { beginJourney, readConfirmedPlan, pendingOperation, readPendingSubmission, acknowledgeOperation } from '../../src/utils/journeyIntegrity.js';
 import { resumeEncounter } from '../../src/utils/encounterContinuation.js';
+import { newEncounterAvailability } from '../../src/utils/newEncounter.js';
 const source = readFileSync(new URL('../../google-apps-script/NaviEngine.gs', import.meta.url), 'utf8');
 const setup = () => createGoogleBridgeJourney({ source });
 const call = (h, action, data = {}) => {
@@ -46,7 +47,8 @@ test('mentor explicitly starts another encounter; forged public flags and other 
   const h = setup(); const first = call(h, 'startStudentCheckIn', { requestId: 'first-visit-0001' }).registration;
   const fake = call(h, 'startStudentCheckIn', { requestId: 'forged-public-0001', newEncounter: true }).registration;
   assert.equal(fake.checkInId, first.checkInId);
-  const second = call(h, 'startNewMentoringEncounter', { actor: h.actor, requestId: 'mentor-new-0001' });
+  call(h, 'saveGoalSelection', {...goal,checkInId:first.checkInId});
+  const second = call(h, 'startNewMentoringEncounter', { actor: h.actor, previousSelectionId:goal.selectionId, requestId: 'mentor-new-0001' });
   assert.notEqual(second.checkInId, first.checkInId);
   assert.equal(call(h, 'startNewMentoringEncounter', { actor: h.actor, requestId: 'mentor-new-0001' }).reused, true);
   const stale = call(h, 'startStudentCheckIn', { requestId: 'first-visit-0001' }).registration;
@@ -93,7 +95,7 @@ test('new encounter never inherits the previous plan or CRM completion; revoked 
   const h = setup(); const first = call(h, 'startStudentCheckIn', { requestId: 'separate-arrival-0001' }).registration;
   call(h, 'saveGoalSelection', { ...goal, checkInId: first.checkInId });
   call(h, 'saveMentoringSession', { actor: h.actor, checkInId: first.checkInId, sessionId: 'previous-crm-0001', documentadoCrm: true, periodo: h.cycle, fechaSesion: '2026-11-05' });
-  const next = call(h, 'startNewMentoringEncounter', { actor: h.actor, requestId: 'next-encounter-0001' });
+  const next = call(h, 'startNewMentoringEncounter', { actor: h.actor, requestId: 'next-encounter-0001', previousSelectionId:goal.selectionId });
   const dashboard = call(h, 'getMentorDashboard', { actor: h.actor });
   const student = dashboard.students.find(item => item.matricula === h.student);
   assert.equal(student.hasGoalSelection, false); assert.equal(student.checkinsessionid, '');
@@ -138,7 +140,7 @@ test('omitted encounter, stale tab and forged replacements cannot bypass finaliz
     assert.equal(h.run('saveGoalSelection', { ...goal, selectionId:'bypass-goal-0002', ...extra }).result.status, 'error');
   }
   assert.equal(h.run('completeCheckInPreTest', { checkInId:first.checkInId, preTestSummary:'Alteración tardía' }).result.status, 'error');
-  const next = call(h, 'startNewMentoringEncounter', { actor:h.actor, requestId:'guard-next-0001' });
+  const next = call(h, 'startNewMentoringEncounter', { actor:h.actor, requestId:'guard-next-0001', previousSelectionId:goal.selectionId });
   assert.equal(h.run('saveGoalSelection', { ...goal, checkInId:first.checkInId }).result.status, 'error');
   assert.equal(h.run('completeCheckInPreTest', { checkInId:first.checkInId, preTestSummary:'Llegada ficticia' }).result.status, 'error');
   call(h, 'saveGoalSelection', { ...goal, selectionId:'mentor-next-goal-0002', checkInId:next.checkInId });
@@ -237,4 +239,33 @@ test('administrative cycle transition does not reuse an old arrival even if the 
   assert.equal(h.counts().CheckIns,2);
   assert.equal(h.counts().GoalSelections,1);
   assert.equal(h.sheets.get('CheckIns').rows[1][11],goal.selectionId);
+});
+
+test('mentor modal permits a closed plan, but blocks unsaved notes, cleared notes, CRM/date edits and pending writes', () => {
+  const state = { student:{matricula:'A00000001',hasGoalSelection:true},
+    goalSelection:{matricula:'A00000001',selectionid:'closed-plan-0001',metaprioritaria:'Planear entregas',metacomplementaria:'Descansar',tiempo:'1 Mes',obstaculo:'Entregas',plan:'Organizar fechas'},
+    draft:{_contextKey:'encounter-1',fechaSesion:'2026-11-06',notasMentor:'',documentadoCrm:false,_confirmed:false},contextKey:'encounter-1',today:'2026-11-06',pending:false };
+  assert.equal(newEncounterAvailability(state),'ready'); // An empty new draft does not force an unnecessary save.
+  for (const patch of [{notasMentor:'Notas sin guardar'}, {sessionId:'saved-session-0001',notasMentor:''}, {documentadoCrm:true}, {fechaSesion:'2026-11-05'}]) {
+    assert.equal(newEncounterAvailability({...state,draft:{...state.draft,...patch}}),'dirty');
+  }
+  assert.equal(newEncounterAvailability({...state,pending:true}),'dirty');
+  assert.equal(newEncounterAvailability({...state,draft:{...state.draft,notasMentor:'Notas guardadas',_confirmed:true}}),'ready');
+  assert.equal(newEncounterAvailability({...state,draft:{...state.draft,_contextKey:'other-encounter'}}),'loading');
+  assert.equal(newEncounterAvailability({...state,student:{...state.student,hasGoalSelection:false}}),'open');
+  assert.equal(newEncounterAvailability({...state,goalSelection:{...state.goalSelection,matricula:'A00000002'}}),'open');
+});
+
+test('a different request cannot open a second active encounter; identical retries remain idempotent', () => {
+  const h = setup(); const first = call(h,'startStudentCheckIn',{requestId:'modal-first-0001'}).registration;
+  assert.equal(h.run('startNewMentoringEncounter',{actor:h.actor,requestId:'premature-new-0001',previousSelectionId:goal.selectionId}).result.status,'error');
+  call(h,'saveGoalSelection',{...goal,checkInId:first.checkInId});
+  const data = {actor:h.actor,requestId:'modal-confirm-0001',previousSelectionId:goal.selectionId};
+  const second = call(h,'startNewMentoringEncounter',data);
+  assert.equal(call(h,'startNewMentoringEncounter',data).checkInId,second.checkInId);
+  assert.equal(h.run('startNewMentoringEncounter',{...data,requestId:'concurrent-other-0002'}).result.status,'error');
+  call(h,'saveGoalSelection',{...goal,selectionId:'second-closed-plan-0002',checkInId:second.checkInId});
+  assert.equal(h.run('startNewMentoringEncounter',{...data,requestId:'stale-dialog-0003'}).result.status,'error');
+  assert.equal(h.counts().CheckIns,2);
+  assert.equal(h.counts().GoalSelections,2);
 });

@@ -9,6 +9,7 @@ import { apiClient } from '../api/client';
 import { workspaceClient } from '../api/workspaceClient';
 import { GoogleWorkspaceLogin } from '../components/admin/GoogleWorkspaceLogin';
 import { getCrmStatus } from '../utils/crmStatus';
+import { newEncounterAvailability } from '../utils/newEncounter';
 import { getDashboardScopeStudents } from '../utils/dashboardScope';
 import { filterMentorDirectory } from '../utils/mentorDirectory';
 import { OUTLOOK_MESSAGE, buildOutlookComposeUrl } from '../utils/outlookDraft';
@@ -207,6 +208,9 @@ export default function AdminDashboard() {
   const [isCheckingWorkspaceSession, setIsCheckingWorkspaceSession] = useState(true);
   const [selectedStudentForDiagnostic, setSelectedStudentForDiagnostic] = useState(null);
   const [startingEncounter, setStartingEncounter] = useState(false);
+  const [newEncounterConfirmation, setNewEncounterConfirmation] = useState(null);
+  const [newEncounterError, setNewEncounterError] = useState('');
+  const newEncounterBusy = useRef(false);
   const newEncounterRequest = useRef(null);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [students, setStudents] = useState(() => {
@@ -865,14 +869,48 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleNewEncounter = async () => {
-    if (startingEncounter || !selectedStudentForDiagnostic) return;
+  const getNewEncounterAvailability = () => {
     const student = selectedStudentForDiagnostic;
-    if (!window.confirm('Se registrará una nueva llegada para este estudiante. El encuentro y sus acuerdos anteriores se conservarán.')) return;
-    setStartingEncounter(true);
+    const contextKey = mentoringContext.current;
     try {
-      if (newEncounterRequest.current?.matricula !== student.matricula) newEncounterRequest.current = { matricula: student.matricula, requestId: crypto.randomUUID() };
-      const registration = await apiClient.post('startNewMentoringEncounter', newEncounterRequest.current);
+      return newEncounterAvailability({ student, contextKey, draft: mentoringSessionDraft,
+        goalSelection: latestGoalSelectionsByMatricula.get(String(student?.matricula || '').trim().toUpperCase()),
+        pending: Boolean(readPendingMentoringDraft(localStorage, contextKey)), today: getLocalDateInputValue() });
+    } catch { return 'unavailable'; }
+  };
+
+  const requestNewEncounter = () => {
+    if (newEncounterBusy.current || !selectedStudentForDiagnostic || getNewEncounterAvailability() === 'open') return;
+    setNewEncounterError('');
+    setNewEncounterConfirmation({ matricula: selectedStudentForDiagnostic.matricula, contextKey: mentoringContext.current,
+      previousSelectionId: latestGoalSelectionsByMatricula.get(selectedStudentForDiagnostic.matricula)?.selectionid || '' });
+  };
+
+  const closeNewEncounter = () => {
+    if (newEncounterBusy.current) return;
+    setNewEncounterConfirmation(null);
+    setNewEncounterError('');
+  };
+
+  const handleNewEncounter = async () => {
+    if (newEncounterBusy.current || !selectedStudentForDiagnostic || !newEncounterConfirmation) return;
+    const student = selectedStudentForDiagnostic;
+    const contextKey = mentoringContext.current;
+    const view = mentoringView.current;
+    if (getNewEncounterAvailability() !== 'ready' || newEncounterConfirmation.contextKey !== contextKey
+      || newEncounterConfirmation.matricula !== student.matricula
+      || newEncounterConfirmation.previousSelectionId !== latestGoalSelectionsByMatricula.get(student.matricula)?.selectionid) return;
+    newEncounterBusy.current = true;
+    setStartingEncounter(true);
+    setNewEncounterError('');
+    try {
+      if (newEncounterRequest.current?.contextKey !== contextKey) newEncounterRequest.current = { contextKey,
+        matricula: student.matricula, previousSelectionId: newEncounterConfirmation.previousSelectionId, requestId: crypto.randomUUID() };
+      const { contextKey: _localContext, ...request } = newEncounterRequest.current;
+      const registration = await apiClient.post('startNewMentoringEncounter', request);
+      if (mentoringContext.current !== contextKey || mentoringView.current !== view) return;
+      setNewEncounterConfirmation(null);
+      setSessionSaveFeedback(null);
       const next = { ...student, encounterManaged: true, checkInId: registration.checkInId, checkInSessionId: '', checkInTimestamp: registration.timestamp,
         agenciaCheckIn: '', checkIn: 'Si', hasCheckIn: true, hasSession: true, hasGoalSelection: false, status: 'Sesión Iniciada' };
       setStudents(current => current.map(item => item.matricula === student.matricula ? next : item));
@@ -880,8 +918,8 @@ export default function AdminDashboard() {
       setGoalSelections(current => current.filter(item => item.matricula !== student.matricula));
       newEncounterRequest.current = null;
       setFeedback({ tone: 'success', message: 'Nueva sesión preparada. El estudiante puede confirmar su matrícula para continuar.' });
-    } catch (error) { setFeedback({ tone: 'error', message: error.message }); }
-    finally { setStartingEncounter(false); }
+    } catch (error) { setNewEncounterError(error.message || 'No pudimos iniciar la nueva sesión.'); }
+    finally { newEncounterBusy.current = false; setStartingEncounter(false); }
   };
 
   const handleSaveMentoringSession = async () => {
@@ -1836,7 +1874,9 @@ export default function AdminDashboard() {
                         </div>
                       ) : null}
 
-                      <Button variant="outline" onClick={handleNewEncounter} isLoading={startingEncounter}>Iniciar una nueva sesión</Button>
+                      {getNewEncounterAvailability() !== 'open'
+                        ? <Button variant="outline" onClick={requestNewEncounter} disabled={isSavingMentoringSession}>Iniciar una nueva sesión</Button>
+                        : <p className="text-sm text-[var(--ink-700)]">Continúa este encuentro. Podrás iniciar otra sesión cuando el estudiante confirme su plan.</p>}
                       <div>
                         <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--ink-500)]">Fecha de sesión</label>
                         <input
@@ -1902,6 +1942,42 @@ export default function AdminDashboard() {
           </Card>
         </Dialog>
       )}
+
+      {newEncounterConfirmation && selectedStudentForDiagnostic
+        && newEncounterConfirmation.matricula === selectedStudentForDiagnostic.matricula
+        && newEncounterConfirmation.contextKey === mentoringContext.current ? (
+        <Dialog labelledBy="new-encounter-title" onClose={closeNewEncounter}
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-[rgba(17,36,66,0.4)] p-4">
+          <Card className="w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <CardContent className="space-y-5 p-6 sm:p-8">
+              <h3 id="new-encounter-title" className="font-display text-2xl font-semibold text-[var(--ink-900)]">
+                ¿Iniciar una nueva sesión con {selectedStudentForDiagnostic.preferredName || selectedStudentForDiagnostic.name}?
+              </h3>
+              <p className="text-[var(--ink-700)]">Usa esta opción cuando comience otro encuentro de acompañamiento con este estudiante.</p>
+              <div className="space-y-3 text-[var(--ink-700)]">
+                <p>Al confirmar:</p>
+                <ul className="list-disc space-y-2 pl-5">
+                  <li>Se abrirá un registro independiente para documentar el nuevo encuentro.</li>
+                  <li>El estudiante podrá responder cómo llega y definir un nuevo plan.</li>
+                  <li>Los acuerdos anteriores se conservarán. Esta acción no cambia la etapa ni reinicia un test ya respondido.</li>
+                </ul>
+              </div>
+              <p className="text-sm text-[var(--ink-700)]">Si sólo quieres continuar las notas del encuentro actual, permanece en esta sesión.</p>
+              {getNewEncounterAvailability() === 'dirty' ? <p role="alert" className="text-sm font-semibold text-[var(--ink-900)]">
+                Hay cambios sin guardar en este encuentro. Guárdalos antes de iniciar una nueva sesión.
+              </p> : null}
+              {getNewEncounterAvailability() === 'loading' ? <p role="status" className="text-sm text-[var(--ink-700)]">Espera a que termine la carga del encuentro antes de continuar.</p> : null}
+              {getNewEncounterAvailability() === 'unavailable' ? <p role="alert" className="text-sm text-[var(--ink-900)]">No pudimos comprobar si hay cambios pendientes. Cierra este aviso y revisa el encuentro antes de continuar.</p> : null}
+              {newEncounterError ? <p role="alert" className="text-sm text-red-600">{newEncounterError}</p> : null}
+              <div className="flex flex-col gap-3 sm:items-stretch">
+                <Button variant="outline" onClick={closeNewEncounter} disabled={startingEncounter}>Seguir en esta sesión</Button>
+                <Button onClick={handleNewEncounter} disabled={getNewEncounterAvailability() !== 'ready' || isSavingMentoringSession}
+                  isLoading={startingEncounter}>Iniciar nueva sesión</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </Dialog>
+      ) : null}
 
     </div>
   );

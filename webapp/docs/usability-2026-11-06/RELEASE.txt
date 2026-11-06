@@ -1,0 +1,29 @@
+FARO-UX-2026.11.06-RC2
+Candidata local sobre FARO-UX-2026.11.05-RC1, commit fa245d8.
+Sin publicar, sin cambios reales y con el laboratorio Neon cerrado.
+
+CAMBIOS APROBADOS EL 6 DE NOVIEMBRE
+1. Obstáculo principal: una sola pregunta, ¿Qué podría dificultarte avanzar en esta meta? Se retiran la explicación redundante, la pregunta contextual repetida y el placeholder. El campo tiene etiqueta accesible vinculada. No se cambia el seed ni las preguntas de las baterías. La pregunta general también sirve para una meta personalizada.
+2. Iniciar una nueva sesión abre un modal informativo y de confirmación, en lugar de window.confirm. Abrir, cancelar, usar Escape o seguir en la sesión no registra un encuentro.
+3. El modal explica que se creará un registro independiente, el estudiante podrá responder cómo llega y definir otro plan, los acuerdos anteriores permanecerán y no se reiniciará un test ya respondido ni cambiará la etapa.
+4. Acciones: Seguir en esta sesión / Iniciar nueva sesión. El foco comienza en la acción de permanecer y vuelve al botón de origen al cancelar. Se conserva la apariencia de claridad con carácter.
+
+REGLA RB-ENCUENTRO-02
+No se inicia otro encuentro mientras el actual no tenga un plan confirmado. En ese caso se muestra la indicación de continuar el encuentro y no el botón de nueva sesión. La comprobación también se realiza en el backend bajo el bloqueo de escritura, además del permiso por cartera.
+Si hay notas, fecha o estado CRM modificados sin guardar, o un envío de sesión sin acuse, el modal explica el pendiente y deshabilita la confirmación. Un borrador vacío no obliga a guardar una sesión sin contenido sólo para continuar. Después de guardar, vuelve a habilitarse la confirmación.
+La confirmación remite previousSelectionId. Si otra pestaña ya abrió otro encuentro o el plan cambió desde que se abrió el modal, el backend rechaza una solicitud nueva. Un reintento con el mismo requestId recupera el encuentro ya creado y no agrega otra fila.
+La apertura conserva la sesión y los acuerdos anteriores y limpia notas y mensajes de guardado del formulario nuevo. El mensaje Sesión guardada del encuentro anterior no se atribuye al nuevo. El estado CRM del nuevo encuentro continúa pendiente de su propia confirmación guardada.
+Las reglas RB-PLAN-01, RB-CRM-01, RB-CRM-02 y RB-METAS-01 de RC1 se conservan.
+
+VERIFICACIÓN
+709 pruebas completas del checkout, lint y build. En copia limpia de la rama: 33 pruebas focalizadas, lint y build. Se adaptó la prueba histórica que exigía la pregunta contextual repetida; se conservan sus verificaciones del contenido editorial semilla.
+Navegador real contra loopback y Sheets ficticio en memoria: pregunta única, cierre del plan ficticio, modal informativo, cancelar, Escape/foco, bloqueo por notas sin guardar, recuperación de esas notas, guardado del borrador y confirmación de un encuentro nuevo. Se conservan el test y el plan anterior en backend; el formulario nuevo no ofrece iniciar otro encuentro mientras su plan siga abierto. Anchos 1280, 390 y 320 sin desbordamiento horizontal; en el menor ancho el contenido del modal admite desplazamiento vertical.
+Los CSS, colores, copys CRM, metas revisadas, baterías y permisos por cartera se cotejan con el estado previo. No se alteran servicios, datos reales o producción. No se agregan hojas ni columnas sobre lo ya previsto por RC1.
+
+PENDIENTES
+Validación del delta en iPhone/Android físicos, teclado y foco del modal; se mantienen los pendientes de RC1 sobre copia nativa y publicación coordinada Apps Script/interfaz/gateway con reversión. No merge a main ni despliegue en esta entrega.
+
+REPRODUCCIÓN
+En webapp: npm test; npm run lint; npm run build.
+La rama limpia incluye las 33 pruebas focalizadas. Las 709 se ejecutan en el checkout completo que conserva auditorías históricas de otros frentes, no añadidas a este commit.
+Revisión ficticia: npm run dev -- --config verification/usability.vite.config.mjs, sólo 127.0.0.1:5199 y A12345678.

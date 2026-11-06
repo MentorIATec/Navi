@@ -38,11 +38,6 @@ const COMPLEMENTARY_DIMENSIONS = [
   { value: 'ocupacional', label: 'Ocupacional' },
 ];
 
-function firstPromptQuestion(goal) {
-  const prompt = String(goal?.preguntasparaafinar || '').split('|').map((part) => part.trim()).filter(Boolean)[0];
-  return prompt || '';
-}
-
 function getGoalLabel(goal) {
   const dimension = String(goal?.dimension || '').trim().toLowerCase();
   const tema = String(goal?.temaoperativo || '').trim().toLowerCase();
@@ -317,7 +312,6 @@ function GoalEditor({ journey, recovery, onPending }) {
   const suggestedTimeframe = exactTimeframe(selectedPrioritaria, TIMEFRAMES);
   const suggestedTimeframeId = suggestedTimeframe?.id;
   const timeOptions = goalTimeOptions(selectedPrioritaria, TIMEFRAMES, selectedTiempo);
-  const obstaclePrompt = firstPromptQuestion(selectedPrioritaria);
   const recommendation = goalsData.recommendation;
   const priorityAreas = recommendation.priorities;
   const primaryGroups = useMemo(() => primaryGoalGroups(goalsData.prioritarias, recommendation), [goalsData.prioritarias, recommendation]);
@@ -587,17 +581,12 @@ function GoalEditor({ journey, recovery, onPending }) {
 
                 {currentStep === 3 ? (
                   <div inert={Boolean(recovery) || isSaving} className="rounded-[18px] border border-[rgba(15,76,129,0.08)] bg-[var(--surface-raised)] p-6">
-                    <label className="block text-sm font-semibold text-[var(--ink-900)]">
-                      ¿Qué podría dificultarte lograr esta meta?
+                    <label htmlFor="goal-obstacle" className="block text-sm font-semibold text-[var(--ink-900)]">
+                      ¿Qué podría dificultarte avanzar en esta meta?
                     </label>
-                    <p className="mt-2 text-sm text-[var(--ink-700)]">
-                      {obstaclePrompt
-                        ? `${obstaclePrompt} Anticipar el obstáculo hace más probable que puedas enfrentarlo a tiempo.`
-                        : 'Nómbralo con honestidad. Anticipar el obstáculo hace más probable que puedas enfrentarlo a tiempo.'}
-                    </p>
                     <textarea
+                      id="goal-obstacle"
                       className="mt-4 w-full rounded-[20px] border border-[rgba(15,76,129,0.12)] bg-white/85 p-4 text-[var(--ink-900)] shadow-sm outline-none transition-all focus:border-[rgba(210,106,92,0.35)] focus:ring-4 focus:ring-[rgba(210,106,92,0.10)] resize-none"
-                      placeholder={obstaclePrompt || 'Ej. Posponer tareas importantes cuando me siento abrumado/a o disperso/a.'}
                       rows="5"
                       value={obstaculo}
                       onChange={(e) => setObstaculo(e.target.value)}
