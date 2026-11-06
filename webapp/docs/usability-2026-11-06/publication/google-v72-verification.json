@@ -1,0 +1,10 @@
+{
+  "immutableVersion": 72,
+  "matchesCandidate": true,
+  "sha256": {
+    "appsscript.json": "616edc519ca8e3fe36ba973867bb7eb37977d586d19be2e3948549e6c58c1464",
+    "GoalExplorationBridge.js": "dab1f2a6d91221aaf0b3920a4f8a9a08cc57465cbc4207fcb2e1a31ef0cf8e7a",
+    "NaviEngine.js": "efc27e24c4d46e3bdd74d3143175e7c77d5bee84d14fb4aa0a48395d842d35e2",
+    "GoalSelectionRead.js": "91f2952570dd8980ddbec8e613c7fa6180994bb031411216d40af35b8f2c32ae"
+  }
+}

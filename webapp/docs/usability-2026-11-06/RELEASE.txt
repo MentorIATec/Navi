@@ -1,6 +1,7 @@
 FARO-UX-2026.11.06-RC2
-Candidata local sobre FARO-UX-2026.11.05-RC1, commit fa245d8.
-Sin publicar, sin cambios reales y con el laboratorio Neon cerrado.
+Publicada el 6 de noviembre de 2026 en https://faro-me.vercel.app/.
+Interfaz b369440, Google72, reversión69/interfaz anterior preparada. Sin cambios en registros reales; laboratorio Neon cerrado.
+Cierre de publicación y fuente Google exacta: publication/PUBLICACION.txt.
 
 CAMBIOS APROBADOS EL 6 DE NOVIEMBRE
 1. Obstáculo principal: una sola pregunta, ¿Qué podría dificultarte avanzar en esta meta? Se retiran la explicación redundante, la pregunta contextual repetida y el placeholder. El campo tiene etiqueta accesible vinculada. No se cambia el seed ni las preguntas de las baterías. La pregunta general también sirve para una meta personalizada.
@@ -16,14 +17,17 @@ La apertura conserva la sesión y los acuerdos anteriores y limpia notas y mensa
 Las reglas RB-PLAN-01, RB-CRM-01, RB-CRM-02 y RB-METAS-01 de RC1 se conservan.
 
 VERIFICACIÓN
-709 pruebas completas del checkout, lint y build. En copia limpia de la rama: 33 pruebas focalizadas, lint y build. Se adaptó la prueba histórica que exigía la pregunta contextual repetida; se conservan sus verificaciones del contenido editorial semilla.
+710 pruebas completas del checkout, lint y build. En copia limpia de la rama: 34 pruebas focalizadas, lint y build. Se adaptó la prueba histórica que exigía la pregunta contextual repetida; se conservan sus verificaciones del contenido editorial semilla.
 Navegador real contra loopback y Sheets ficticio en memoria: pregunta única, cierre del plan ficticio, modal informativo, cancelar, Escape/foco, bloqueo por notas sin guardar, recuperación de esas notas, guardado del borrador y confirmación de un encuentro nuevo. Se conservan el test y el plan anterior en backend; el formulario nuevo no ofrece iniciar otro encuentro mientras su plan siga abierto. Anchos 1280, 390 y 320 sin desbordamiento horizontal; en el menor ancho el contenido del modal admite desplazamiento vertical.
-Los CSS, colores, copys CRM, metas revisadas, baterías y permisos por cartera se cotejan con el estado previo. No se alteran servicios, datos reales o producción. No se agregan hojas ni columnas sobre lo ya previsto por RC1.
+Los CSS, colores, copys CRM, metas revisadas, baterías y permisos por cartera se cotejan con el estado previo. Publicación autorizada en servicios existentes, sin cambios de registros reales. Sólo se añadió CheckIns!L1 = GoalSelectionId, previsto por RC1; las 15 pestañas existentes se conservan.
 
 PENDIENTES
-Validación del delta en iPhone/Android físicos, teclado y foco del modal; se mantienen los pendientes de RC1 sobre copia nativa y publicación coordinada Apps Script/interfaz/gateway con reversión. No merge a main ni despliegue en esta entrega.
+Validación del delta en iPhone/Android físicos, teclado y foco del modal; se mantiene el pendiente de RC1 sobre copia nativa. Publicación coordinada Apps Script/interfaz/gateway completada con reversión preparada. No merge a main; ver publication/PUBLICACION.txt.
 
 REPRODUCCIÓN
 En webapp: npm test; npm run lint; npm run build.
-La rama limpia incluye las 33 pruebas focalizadas. Las 709 se ejecutan en el checkout completo que conserva auditorías históricas de otros frentes, no añadidas a este commit.
+La rama limpia incluye las 34 pruebas focalizadas. Las 710 se ejecutan en el checkout completo que conserva auditorías históricas de otros frentes, no añadidas a este commit.
 Revisión ficticia: npm run dev -- --config verification/usability.vite.config.mjs, sólo 127.0.0.1:5199 y A12345678.
+
+COMPATIBILIDAD HISTÓRICA VERIFICADA AL PUBLICAR
+Los planes antiguos sin SelectionId reciben una referencia determinista sólo en la respuesta de lectura, idéntica para el reingreso y el panel. No se rellenan IDs en las filas, no se guarda otra meta ni se crea un encuentro histórico. La consulta sigue siendo de sólo lectura y el nuevo encuentro exige confirmación de una persona mentora con permisos por cartera.

@@ -1,6 +1,6 @@
 {
   "version": "FARO-UX-2026.11.06-RC2",
-  "status": "local-candidate-not-deployed",
+  "status": "published",
   "businessRules": [
     "RB-PLAN-01",
     "RB-CRM-01",
@@ -8,9 +8,9 @@
     "RB-METAS-01",
     "RB-ENCUENTRO-02"
   ],
-  "fullCheckoutTests": 709,
-  "focusedBranchTests": 33,
-  "productionChanged": false,
+  "fullCheckoutTests": 710,
+  "focusedBranchTests": 34,
+  "productionChanged": true,
   "realDataWrites": 0,
   "neonOpened": false,
   "protected": {
@@ -38,7 +38,7 @@
     "webapp/.gitignore": "2bd3581b4bcc92ba890c0ce168bc0ffde74021f056a26216b74db9f0fd6ebe1c",
     "webapp/api/_lib/adminSessionCopy.test.js": "1b3d703c5c205e6a9d1d897f65eb9b587c7c7049a3be565b9cd21dc653403236",
     "webapp/api/_lib/appsScript.js": "9d0ca21e03f6b492e074d3253d9c3d2e0067365e4f6ef387981b28ec1d3cb40f",
-    "webapp/api/_lib/encounterUsability.test.js": "db66af88fca2fa923f0afedce7fc69f323c9f0d77260a36f073dd84c89bd9841",
+    "webapp/api/_lib/encounterUsability.test.js": "3b1a59a22f11970a8cdfc0ba5655850ba4af4c71a775d79e519e6cd520fa1c75",
     "webapp/api/_lib/goalCatalog.js": "3fdda1f136c7da321dad6b2953c5116a24e9d65f1259fa1a67f521f9033ae1f4",
     "webapp/api/_lib/goalExploration.js": "b084e1a354230c9d62e0a9978a2a18e5aab78c042af6410deaf6bc19f4e642da",
     "webapp/api/_lib/goalExplorationStore.js": "cd7dc9c8bbf14362183f5f825ece92e65fe8813cbf2a3f964a1854c8560fcc02",
@@ -62,7 +62,7 @@
     "webapp/eslint.config.js": "15c6a3b6341e553354a9209918e6dd99b99e07d6bc80eec7619a2e65ca460649",
     "webapp/google-apps-script/GoalExplorationBridge.gs": "4d98543f9b1bb3018931f192f6368bbab7e803da31bdc4e8e7c1f1f9226fb8a0",
     "webapp/google-apps-script/GoalSelectionRead.gs": "91f2952570dd8980ddbec8e613c7fa6180994bb031411216d40af35b8f2c32ae",
-    "webapp/google-apps-script/NaviEngine.gs": "b058263918b3f5594ebf5d318ec3d108cb61b6ec854eb24100ac57afc15794f9",
+    "webapp/google-apps-script/NaviEngine.gs": "abf9949c6b26370eac5974ffdc4c2221f5089ecba9910fcb7684858e3256ecbb",
     "webapp/google-apps-script/appsscript.json": "4a52996014df9d0f6e40abbf5ed08e2245b70860451517e84f24bb2e5cee12e5",
     "webapp/index.html": "7eb3127f5671be956d9a542fc95ce52538056ed0fd1265f42f12cb7671dcd6c4",
     "webapp/package-lock.json": "5d5b654ce9dc6b88e32db2f89870f249d9907fa9e64c4eebf041d3ce41930cdb",
@@ -144,5 +144,9 @@
     "webapp/src/utils/newEncounter.js": "bd3fa41564a394fd117dc06e32a453c478d7d6546bfc811c0c6bdaffacd794f4"
   },
   "previousVersion": "FARO-UX-2026.11.05-RC1",
-  "previousCommit": "fa245d8d529bb171a289e0bfd8f4d41bf161a60e"
+  "previousCommit": "fa245d8d529bb171a289e0bfd8f4d41bf161a60e",
+  "publication": "publication/PUBLICACION.txt",
+  "frontendSourceCommit": "b369440ae2e1280970c6dcc77e664ef7299adcad",
+  "googleVersion": 72,
+  "publishedGoogleSourceSha256": "efc27e24c4d46e3bdd74d3143175e7c77d5bee84d14fb4aa0a48395d842d35e2"
 }

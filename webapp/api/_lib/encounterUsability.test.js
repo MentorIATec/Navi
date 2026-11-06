@@ -269,3 +269,39 @@ test('a different request cannot open a second active encounter; identical retri
   assert.equal(h.counts().CheckIns,2);
   assert.equal(h.counts().GoalSelections,2);
 });
+
+
+test('pre-idempotency plans with blank SelectionId resume read-only without backfilling or unlocking edits', () => {
+  for (const historicalArrival of [false, true]) {
+    const h = setup();
+    if (historicalArrival) {
+      const arrival = call(h, 'startStudentCheckIn', { requestId: 'pre-id-arrival-0001' }).registration;
+      call(h, 'saveGoalSelection', { ...goal, checkInId: arrival.checkInId });
+      h.sheets.get('CheckIns').rows[1][8] = 'legacy';
+      h.sheets.get('CheckIns').rows[1][11] = '';
+    } else call(h, 'saveGoalSelection', goal);
+    const goals = h.sheets.get('GoalSelections');
+    goals.rows[1][goals.rows[0].indexOf('SelectionId')] = '';
+    h.cache.clear();
+    const before = JSON.stringify([...h.sheets].map(([name,sheet])=>[name,sheet.rows]));
+    const entry = call(h, 'getStudentEntry');
+    assert.match(entry.continuation.plan.selectionId, /^legacy-goal-[a-f0-9]{32}$/);
+    assert.equal(call(h, 'getStudentEntry').continuation.plan.selectionId, entry.continuation.plan.selectionId);
+    const values = new Map();
+    const storage = { getItem:k=>values.get(k)||null, setItem:(k,v)=>values.set(k,v), removeItem:k=>values.delete(k) };
+    const journey = beginJourney(storage, { matricula:h.student, operationalCycle:h.cycle, checkInId:entry.continuation.checkInId });
+    assert.equal(resumeEncounter(storage,journey,entry.continuation), '/plan-accion');
+    assert.equal(readConfirmedPlan(storage,journey).payload.metaPrioritaria, goal.metaPrioritaria);
+    const dashboard = call(h,'getMentorDashboard',{actor:h.actor});
+    const dashboardGoal = dashboard.goalSelections.find(item=>item.matricula===h.student);
+    assert.equal(dashboardGoal.selectionid,entry.continuation.plan.selectionId);
+    assert.equal(newEncounterAvailability({student:dashboard.students.find(item=>item.matricula===h.student),goalSelection:dashboardGoal,contextKey:'legacy-view',draft:{_contextKey:'legacy-view'},pending:false,today:'2026-11-06'}),'ready');
+    assert.equal(JSON.stringify([...h.sheets].map(([name,sheet])=>[name,sheet.rows])), before);
+    assert.equal(h.run('saveGoalSelection', {...goal,selectionId:'historical-edit-denied-0001'}).result.code,'PLAN_ALREADY_CONFIRMED');
+    const newEncounter = call(h,'startNewMentoringEncounter',{actor:h.actor,previousSelectionId:entry.continuation.plan.selectionId,requestId:'historical-mentor-new-0001'});
+    assert.equal(call(h,'getStudentEntry').continuation.checkInId,newEncounter.checkInId);
+    assert.equal(call(h,'getStudentEntry').continuation.plan,null);
+    assert.equal(goals.rows[1][goals.rows[0].indexOf('SelectionId')],'');
+    assert.equal(h.counts().GoalSelections,1);
+  }
+});

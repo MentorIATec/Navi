@@ -1256,9 +1256,13 @@ function encounterContinuation_(ss, record, timing) {
 }
 
 function sanitizeConfirmedStudentPlan_(goal) {
-  return goal ? { selectionId: String(goal.selectionid || ''), metaPrioritaria: String(goal.metaprioritaria || ''),
-    metaComplementaria: String(goal.metacomplementaria || ''), tiempo: String(goal.tiempo || ''),
-    obstaculo: String(goal.obstaculo || ''), plan: String(goal.plan || ''), completedAt: String(goal.timestamp || '') } : null;
+  if (!goal) return null;
+  var fields = { metaPrioritaria: String(goal.metaprioritaria || ''), metaComplementaria: String(goal.metacomplementaria || ''),
+    tiempo: String(goal.tiempo || ''), obstaculo: String(goal.obstaculo || ''), plan: String(goal.plan || '') };
+  // Pre-idempotency plans have no SelectionId. Derive a stable read-only reference
+  // from the saved content; never backfill, resave or create a historical encounter.
+  var selectionId = String(goal.selectionid || '').trim() || buildLegacyGoalSelectionId_(fields, goal.matricula);
+  return Object.assign({ selectionId: selectionId }, fields, { completedAt: String(goal.timestamp || '') });
 }
 
 function studentContinuation_(ss, snapshot, timing) {
@@ -3117,7 +3121,9 @@ function getMentorDashboard(ss, data, requestTiming) {
       students: scopedStudents,
       mentors: mentors,
       emailingProfiles: [],
-      goalSelections: latestGoalSelections,
+      goalSelections: latestGoalSelections.map(function(record) {
+        return Object.assign({}, record, { selectionid: sanitizeConfirmedStudentPlan_(record).selectionId });
+      }),
       responses: latestResponses,
       sessions: latestSessions,
     },

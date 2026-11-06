@@ -1,0 +1,33 @@
+{
+  "vercel": {
+    "deploymentId": "dpl_2EBhEt8N21CWHYwTbtik4yu8aSQT",
+    "url": "https://webapp-l5j5p11nu-mentoria-tecs-projects.vercel.app",
+    "command": [
+      "vercel",
+      "promote",
+      "https://webapp-l5j5p11nu-mentoria-tecs-projects.vercel.app",
+      "--scope",
+      "mentoria-tecs-projects"
+    ]
+  },
+  "google": {
+    "scriptId": "1r2W5XDCbso_017cZpGAzUR5DDECbybph_BRQKXSjth3JYClkwB9LfjtR",
+    "deploymentId": "AKfycby8GOAIa6XrLdctYJTYUMeU02wgbyYhdoRNZDWOhywklaCOcTs7yKtTZcuVgnz8Mvn3eg",
+    "version": 69,
+    "command": [
+      "clasp",
+      "deploy",
+      "-i",
+      "AKfycby8GOAIa6XrLdctYJTYUMeU02wgbyYhdoRNZDWOhywklaCOcTs7yKtTZcuVgnz8Mvn3eg",
+      "-V",
+      "69",
+      "-d",
+      "faro rollback RC2 to exact Google69"
+    ]
+  },
+  "order": [
+    "Restore previous Vercel production deployment first",
+    "Restore same Google deployment to immutable69 if required"
+  ],
+  "data": "Do not delete rows, reseed or restore whole Sheets. Leave additive CheckIns L header inert under69; no new tabs."
+}

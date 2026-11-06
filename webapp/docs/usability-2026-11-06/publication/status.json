@@ -1,0 +1,25 @@
+{
+  "release": "FARO-UX-2026.11.06-RC2",
+  "status": "published",
+  "url": "https://faro-me.vercel.app",
+  "frontendDeployment": "dpl_7G1yoGp6181TrFWPV7vtm8iEBXsp",
+  "frontendSourceCommit": "b369440ae2e1280970c6dcc77e664ef7299adcad",
+  "googleVersion": 72,
+  "googleSourceSha256": "efc27e24c4d46e3bdd74d3143175e7c77d5bee84d14fb4aa0a48395d842d35e2",
+  "tests": {
+    "fullCheckout": 710,
+    "focusedBranchAndActualGoogle": 34
+  },
+  "remoteDemoReads": true,
+  "browserDemoResume": "plan-accion, consultation only; no edit or new test controls",
+  "assetsVerified": 35,
+  "stylesBatteriesGoalsProtected": 11,
+  "businessDataWrites": 0,
+  "newSheets": 0,
+  "sheetCountBeforeAndAfter": 15,
+  "technicalHeaderOnly": "CheckIns!L1 = GoalSelectionId",
+  "neonOpened": false,
+  "physicalDeltaPending": true,
+  "nativeClipboardDeltaPending": true,
+  "releaseIncident": "First browser validation caught missing legacy SelectionId; restored previous interface/Google69; fixed response-only compatibility and verified fictitious cases before final promotion."
+}

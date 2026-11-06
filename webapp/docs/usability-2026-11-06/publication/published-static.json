@@ -1,0 +1,147 @@
+{
+  "base": "https://faro-me.vercel.app",
+  "count": 35,
+  "matchesApprovedBuild": true,
+  "files": [
+    {
+      "path": "assets/ActionPlan-Cd-xeX0N.css",
+      "sha256": "f03537d9e1c5cb53006af4baa53a94f7b0d9f84e97d2f2978de154e958d22a00"
+    },
+    {
+      "path": "assets/ActionPlan-DO3muYCQ.js",
+      "sha256": "0aba02ee068938d4f3725c7bb7b49d7b32072a98b7944cfed692e3ab9a898b70"
+    },
+    {
+      "path": "assets/AdminDashboard-BNSnVAyk.js",
+      "sha256": "996dfbc05273ee5221def3dca3e69b147c5e3760759fef9245d02f57683a0a16"
+    },
+    {
+      "path": "assets/arrow-right-B6cOA0sb.js",
+      "sha256": "531a633c629c27c76a05f90a669c9163dff5f49e4897e50a3fe2edba080f0839"
+    },
+    {
+      "path": "assets/check-DvKP5Vv0.js",
+      "sha256": "962a8ba156ac8abfe19a1740a7518a8319cf1e73cb1678b85d3f6ba42dafa47f"
+    },
+    {
+      "path": "assets/CheckIn-BOQgO6UI.js",
+      "sha256": "513310bd9dea6745cdbe6e17aa96592fea564ca04c620274dbcc28e91e9835dc"
+    },
+    {
+      "path": "assets/client-QARF1dlg.js",
+      "sha256": "b35a573a1053fa64dcc14374ae7a96a1b2f7052d88873540957c953580567d83"
+    },
+    {
+      "path": "assets/createLucideIcon-DBa-os0-.js",
+      "sha256": "2c5cf625a2dbd210db1ae3d8871bf79d5b8510f5dad67f1779ba1f036b82ee81"
+    },
+    {
+      "path": "assets/Diagnostic-BQjJQR4S.js",
+      "sha256": "168f327b7d9025f7b606163f942226a3d6e6465c9ddad3fba8a69bcd85e7008c"
+    },
+    {
+      "path": "assets/diagnosticBank-4Q4mwyxj.js",
+      "sha256": "1a6124c204ca7702162861f85d718944c133b0f09adc973c001209bde1599121"
+    },
+    {
+      "path": "assets/encounterContinuation-Cokw6OGA.js",
+      "sha256": "cf6aa2c81e94a10a3757320c06c1da41cabfb4f8d33b12182127cd12363c0245"
+    },
+    {
+      "path": "assets/GoalSelection-B427eszk.css",
+      "sha256": "33d6e4083f1f14cbb7e1cfc46993c8210b95a9841dd1ee8b60c4ec25e79fa965"
+    },
+    {
+      "path": "assets/GoalSelection-D_pREVyt.js",
+      "sha256": "ae786e27be7d943ed2def1bbad238b7f6909ff140499d3bfb5e7347eb8156837"
+    },
+    {
+      "path": "assets/index-Cl7So0Xo.js",
+      "sha256": "4eff8158a448c7a51f2ae27a5385e929e53b2f4c77e810bd955c97814f9c622e"
+    },
+    {
+      "path": "assets/index-FTOes8l1.css",
+      "sha256": "5e8b0dd7db9f0a6d29f1da406e25c0287cecd06f9766045af698534ca330823f"
+    },
+    {
+      "path": "assets/journeyDiagnostic-DKP4iY29.js",
+      "sha256": "182a138d076d5d87328e058217ca34ce74f062f0b1a6233d6add12604da73feb"
+    },
+    {
+      "path": "assets/jsx-runtime-k-awuBEX.js",
+      "sha256": "0dc95b48a4b075c20102603996fe041df09b5cfcbb873f40d05dda89dc0671d3"
+    },
+    {
+      "path": "assets/PreTest-BTnIMKam.js",
+      "sha256": "8ac2a6590a6e133c28804d268ce220b69ee66e7d6b178a10496c438e3be24e3b"
+    },
+    {
+      "path": "assets/ProgressBar-DYeIolRl.js",
+      "sha256": "e389b493a9290ecf5eae0f7cb40e71ad9f80f9555bb3cafc04e565f7a359fd01"
+    },
+    {
+      "path": "assets/Results-BkVIa_YC.js",
+      "sha256": "1a656e3b5094cf2aec7836b5fc72358b8e988bd1095cebbfb952116a34be2135"
+    },
+    {
+      "path": "assets/sessionContinuation-ChwfNMH5.js",
+      "sha256": "03090d0b62e16d31d36d649e48ab3429be84386c09b71d9a79275250fa6b3a3f"
+    },
+    {
+      "path": "assets/testResults-Bs8PhJIx.js",
+      "sha256": "67df29b15e1178fe6282dad67faae38826a41d336aba8737d86a02ff6a22c97f"
+    },
+    {
+      "path": "assets/Welcome-BG_MbTc3.js",
+      "sha256": "5960bc7576e8e1d2f95c8c39b3e99f9b71534f6597261cad5e0e52466b753156"
+    },
+    {
+      "path": "favicon.svg",
+      "sha256": "c1708a4d3e0ee3ce8367d1727603de0923007c38dce8f65e5384d13cf8664864"
+    },
+    {
+      "path": "fonts/faro-inter-regular.woff",
+      "sha256": "bcf24d68e49ab25727d08d7f89cafe1e87db057d2be1cd7c28abbc0406f00079"
+    },
+    {
+      "path": "fonts/faro-inter-semibold.woff",
+      "sha256": "e9b0ebc8c604dae2d953a18dbde973da8d5b562f7a6a41cdc65390f186c037e9"
+    },
+    {
+      "path": "fonts/faro-literata.woff",
+      "sha256": "1255c5c7a0363002582cbcca545226e20288b42c4ff86efbce48aeb28f3cb6bb"
+    },
+    {
+      "path": "fonts/faro-sora-bold.woff",
+      "sha256": "f8d47aaed0bad20fc399d5282ffd146a2a19245368e5895336045327ebc968b3"
+    },
+    {
+      "path": "fonts/faro-sora-semibold.woff",
+      "sha256": "5d1ff16bfb8256ddcd37a9dd9ba6e747ece08fb8a78a1630f6927d43a11fbf60"
+    },
+    {
+      "path": "fonts/LICENSES.txt",
+      "sha256": "704fb7bf45335ba873b58a25edf412e3cc8d42b936c287b4203f49e6ade4ecbc"
+    },
+    {
+      "path": "fonts/OFL-inter.txt",
+      "sha256": "5b9321a4298cfeb6b34354164a1c3afc3db114569984c502b9b35d988fd58c57"
+    },
+    {
+      "path": "fonts/OFL-literata.txt",
+      "sha256": "8742963604cd89dc81437811a850018fc03b2bfad686d7422c8235967c87614e"
+    },
+    {
+      "path": "fonts/OFL-sora.txt",
+      "sha256": "ba0b9729c9428ba79a0459ab8ec575791b51509dbec213e383d0316d37fec299"
+    },
+    {
+      "path": "icons.svg",
+      "sha256": "b45fa506195cfcdef406ba9f0c77b36ddc1a7c224040926ec70abc2fdea7b93a"
+    },
+    {
+      "path": "index.html",
+      "sha256": "5dad0f305a0c6a1c232397e254f3a80340edc396d8ba51cda180ff8379bfc89f"
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "label": "published",
+  "base": "https://faro-me.vercel.app",
+  "identity": "authorized fictitious demo only",
+  "cycle": "AD26-FJ27",
+  "browserResumeContract": true,
+  "goalOptionsUnchanged": true,
+  "primary": 34,
+  "complementary": 20,
+  "entryHasContinuation": true,
+  "entryHasConfirmedPlan": true,
+  "confirmedPlanHasRequiredFields": true,
+  "checks": [
+    {
+      "action": "getStudentEntry",
+      "status": 200,
+      "httpMs": 4839.4259999999995
+    },
+    {
+      "action": "getGoalSelectionOptions",
+      "status": 200,
+      "httpMs": 3630.786
+    },
+    {
+      "action": "getGoalSelectionOptions",
+      "status": 401,
+      "httpMs": 172.75099999999998
+    },
+    {
+      "action": "getGoalSelectionOptions",
+      "status": 403,
+      "httpMs": 203.337
+    },
+    {
+      "action": "getGoalSelectionOptions",
+      "status": 409,
+      "httpMs": 191.905
+    },
+    {
+      "action": "startNewMentoringEncounter",
+      "status": 401,
+      "httpMs": 164.83100000000002
+    }
+  ],
+  "businessWrites": 0,
+  "realRecordsAltered": false
+}
