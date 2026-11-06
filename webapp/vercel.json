@@ -1,4 +1,7 @@
 {
+  "functions": {
+    "api/goals.js": { "maxDuration": 120 }
+  },
   "rewrites": [
     {
       "source": "/(.*)",

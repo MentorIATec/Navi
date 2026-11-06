@@ -1,0 +1,28 @@
+.goal-keepsake { width:100%; max-width:390px; margin:0 auto; background:#fffaf0; color:#102645; border:1px solid #d8d7d0; border-radius:6px 38px 6px 6px; overflow:hidden; font:400 17px/1.5 Inter,system-ui,sans-serif; text-align:left; box-shadow:0 4px 14px #1026450d; }
+.goal-keepsake * { box-sizing:border-box; }
+.goal-keepsake p,.goal-keepsake h3 { margin:0; white-space:pre-wrap; overflow-wrap:anywhere; }
+.keepsake-community { display:flex; align-items:flex-start; gap:12px; padding:20px; background:var(--community-color); color:var(--community-ink); }
+.keepsake-community>div { min-width:0; flex:1; }
+.keepsake-community>div>p:first-child { font-size:12px; letter-spacing:.12em; font-weight:600; }
+.goal-keepsake .keepsake-slogan { font:italic 16px/1.45 Literata,Georgia,serif; margin-top:5px; }
+.keepsake-wordmark { font:700 28px/1 Sora,Inter,sans-serif; letter-spacing:-.06em; flex-shrink:0; }
+.keepsake-body { padding:25px 20px 20px; }
+.goal-keepsake .keepsake-label { font:600 12px/1.6 Inter,system-ui,sans-serif; text-transform:uppercase; letter-spacing:.16em; color:#735a4e; }
+.goal-keepsake .keepsake-session { color:#526179; }
+.keepsake-identity { display:flex; align-items:center; gap:16px; margin:20px 0 25px; }
+.goal-keepsake h3 { flex:1; min-width:0; font:600 40px/1.15 Sora,Inter,sans-serif; letter-spacing:-.05em; }
+.keepsake-seal { width:68px; height:68px; flex:0 0 68px; display:grid; place-items:center; background:repeating-conic-gradient(#d26a5c 0deg 6deg,transparent 6deg 30deg); border-radius:50%; }
+.keepsake-seal>span { display:grid; place-items:center; width:48px; height:48px; border-radius:50%; background:#102645; color:#fffaf0; box-shadow:0 0 0 5px #fffaf0; }
+.goal-keepsake .keepsake-goal { margin-top:12px; font:400 25px/1.36 Literata,Georgia,serif; letter-spacing:-.015em; }
+.keepsake-complement { margin-top:23px; border-top:1px solid #d8d7d0; padding-top:19px; }
+.goal-keepsake .keepsake-copy { margin-top:10px; font:400 17px/1.55 Inter,system-ui,sans-serif; }
+.keepsake-horizon { margin-top:22px; background:#eee8db; border-radius:10px; padding:15px; display:flex; align-items:center; gap:12px; }
+.keepsake-horizon>svg { flex-shrink:0; }
+.keepsake-horizon p { min-width:0; display:flex; flex-wrap:wrap; align-items:baseline; gap:5px 12px; }
+.keepsake-horizon span { font-size:12px; letter-spacing:.08em; text-transform:uppercase; }
+.keepsake-horizon strong { font-size:18px; font-weight:600; }
+.keepsake-strategy { padding:20px; background:#102645; color:#fffaf0; }
+.goal-keepsake .keepsake-strategy .keepsake-label { color:#f4b5a1; }
+.keepsake-closure { padding:18px 12px; display:flex; gap:10px; align-items:center; justify-content:center; font-size:14px; color:#526179; }
+.keepsake-closure svg { color:#a4493e; flex-shrink:0; }
+.goal-keepsake--extended .keepsake-goal { font-size:20px; line-height:1.5; }

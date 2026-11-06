@@ -1,0 +1,232 @@
+[
+  {
+    "CategoryKey": "claridad_carrera",
+    "Stage": "exploracion",
+    "PriorityRank": "1",
+    "GoalId": "CAR001",
+    "SlotType": "primary",
+    "Active": "Si",
+    "Notes": "Aplicar sólo a opciones de respuesta indicadas; no sustituye confirmación de requisitos.",
+    "ResponseScores": "1|2|3"
+  },
+  {
+    "CategoryKey": "claridad_carrera",
+    "Stage": "exploracion",
+    "PriorityRank": "2",
+    "GoalId": "CAR002",
+    "SlotType": "primary",
+    "Active": "Si",
+    "Notes": "Aplicar sólo a opciones de respuesta indicadas; no sustituye confirmación de requisitos.",
+    "ResponseScores": "1|2|3"
+  },
+  {
+    "CategoryKey": "claridad_carrera",
+    "Stage": "exploracion",
+    "PriorityRank": "3",
+    "GoalId": "SEED097",
+    "SlotType": "primary",
+    "Active": "Si",
+    "Notes": "Aplicar sólo a opciones de respuesta indicadas; no sustituye confirmación de requisitos.",
+    "ResponseScores": "1|2|3"
+  },
+  {
+    "CategoryKey": "plan_practicas",
+    "Stage": "exploracion",
+    "PriorityRank": "1",
+    "GoalId": "PRA001",
+    "SlotType": "primary",
+    "Active": "Si",
+    "Notes": "Aplicar sólo a opciones de respuesta indicadas; no sustituye confirmación de requisitos.",
+    "ResponseScores": "1|2|3|4"
+  },
+  {
+    "CategoryKey": "servicio_social",
+    "Stage": "exploracion",
+    "PriorityRank": "1",
+    "GoalId": "SER001",
+    "SlotType": "primary",
+    "Active": "Si",
+    "Notes": "Aplicar sólo a opciones de respuesta indicadas; no sustituye confirmación de requisitos.",
+    "ResponseScores": "1|2|3|4"
+  },
+  {
+    "CategoryKey": "servicio_social",
+    "Stage": "enfoque",
+    "PriorityRank": "1",
+    "GoalId": "SEED103",
+    "SlotType": "primary",
+    "Active": "Si",
+    "Notes": "Aplicar sólo a opciones de respuesta indicadas; no sustituye confirmación de requisitos.",
+    "ResponseScores": "1|2"
+  },
+  {
+    "CategoryKey": "servicio_social",
+    "Stage": "enfoque",
+    "PriorityRank": "2",
+    "GoalId": "SEED100",
+    "SlotType": "primary",
+    "Active": "Si",
+    "Notes": "Aplicar sólo a opciones de respuesta indicadas; no sustituye confirmación de requisitos.",
+    "ResponseScores": "2|3|4"
+  },
+  {
+    "CategoryKey": "decision_semestre_tec",
+    "Stage": "enfoque",
+    "PriorityRank": "1",
+    "GoalId": "SEED084",
+    "SlotType": "primary",
+    "Active": "Si",
+    "Notes": "Aplicar sólo a opciones de respuesta indicadas; no sustituye confirmación de requisitos.",
+    "ResponseScores": "1|2"
+  },
+  {
+    "CategoryKey": "decision_semestre_tec",
+    "Stage": "enfoque",
+    "PriorityRank": "2",
+    "GoalId": "SEED092",
+    "SlotType": "primary",
+    "Active": "Si",
+    "Notes": "Aplicar sólo a opciones de respuesta indicadas; no sustituye confirmación de requisitos.",
+    "ResponseScores": "3"
+  },
+  {
+    "CategoryKey": "decision_semestre_tec",
+    "Stage": "enfoque",
+    "PriorityRank": "3",
+    "GoalId": "SEED101",
+    "SlotType": "primary",
+    "Active": "Si",
+    "Notes": "Aplicar sólo a opciones de respuesta indicadas; no sustituye confirmación de requisitos.",
+    "ResponseScores": "4"
+  },
+  {
+    "CategoryKey": "decision_semestre_tec",
+    "Stage": "enfoque",
+    "PriorityRank": "4",
+    "GoalId": "SEED085",
+    "SlotType": "primary",
+    "Active": "Si",
+    "Notes": "Aplicar sólo a opciones de respuesta indicadas; no sustituye confirmación de requisitos.",
+    "ResponseScores": "1|2|3"
+  },
+  {
+    "CategoryKey": "certificacion_idioma",
+    "Stage": "enfoque",
+    "PriorityRank": "1",
+    "GoalId": "SEED102",
+    "SlotType": "primary",
+    "Active": "Si",
+    "Notes": "Aplicar sólo a opciones de respuesta indicadas; no sustituye confirmación de requisitos.",
+    "ResponseScores": "2|3"
+  },
+  {
+    "CategoryKey": "certificacion_idioma",
+    "Stage": "enfoque",
+    "PriorityRank": "2",
+    "GoalId": "SEED105",
+    "SlotType": "primary",
+    "Active": "Si",
+    "Notes": "Aplicar sólo a opciones de respuesta indicadas; no sustituye confirmación de requisitos.",
+    "ResponseScores": "4"
+  },
+  {
+    "CategoryKey": "plan_practicas",
+    "Stage": "enfoque",
+    "PriorityRank": "1",
+    "GoalId": "PRA001",
+    "SlotType": "primary",
+    "Active": "Si",
+    "Notes": "Aplicar sólo a opciones de respuesta indicadas; no sustituye confirmación de requisitos.",
+    "ResponseScores": "1|2|3"
+  },
+  {
+    "CategoryKey": "plan_practicas",
+    "Stage": "enfoque",
+    "PriorityRank": "2",
+    "GoalId": "PRA004",
+    "SlotType": "primary",
+    "Active": "Si",
+    "Notes": "Aplicar sólo a opciones de respuesta indicadas; no sustituye confirmación de requisitos.",
+    "ResponseScores": "4"
+  },
+  {
+    "CategoryKey": "plan_practicas",
+    "Stage": "enfoque",
+    "PriorityRank": "3",
+    "GoalId": "PRA002",
+    "SlotType": "primary",
+    "Active": "Si",
+    "Notes": "Aplicar sólo a opciones de respuesta indicadas; no sustituye confirmación de requisitos.",
+    "ResponseScores": "4"
+  },
+  {
+    "CategoryKey": "plan_practicas",
+    "Stage": "enfoque",
+    "PriorityRank": "4",
+    "GoalId": "SEED099",
+    "SlotType": "primary",
+    "Active": "Si",
+    "Notes": "Aplicar sólo a opciones de respuesta indicadas; no sustituye confirmación de requisitos.",
+    "ResponseScores": "4"
+  },
+  {
+    "CategoryKey": "plan_practicas",
+    "Stage": "enfoque",
+    "PriorityRank": "5",
+    "GoalId": "SEED090",
+    "SlotType": "primary",
+    "Active": "Si",
+    "Notes": "Aplicar sólo a opciones de respuesta indicadas; no sustituye confirmación de requisitos.",
+    "ResponseScores": "4"
+  },
+  {
+    "CategoryKey": "desempeno_academico",
+    "Stage": "exploracion",
+    "PriorityRank": "1",
+    "GoalId": "SEED106",
+    "SlotType": "primary",
+    "Active": "Si",
+    "Notes": "Aplicar sólo a opciones de respuesta indicadas; no sustituye confirmación de requisitos.",
+    "ResponseScores": "1|2|3"
+  },
+  {
+    "CategoryKey": "desempeno_academico",
+    "Stage": "exploracion",
+    "PriorityRank": "2",
+    "GoalId": "SEED098",
+    "SlotType": "primary",
+    "Active": "Si",
+    "Notes": "Aplicar sólo a opciones de respuesta indicadas; no sustituye confirmación de requisitos.",
+    "ResponseScores": "1|2|3"
+  },
+  {
+    "CategoryKey": "desempeno_academico",
+    "Stage": "exploracion",
+    "PriorityRank": "3",
+    "GoalId": "ACA005",
+    "SlotType": "primary",
+    "Active": "Si",
+    "Notes": "Aplicar sólo a opciones de respuesta indicadas; no sustituye confirmación de requisitos.",
+    "ResponseScores": "1|2|3"
+  },
+  {
+    "CategoryKey": "desempeno_academico",
+    "Stage": "exploracion",
+    "PriorityRank": "4",
+    "GoalId": "ACA001",
+    "SlotType": "primary",
+    "Active": "Si",
+    "Notes": "Aplicar sólo a opciones de respuesta indicadas; no sustituye confirmación de requisitos.",
+    "ResponseScores": "1|2|3"
+  },
+  {
+    "CategoryKey": "servicio_social",
+    "Stage": "enfoque",
+    "PriorityRank": "3",
+    "GoalId": "SEED088",
+    "SlotType": "primary",
+    "Active": "Si",
+    "Notes": "Plan con horas pendientes conocidas o intensivo considerado; consultar oferta y cupo, no inferir rezago ni garantizar inscripción.",
+    "ResponseScores": "2|3"
+  }
+]

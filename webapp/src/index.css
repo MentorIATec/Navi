@@ -1,5 +1,10 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Literata:opsz,wght@7..72,400;7..72,600&family=Sora:wght@400;600;700;800&display=swap");
 @import "tailwindcss";
+@font-face {font-family:Inter;src:url('/fonts/faro-inter-regular.woff');font-weight:400;font-display:swap;}
+@font-face {font-family:Inter;src:url('/fonts/faro-inter-semibold.woff');font-weight:600;font-display:swap;}
+@font-face {font-family:Sora;src:url('/fonts/faro-sora-semibold.woff');font-weight:600;font-display:swap;}
+@font-face {font-family:Sora;src:url('/fonts/faro-sora-bold.woff');font-weight:700;font-display:swap;}
+@font-face {font-family:Literata;src:url('/fonts/faro-literata.woff');font-weight:400;font-display:swap;}
+
 
 @theme {
   --color-brand-50: color-mix(in srgb, var(--theme-color) 4%, white);
@@ -63,7 +68,8 @@ body {
 }
 
 .font-display {
-  font-family: Sora, Inter, system-ui, sans-serif;
+  font-family: Inter, system-ui, sans-serif;
+  font-weight: 600;
 }
 
 .font-editorial {

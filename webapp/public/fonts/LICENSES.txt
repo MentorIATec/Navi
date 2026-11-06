@@ -1,0 +1,19 @@
+faro-inter-regular.ttf
+Copyright 2016 The Inter Project Authors (https://github.com/rsms/inter)
+https://openfontlicense.org
+
+faro-inter-semibold.ttf
+Copyright 2016 The Inter Project Authors (https://github.com/rsms/inter)
+https://openfontlicense.org
+
+faro-literata.ttf
+Copyright 2017 The Literata Project Authors (https://github.com/googlefonts/literata)
+https://scripts.sil.org/OFL
+
+faro-sora-bold.ttf
+Copyright 2019 The Sora Project Authors (https://github.com/sora-xor/sora-font)
+https://scripts.sil.org/OFL
+
+faro-sora-semibold.ttf
+Copyright 2019 The Sora Project Authors (https://github.com/sora-xor/sora-font)
+https://scripts.sil.org/OFL

@@ -15,13 +15,93 @@ const CONFIG_KEYS = {
   goalsUpdatedAt: 'GOALS_UPDATED_AT',
   version: 'VERSION',
   lastSync: 'LAST_SYNC',
+  directoryStudentSourceSpreadsheetId: 'DIRECTORY_STUDENT_SOURCE_SPREADSHEET_ID',
+  directoryStudentSourceSheetName: 'DIRECTORY_STUDENT_SOURCE_SHEET_NAME',
+  directoryMentorSourceSpreadsheetId: 'DIRECTORY_MENTOR_SOURCE_SPREADSHEET_ID',
+  directoryMentorSourceSheetName: 'DIRECTORY_MENTOR_SOURCE_SHEET_NAME',
+  directorySourcePeriod: 'DIRECTORY_SOURCE_PERIOD',
+  directoryTargetPeriod: 'DIRECTORY_TARGET_PERIOD',
+  directorySourceCutoffAt: 'DIRECTORY_SOURCE_CUTOFF_AT',
+  directorySemesterIncrement: 'DIRECTORY_SEMESTER_INCREMENT',
+  directoryPublishEnabled: 'DIRECTORY_PUBLISH_ENABLED',
+  directoryRollbackEnabled: 'DIRECTORY_ROLLBACK_ENABLED',
 };
 
 const STUDENT_HEADERS = ['Matrícula', 'Nombre', 'NombrePreferido', 'Email', 'NicknameMentor', 'Status', 'Check-in', 'AgenciaCheckIn', 'UltimoAviso'];
 const LEGACY_STUDENT_HEADERS = ['Matrícula', 'Nombre', 'Email', 'NicknameMentor', 'Comunidad', 'Status', 'Check-in'];
-const STAFF_HEADERS = ['Email', 'PIN', 'Nombre', 'Alias', 'Rol', 'Comunidad', 'Hex', 'Slogan', 'Activo'];
-const RESPONSES_HEADERS = ['Matrícula', 'FechaTest', 'Modalidad', 'Etapa', 'ScorePromedio', 'AreasPrioritarias', 'Claridad_Carrera', 'Desempeno_Academico', 'Plan_Practicas', 'Servicio_Social', 'Decision_SemestreTec', 'Certificacion_Idioma'];
-const GOAL_SELECTION_HEADERS = ['Timestamp', 'Matrícula', 'Nombre', 'Meta Prioritaria', 'Meta Complementaria', 'Tiempo', 'Obstáculo', 'Plan'];
+const STAFF_HEADERS = ['Email', 'PIN', 'Nombre', 'Alias', 'Rol', 'Comunidad', 'Hex', 'Slogan', 'Activo', 'GoogleSubject', 'WhatsAppE164', 'WhatsAppActivo', 'MentorId', 'WhatsAppValidadoAt'];
+const DIRECTORY_VERSION_HEADERS = ['VersionId', 'Periodo', 'SourceSpreadsheetId', 'SourceCutoffAt', 'ExtractedAt', 'SourceFingerprint', 'StudentCount', 'MentorCount', 'AssignmentCount', 'ErrorCount', 'WarningCount', 'Status', 'PreviousVersionId', 'PublishedAt', 'PublishedBySubject', 'RolledBackAt', 'RolledBackBySubject', 'RollbackToVersionId'];
+const DIRECTORY_STUDENT_HEADERS = ['VersionId', 'Matricula', 'Nombre', 'Email', 'MentorId', 'Periodo', 'FechaCorte'];
+const STUDENT_PREFERENCE_HEADERS = ['Matricula', 'NombrePreferido', 'UpdatedAt', 'Source', 'MigrationId'];
+const CHECKIN_HEADERS = ['CheckInId', 'Matricula', 'TimestampISO', 'PreTestResumen', 'Modalidad', 'SessionId', 'CreatedAt', 'UpdatedAt', 'Source', 'MigrationId', 'OperationalCycle', 'GoalSelectionId'];
+const PRODUCT_MIGRATION_RUN_HEADERS = ['MigrationId', 'SourceFingerprint', 'Status', 'PreferenceInserted', 'CheckInInserted', 'PublishedAt', 'PublishedBySubject', 'RolledBackAt', 'RolledBackBySubject'];
+const DIRECTORY_APPROVED_MENTORS = [
+  { name: 'Ana Lilia Varela Serrato', mentorId: 'AD26-ANAVARELA' },
+  { name: 'Martha Gabriela Flores Ramírez', mentorId: 'AD26-MGFLORES' },
+  { name: 'María del Carmen Mora González', mentorId: 'AD26-CARMENMORA' },
+  { name: 'Karla Lorena Villarreal Aldape', mentorId: 'AD26-KVILLARREAL' },
+  { name: 'Mariana Ortega Lankenau', mentorId: 'AD26-MARIANAORTEGA' },
+  { name: 'Montserrat García Yáñez', mentorId: 'AD26-MOGARCIA' },
+  { name: 'Karen Ariadna Guzmán Vega', mentorId: 'AD26-KARENG' },
+  { name: 'Monserrat Tijerina Cervantes', mentorId: 'AD26-MONSERRAT-TIJERINA' },
+  { name: 'Christopher Jean-Philippe Josette Michaux', mentorId: 'AD26-CHRISTOPHER-MICHAUX' },
+];
+const DIRECTORY_PILOT_MENTOR_IDS = ['AD26-KARENG'];
+// Fixtures estables de demostración. No pertenecen a una campaña ni requieren MentorId.
+// Se conservan en Students durante la transición y nunca forman parte de DirectoryStudents.
+const DEMO_STUDENT_MATRICULAS = Object.freeze([
+  'A10984011',
+  'A10984012',
+  'A10984013',
+  'A10984014',
+  'A10984015',
+  'A10984016',
+  'A10984017',
+  'A10984018',
+  'A10984019',
+  'A10984020',
+]);
+const DIRECTORY_READ_CACHE_VERSION = 'v1';
+const DIRECTORY_READ_CACHE_TTL_SECONDS = 21600;
+const DIRECTORY_MIN_ACTUAL_SEMESTER = 2;
+const DIRECTORY_MAX_ACTUAL_SEMESTER = 6;
+const STUDENT_PRODUCT_CACHE_VERSION = 'v3-plan-closure';
+const STUDENT_PRODUCT_CACHE_TTL_SECONDS = 300;
+const IDENTITY_READ_CACHE_VERSION = 'v1';
+const STAFF_READ_CACHE_TTL_SECONDS = 300;
+const PRODUCT_READ_INDEX_VERSION = 'v1';
+const PRODUCT_READ_INDEX_TTL_SECONDS = 300;
+const PRODUCT_UNIQUE_INDEX_VERSION = 'v1';
+const PRODUCT_UNIQUE_INDEX_ALIASES = Object.freeze({
+  CheckIns: ['CheckInId'],
+  Responses: ['ResponseId'],
+  GoalSelections: ['SelectionId'],
+  Sesiones: ['Session_ID'],
+});
+const INTERACTIVE_WRITE_LOCK_TIMEOUT_MS = 8000;
+const OPERATIONAL_TELEMETRY_PREFIX = 'FARO_OPERATIONAL_TELEMETRY_V1_';
+const OPERATIONAL_TELEMETRY_MAX_SAMPLES = 25;
+const OPERATIONAL_TELEMETRY_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
+const OPERATIONAL_TELEMETRY_SUCCESS_SAMPLE_RATE = 4;
+const OPERATIONAL_TELEMETRY_SLOW_MS = 10000;
+const DASHBOARD_READ_MODEL_SCHEMA_VERSION = 'v2-encounter';
+const DASHBOARD_PAGE_SIZE_DEFAULT = 12;
+const DASHBOARD_PAGE_SIZE_MAX = 25;
+const DASHBOARD_READ_MODEL_CACHE_TTL_SECONDS = 600;
+const DASHBOARD_READ_MODEL_CHUNK_MAX_BYTES = 60000;
+const SYNTHETIC_DIRECTORY_STAGING_ID = '1SGC0YyUW_HfqDs7Q8k7TV0pxQomKkO5_bEepGfYjrg4';
+const SYNTHETIC_DIRECTORY_MENTOR_SOURCE_ID = '1jHE0OAX7EXTyo5Try8Jh5J_xwP0g_PEztxxiQBuGwZU';
+const PILOT_DIRECTORY_STAGING_ID = '1_Y2jzEfIJQB_O00aJYJJcM-8SDV5r3Y9fQHKMzvAMvA';
+const PILOT_DIRECTORY_APPROVED_FINGERPRINT = '2adccb014c99bda9a46bf8340663533a939215511dc923286ae8dcbbcd5f5a8e';
+const PILOT_DIRECTORY_EXPECTED_COUNT = 219;
+const SYNTHETIC_DIRECTORY_MATRICULAS = Object.freeze(['A99999001', 'A99999002', 'A99999003']);
+const APPROVED_LEGACY_PRODUCT_FINGERPRINT = '231627fc405335710d53672294b59f7a4322f8e6558ecef677f49bc0bd300d09';
+const APPROVED_LEGACY_PREFERENCE_COUNT = 49;
+const APPROVED_LEGACY_CHECKIN_COUNT = 7;
+const LEGACY_UNDATED_OPERATIONAL_CYCLE = 'LEGACY-UNDATED';
+const EMAILING_PROFILE_HEADERS = ['Matrícula', 'Programa', 'Semestre', 'Mentor', 'Comunidad', 'PromedioBucket', 'CreditosReprobadosFlag', 'CondicionalFJ26Flag', 'SegmentoEmail', 'MensajeClave', 'UpdatedAt'];
+const RESPONSES_HEADERS = ['Matrícula', 'FechaTest', 'Modalidad', 'Etapa', 'ScorePromedio', 'AreasPrioritarias', 'Claridad_Carrera', 'Desempeno_Academico', 'Plan_Practicas', 'Servicio_Social', 'Decision_SemestreTec', 'Certificacion_Idioma', 'ResponseId', 'OperationalCycle', 'QuestionnaireVersion', 'Source'];
+const GOAL_SELECTION_HEADERS = ['Timestamp', 'Matrícula', 'Nombre', 'Meta Prioritaria', 'Meta Complementaria', 'Tiempo', 'Obstáculo', 'Plan', 'OperationalCycle', 'SelectionId'];
 const SESSIONS_HEADERS = ['Session_ID', 'Matricula', 'Nombre', 'Mentor', 'Comunidad', 'Periodo', 'Fecha_Sesion', 'Etapa', 'Areas_Prioritarias', 'Pretest_Resumen', 'Meta_Prioritaria', 'Meta_Complementaria', 'Horizonte', 'Obstaculo', 'Estrategia', 'Notas_Mentor', 'Estado_Documentacion', 'Documentado_CRM', 'Timestamp_Creacion', 'Timestamp_Actualizado'];
 // Dimension = una sola de las 7 dimensiones del bienestar del modelo Tec.
 // TemaOperativo = agrupador práctico de navegación/curación para mentoría; no reemplaza a la dimensión.
@@ -98,7 +178,45 @@ const DIAGNOSTIC_TAG_ALIASES = {
   intercambio: 'certificacion_idioma',
 };
 const CONTROLLED_DIAGNOSTIC_TAGS = Object.keys(DIAGNOSTIC_CATEGORY_MAP);
-const ADMIN_WRITE_ACTIONS = ['syncBulk', 'saveGoalsCatalog', 'saveMetasConfig', 'sendCampaign'];
+const SERVICE_ACTIONS = [
+  'findStudent',
+  'startStudentCheckIn',
+  'startNewMentoringEncounter',
+  'resolveWorkspaceUser',
+  'getMentorDashboard',
+  'saveStudentPreference',
+  'registerCheckIn',
+  'completeCheckInPreTest',
+  'syncBulk',
+  'previewManagedDirectoryImport',
+  'publishManagedDirectoryImport',
+  'previewDirectoryImport',
+  'publishDirectoryImport',
+  'rollbackDirectoryImport',
+  'previewLegacyStudentProductMigration',
+  'publishLegacyStudentProductMigration',
+  'rollbackLegacyStudentProductMigration',
+  'publishApprovedLegacyProductMigrationScope',
+  'rollbackApprovedLegacyProductMigration',
+  'resetDemoStudentJourney',
+  'runSyntheticDirectoryLifecycle',
+  'runSyntheticProductMigrationLifecycle',
+  'previewPilotDirectory',
+  'publishPilotDirectory',
+  'getMetas',
+  'getGoalsCatalog',
+  'getOperationalTelemetry',
+  'prepareDashboardReadModelPreview',
+  'getDashboardReadModelPreview',
+  'runDashboardReadModelEvaluation',
+  'saveMetasConfig',
+  'saveGoalsCatalog',
+  'saveGoalSelection',
+  'saveMentoringSession',
+  'saveTestResponse',
+  'getTestResponse',
+  'getStudentEntry',
+];
 
 function onOpen() {
   const ui = SpreadsheetApp.getUi();
@@ -106,8 +224,7 @@ function onOpen() {
     .addItem('Inicializar Tablas', 'setup')
     .addItem('Cargar Datos de Prueba de Comunidad', 'seedCommunityTestData')
     .addItem('Poblar Roles y Banco de Metas', 'seedRolesAndGoalsCatalog')
-    .addSeparator()
-    .addItem('Limpiar Datos de Prueba', 'clearTestData')
+    .addItem('Reconstruir EmailingProfile desde hoja fuente', 'syncEmailingProfileFromSource')
     .addToUi();
 }
 
@@ -122,113 +239,130 @@ function setup() {
   SpreadsheetApp.getUi().alert('✅ Estructura de Navi inicializada correctamente.');
 }
 
+/**
+ * Autorización operativa de sólo lectura para las dos fuentes externas del
+ * directorio. Se ejecuta manualmente una sola vez desde el editor de Apps
+ * Script cuando Google solicita ampliar los permisos del proyecto.
+ */
+function authorizeDirectorySourceAccess() {
+  var mentorSheet = SpreadsheetApp.openById(SYNTHETIC_DIRECTORY_MENTOR_SOURCE_ID).getSheetByName('Datos mentor');
+  var stagingSheet = SpreadsheetApp.openById(SYNTHETIC_DIRECTORY_STAGING_ID).getSheetByName('Carga estudiantes');
+  if (!mentorSheet || !stagingSheet) {
+    throw new Error('No fue posible validar las dos fuentes autorizadas del directorio.');
+  }
+  var mentorRows = mentorSheet.getDataRange().getValues();
+  var stagingRows = assertSyntheticDirectoryStaging_(stagingSheet);
+  var mentorIdIndex = findHeaderIndex_(mentorRows[0] || [], ['mentor_id', 'MentorId'], 'mentor_id');
+  var hasPilotMentor = mentorRows.slice(1).some(function(row) {
+    return normalizeDirectoryCell_(row[mentorIdIndex]) === 'AD26-KARENG';
+  });
+  if (!hasPilotMentor) throw new Error('Datos mentor no contiene AD26-KARENG.');
+  return {
+    mentorSourceReadable: true,
+    stagingReadable: true,
+    syntheticStudents: stagingRows.length - 1,
+  };
+}
+
 /** API: Maneja solicitudes GET (Lectura de datos) */
 function doGet(e) {
-  try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    ensureCoreSheets_(ss);
-    ensureOperationsSheets_(ss);
-
-    const staffData = parseSheetData(ensureSheetWithHeaders_(ss, 'Staff', STAFF_HEADERS).getDataRange().getValues());
-    const payload = {
-      status: 'success',
-      data: {
-        students: parseSheetData(ss.getSheetByName('Students').getDataRange().getValues()),
-        staff: staffData,
-        mentors: staffData,
-        goalSelections: parseSheetData(ensureSheetWithHeaders_(ss, 'GoalSelections', GOAL_SELECTION_HEADERS).getDataRange().getValues()),
-        responses: parseSheetData(ensureSheetWithHeaders_(ss, 'Responses', RESPONSES_HEADERS).getDataRange().getValues()),
-        sessions: parseSheetData(ensureSessionsSheet_(ss).getDataRange().getValues()),
-      }
-    };
-
-    if (e && e.parameter && e.parameter.action === 'getMetas') {
-      return jsonResponse_({ status: 'success', ...getMetasData(ss, e && e.parameter ? e.parameter : {}) });
-    }
-
-    return jsonResponse_(payload);
-  } catch (err) {
-    return jsonResponse_({
-      status: 'error',
-      message: err.toString()
-    });
-  }
+  return jsonResponse_({
+    status: 'success',
+    service: 'faro',
+    message: 'Usa la aplicación de faro para acceder a este servicio.',
+  });
 }
 
 /** API: Maneja solicitudes POST (Escritura de datos) */
 function doPost(e) {
+  var requestStartedAt = Date.now();
+  var requestAction = 'unknown';
+  var requestOutcome = 'success';
   try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    ensureCoreSheets_(ss);
-    ensureOperationsSheets_(ss);
     const params = JSON.parse(e.postData.contents);
     const action = params.action;
+    requestAction = String(action || 'unknown');
 
-    if (ADMIN_WRITE_ACTIONS.indexOf(action) > -1) {
-      requireAdminSecret_(params, action);
+    if (SERVICE_ACTIONS.indexOf(action) === -1) {
+      requestOutcome = 'error';
+      return jsonResponse_({ status: 'error', message: 'Acción no reconocida' });
     }
+    requireServiceSecret_(params, action);
 
-    if (action === 'findStudent') {
-      return findStudent(ss, params.data);
+    var requestTiming = createRequestTiming_(params.data || {});
+    const ss = measureRequestStage_(requestTiming, 'openSpreadsheet', function() { return SpreadsheetApp.getActiveSpreadsheet(); });
+    var response = dispatchServiceAction_(ss, action, params.data, requestTiming);
+    try {
+      var responsePayload = JSON.parse(response.getContent());
+      requestOutcome = responsePayload.status === 'error' ? 'error' : 'success';
+    } catch (parseError) {
+      requestOutcome = 'error';
     }
-
-    if (action === 'resolveUserByEmail') {
-      return resolveUserByEmail(ss, params.data);
-    }
-    
-    if (action === 'updateStudent') {
-      return updateStudentStatus(ss, params.data);
-    }
-    
-    if (action === 'syncBulk') {
-      return syncBulkData(ss, params.data);
-    }
-
-    if (action === 'getMetas') {
-      return jsonResponse_({ status: 'success', ...getMetasData(ss, params.data || {}) });
-    }
-
-    if (action === 'getGoalsCatalog') {
-      return jsonResponse_({ status: 'success', items: getGoalsCatalogData(ss) });
-    }
-
-    if (action === 'saveMetasConfig') {
-      return saveMetasConfig(ss, params.data);
-    }
-
-    if (action === 'saveGoalsCatalog') {
-      return saveGoalsCatalog(ss, params.data);
-    }
-
-    if (action === 'saveGoalSelection') {
-      return saveGoalSelection(ss, params.data);
-    }
-    if (action === 'saveMentoringSession') {
-      return saveMentoringSession(ss, params.data);
-    }
-
-    if (action === 'saveTestResponse') {
-      return saveTestResponse(ss, params.data);
-    }
-
-    if (action === 'getTestResponse') {
-      return getTestResponse(ss, params.data);
-    }
-
-    if (action === 'sendCampaign') {
-      return sendCampaignHandler(ss, params.data);
-    }
-
-    return jsonResponse_({
-      status: 'error',
-      message: 'Acción no reconocida'
-    });
+    return response;
   } catch (err) {
-    return jsonResponse_({
+    requestOutcome = 'error';
+    var errorPayload = {
       status: 'error',
       message: err.toString()
-    });
+    };
+    return requestTiming
+      ? jsonResponseWithTiming_(errorPayload, requestTiming)
+      : jsonResponse_(errorPayload);
+  } finally {
+    var timingEvent = {
+      event: 'faro_apps_script_timing',
+      action: requestAction,
+      outcome: requestOutcome,
+      durationMs: Date.now() - requestStartedAt,
+      traceId: requestTiming ? requestTiming.traceId : null,
+      internalDurationMs: requestTiming ? Date.now() - requestTiming.startedAt : null,
+      stages: requestTiming ? requestTiming.stages : null,
+      cache: requestTiming ? requestTiming.cache : null,
+    };
+    persistOperationalTelemetry_(timingEvent);
+    console.log(JSON.stringify(timingEvent));
   }
+}
+
+function dispatchServiceAction_(ss, action, data, timing) {
+  if (action === 'findStudent') return findStudent(ss, data, timing);
+  if (action === 'getStudentEntry') return getStudentEntry(ss, data, timing);
+  if (action === 'startStudentCheckIn') return startStudentCheckIn(ss, data, timing);
+  if (action === 'startNewMentoringEncounter') return startNewMentoringEncounter(ss, data, timing);
+  if (action === 'resolveWorkspaceUser') return resolveWorkspaceUser(ss, data);
+  if (action === 'getMentorDashboard') return getMentorDashboard(ss, data, timing);
+  if (action === 'saveStudentPreference') return saveStudentPreference(ss, data, timing);
+  if (action === 'registerCheckIn') return registerCheckIn(ss, data, timing);
+  if (action === 'completeCheckInPreTest') return completeCheckInPreTest(ss, data, timing);
+  if (action === 'syncBulk') return syncBulkData(ss, data);
+  if (action === 'previewManagedDirectoryImport') return previewManagedDirectoryImport(ss, data);
+  if (action === 'publishManagedDirectoryImport') return publishManagedDirectoryImport(ss, data);
+  if (action === 'previewDirectoryImport') return previewDirectoryImport(ss, data);
+  if (action === 'publishDirectoryImport') return publishDirectoryImport(ss, data);
+  if (action === 'rollbackDirectoryImport') return rollbackDirectoryImport(ss, data);
+  if (action === 'previewLegacyStudentProductMigration') return previewLegacyStudentProductMigration(ss, data);
+  if (action === 'publishLegacyStudentProductMigration') return publishLegacyStudentProductMigration(ss, data);
+  if (action === 'rollbackLegacyStudentProductMigration') return rollbackLegacyStudentProductMigration(ss, data);
+  if (action === 'publishApprovedLegacyProductMigrationScope') return publishApprovedLegacyProductMigrationScope(ss, data);
+  if (action === 'rollbackApprovedLegacyProductMigration') return rollbackApprovedLegacyProductMigration(ss, data);
+  if (action === 'resetDemoStudentJourney') return resetDemoStudentJourney(ss, data);
+  if (action === 'runSyntheticDirectoryLifecycle') return runSyntheticDirectoryLifecycle(ss, data);
+  if (action === 'runSyntheticProductMigrationLifecycle') return runSyntheticProductMigrationLifecycle(ss, data);
+  if (action === 'previewPilotDirectory') return previewPilotDirectory(ss, data);
+  if (action === 'publishPilotDirectory') return publishPilotDirectory(ss, data);
+  if (action === 'getMetas') return jsonResponse_({ status: 'success', ...getMetasData(ss, data || {}) });
+  if (action === 'getGoalsCatalog') return jsonResponse_({ status: 'success', items: getGoalsCatalogData(ss) });
+  if (action === 'getOperationalTelemetry') return getOperationalTelemetry(ss, data);
+  if (action === 'prepareDashboardReadModelPreview') return prepareDashboardReadModelPreview(ss, data, timing);
+  if (action === 'getDashboardReadModelPreview') return getDashboardReadModelPreview(ss, data, timing);
+  if (action === 'runDashboardReadModelEvaluation') return runDashboardReadModelEvaluation(ss, data, timing);
+  if (action === 'saveMetasConfig') return saveMetasConfig(ss, data);
+  if (action === 'saveGoalsCatalog') return saveGoalsCatalog(ss, data);
+  if (action === 'saveGoalSelection') return saveGoalSelection(ss, data, timing);
+  if (action === 'saveMentoringSession') return saveMentoringSession(ss, data, timing);
+  if (action === 'saveTestResponse') return saveTestResponse(ss, data, timing);
+  if (action === 'getTestResponse') return getTestResponse(ss, data, timing);
+  return jsonResponse_({ status: 'error', message: 'Acción no reconocida' });
 }
 
 /** Auxiliar: Convierte matriz de Sheet a Array de Objetos */
@@ -252,27 +386,681 @@ function parseSheetData(values) {
   }).filter(row => Object.values(row).some(value => value !== '' && value !== null && value !== undefined));
 }
 
+function createRequestTiming_(data) {
+  var suppliedTraceId = String(data && data.traceId ? data.traceId : '').trim();
+  return {
+    traceId: /^[A-Za-z0-9_-]{8,80}$/.test(suppliedTraceId) ? suppliedTraceId : Utilities.getUuid(),
+    startedAt: Date.now(),
+    stages: {},
+    cache: {},
+  };
+}
+
+function measureRequestStage_(timing, stage, callback) {
+  var startedAt = Date.now();
+  try {
+    return callback();
+  } finally {
+    timing.stages[stage] = (timing.stages[stage] || 0) + (Date.now() - startedAt);
+  }
+}
+
+function jsonResponseWithTiming_(payload, timing) {
+  return jsonResponse_({
+    ...payload,
+    telemetry: {
+      traceId: timing.traceId,
+      internalDurationMs: Date.now() - timing.startedAt,
+      stages: timing.stages,
+      cache: timing.cache,
+    },
+  });
+}
+
+function markRequestCache_(timing, cacheName, outcome) {
+  if (!timing || !timing.cache) return;
+  timing.cache[cacheName] = outcome;
+}
+
+function getOperationalTelemetryPropertyKey_(action) {
+  var normalizedAction = String(action || 'unknown').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 80) || 'unknown';
+  return OPERATIONAL_TELEMETRY_PREFIX + normalizedAction;
+}
+
+function shouldPersistOperationalTelemetry_(event) {
+  if (!event || event.action === 'getOperationalTelemetry') return false;
+  if (event.action === 'getMentorDashboard') return true;
+  if (event.outcome !== 'success' || Number(event.durationMs) >= OPERATIONAL_TELEMETRY_SLOW_MS) return true;
+  var traceId = String(event.traceId || '');
+  var hash = 0;
+  for (var index = 0; index < traceId.length; index++) hash = (hash + traceId.charCodeAt(index)) % 997;
+  return hash % OPERATIONAL_TELEMETRY_SUCCESS_SAMPLE_RATE === 0;
+}
+
+function countTelemetryCacheOutcomes_(cache, expected) {
+  return Object.keys(cache || {}).filter(function(key) { return cache[key] === expected; }).length;
+}
+
+function getSlowestTelemetryStage_(stages) {
+  return Object.keys(stages || {}).reduce(function(slowest, stage) {
+    var durationMs = Math.max(0, Number(stages[stage]) || 0);
+    return !slowest || durationMs > slowest.durationMs
+      ? { stage: String(stage || ''), durationMs: durationMs }
+      : slowest;
+  }, null);
+}
+
+function persistOperationalTelemetry_(event) {
+  if (!shouldPersistOperationalTelemetry_(event)) return;
+  try {
+    var properties = PropertiesService.getScriptProperties();
+    var key = getOperationalTelemetryPropertyKey_(event.action);
+    var now = Date.now();
+    var current = {};
+    try { current = JSON.parse(properties.getProperty(key) || '{}'); } catch (parseError) { current = {}; }
+    var samples = Array.isArray(current.samples) ? current.samples : [];
+    samples = samples.filter(function(sample) {
+      return Array.isArray(sample) && Number(sample[0]) >= now - OPERATIONAL_TELEMETRY_RETENTION_MS;
+    });
+    var stages = event.stages || {};
+    var slowestStage = getSlowestTelemetryStage_(stages);
+    samples.push([
+      now,
+      String(event.traceId || ''),
+      Math.max(0, Number(event.durationMs) || 0),
+      String(event.outcome || 'unknown'),
+      Math.max(0, Number(event.internalDurationMs) || 0),
+      Math.max(0, Number(stages.lockWait || 0) + Number(stages.preferenceLockWait || 0)),
+      countTelemetryCacheOutcomes_(event.cache, 'hit'),
+      countTelemetryCacheOutcomes_(event.cache, 'miss'),
+      slowestStage ? slowestStage.stage : '',
+      slowestStage ? slowestStage.durationMs : 0,
+    ]);
+    properties.setProperty(key, JSON.stringify({
+      version: 1,
+      action: String(event.action || 'unknown'),
+      samples: samples.slice(-OPERATIONAL_TELEMETRY_MAX_SAMPLES),
+    }));
+  } catch (error) {
+    console.warn(JSON.stringify({ event: 'faro_telemetry_persist_error', action: String(event && event.action || 'unknown') }));
+  }
+}
+
+function telemetryPercentile_(values, percentile) {
+  if (!values.length) return null;
+  var sorted = values.slice().sort(function(left, right) { return left - right; });
+  var index = Math.max(0, Math.ceil(percentile * sorted.length) - 1);
+  return sorted[index];
+}
+
+function summarizeOperationalTelemetry_(record, cutoffAt) {
+  var samples = (Array.isArray(record.samples) ? record.samples : []).filter(function(sample) {
+    return Array.isArray(sample) && Number(sample[0]) >= cutoffAt;
+  });
+  var durations = samples.map(function(sample) { return Number(sample[2]) || 0; });
+  var successCount = samples.filter(function(sample) { return sample[3] === 'success'; }).length;
+  var errorCount = samples.length - successCount;
+  var cacheHits = samples.reduce(function(total, sample) { return total + (Number(sample[6]) || 0); }, 0);
+  var cacheMisses = samples.reduce(function(total, sample) { return total + (Number(sample[7]) || 0); }, 0);
+  var slowestStageTotals = samples.reduce(function(totals, sample) {
+    var stage = String(sample[8] || '');
+    if (stage) totals[stage] = (totals[stage] || 0) + (Number(sample[9]) || 0);
+    return totals;
+  }, {});
+  var dominantStage = Object.keys(slowestStageTotals).sort(function(left, right) {
+    return slowestStageTotals[right] - slowestStageTotals[left];
+  })[0] || '';
+  return {
+    action: String(record.action || ''),
+    sampleCount: samples.length,
+    successCount: successCount,
+    errorCount: errorCount,
+    p50Ms: telemetryPercentile_(durations, 0.50),
+    p95Ms: telemetryPercentile_(durations, 0.95),
+    p99Ms: telemetryPercentile_(durations, 0.99),
+    maxMs: durations.length ? Math.max.apply(null, durations) : null,
+    averageLockWaitMs: samples.length
+      ? Math.round(samples.reduce(function(total, sample) { return total + (Number(sample[5]) || 0); }, 0) / samples.length)
+      : null,
+    cacheHits: cacheHits,
+    cacheMisses: cacheMisses,
+    dominantStage: dominantStage,
+    dominantStageTotalMs: dominantStage ? slowestStageTotals[dominantStage] : null,
+    samples: samples.map(function(sample) {
+      return {
+        recordedAt: new Date(Number(sample[0])).toISOString(),
+        traceId: String(sample[1] || ''),
+        durationMs: Number(sample[2]) || 0,
+        outcome: String(sample[3] || 'unknown'),
+        internalDurationMs: Number(sample[4]) || 0,
+        lockWaitMs: Number(sample[5]) || 0,
+        cacheHits: Number(sample[6]) || 0,
+        cacheMisses: Number(sample[7]) || 0,
+        slowestStage: String(sample[8] || ''),
+        slowestStageMs: Number(sample[9]) || 0,
+      };
+    }),
+  };
+}
+
+function getOperationalTelemetry(ss, data) {
+  var user = resolveWorkspaceStaffUser_(ss, data);
+  if (normalizeIdentityValue_(user.rol || 'mentor') !== 'admin') {
+    throw new Error('Esta consulta requiere permisos de administración.');
+  }
+  var requestedAction = String(data && data.action ? data.action : '').trim();
+  var requestedTraceId = String(data && data.traceId ? data.traceId : '').trim();
+  var requestedHours = Number(data && data.hours);
+  var hours = Number.isFinite(requestedHours) ? Math.min(168, Math.max(1, Math.floor(requestedHours))) : 24;
+  var cutoffAt = Date.now() - hours * 60 * 60 * 1000;
+  var allProperties = PropertiesService.getScriptProperties().getProperties();
+  var summaries = Object.keys(allProperties).filter(function(key) {
+    return key.indexOf(OPERATIONAL_TELEMETRY_PREFIX) === 0;
+  }).map(function(key) {
+    try { return JSON.parse(allProperties[key]); } catch (error) { return null; }
+  }).filter(function(record) {
+    return record && (!requestedAction || record.action === requestedAction);
+  }).map(function(record) {
+    return summarizeOperationalTelemetry_(record, cutoffAt);
+  }).filter(function(summary) {
+    return summary.sampleCount > 0;
+  }).sort(function(left, right) {
+    return left.action.localeCompare(right.action);
+  });
+  var traces = requestedTraceId ? summaries.reduce(function(found, summary) {
+    summary.samples.forEach(function(sample) {
+      if (sample.traceId === requestedTraceId) found.push({ action: summary.action, ...sample });
+    });
+    return found;
+  }, []) : [];
+  return jsonResponse_({
+    status: 'success',
+    data: {
+      generatedAt: new Date().toISOString(),
+      windowHours: hours,
+      retentionHours: OPERATIONAL_TELEMETRY_RETENTION_MS / (60 * 60 * 1000),
+      successSampling: '1/' + OPERATIONAL_TELEMETRY_SUCCESS_SAMPLE_RATE,
+      failuresAndSlowOperations: 'all',
+      summaries: summaries,
+      traces: traces,
+    },
+  });
+}
+
+function getDirectoryReadCache_() {
+  try {
+    return CacheService.getScriptCache();
+  } catch (error) {
+    return null;
+  }
+}
+
+function getDirectoryReadCacheKey_(kind, versionId) {
+  return ['faro', 'directory-read', DIRECTORY_READ_CACHE_VERSION, kind, String(versionId || '')].join(':');
+}
+
+function readDirectoryCacheJson_(cache, key, timing, cacheName) {
+  if (!cache) {
+    markRequestCache_(timing, cacheName, 'unavailable');
+    return null;
+  }
+  try {
+    var raw = cache.get(key);
+    if (!raw) {
+      markRequestCache_(timing, cacheName, 'miss');
+      return null;
+    }
+    markRequestCache_(timing, cacheName, 'hit');
+    return JSON.parse(raw);
+  } catch (error) {
+    markRequestCache_(timing, cacheName, 'error');
+    return null;
+  }
+}
+
+function writeDirectoryCacheJson_(cache, key, value) {
+  if (!cache) return;
+  try {
+    cache.put(key, JSON.stringify(value), DIRECTORY_READ_CACHE_TTL_SECONDS);
+  } catch (error) {
+    // El cache es una optimización. Una cuota o entrada demasiado grande debe
+    // degradar a la lectura focalizada vigente, nunca bloquear una entrada.
+  }
+}
+
+function invalidateDirectoryReadCache_(versionIds) {
+  var cache = getDirectoryReadCache_();
+  if (!cache) return;
+  var keys = [];
+  (versionIds || []).filter(Boolean).forEach(function(versionId) {
+    keys.push(getDirectoryReadCacheKey_('published', versionId));
+    keys.push(getDirectoryReadCacheKey_('student-index', versionId));
+  });
+  if (!keys.length) return;
+  try {
+    cache.removeAll(keys);
+  } catch (error) {
+    keys.forEach(function(key) {
+      try { cache.remove(key); } catch (removeError) { /* degradación segura */ }
+    });
+  }
+}
+
+function getStudentProductCacheKey_(matricula, operationalCycle) {
+  return [
+    'faro',
+    'student-product',
+    STUDENT_PRODUCT_CACHE_VERSION,
+    String(operationalCycle || ''),
+    String(matricula || '').trim().toUpperCase(),
+  ].join(':');
+}
+
+function writeStudentProductCacheJson_(cache, key, value) {
+  if (!cache) return;
+  try {
+    cache.put(key, JSON.stringify(value), STUDENT_PRODUCT_CACHE_TTL_SECONDS);
+  } catch (error) {
+    // El snapshot es sólo una optimización efímera. Cualquier fallo conserva
+    // la lectura directa desde Sheets como fuente de verdad.
+  }
+}
+
+function invalidateStudentProductSnapshot_(matricula, operationalCycle) {
+  var normalizedMatricula = String(matricula || '').trim().toUpperCase();
+  if (!normalizedMatricula) return;
+  var cycle = String(operationalCycle || getActiveOperationalCycle_()).trim();
+  var cache = getDirectoryReadCache_();
+  if (!cache) return;
+  try {
+    cache.remove(getStudentProductCacheKey_(normalizedMatricula, cycle));
+  } catch (error) {
+    // La expiración corta mantiene una degradación segura si CacheService falla.
+  }
+}
+
+function invalidateStudentProductSnapshots_(matriculas, operationalCycle) {
+  var seen = {};
+  (matriculas || []).forEach(function(matricula) {
+    var normalized = String(matricula || '').trim().toUpperCase();
+    if (!normalized || seen[normalized]) return;
+    seen[normalized] = true;
+    invalidateStudentProductSnapshot_(normalized, operationalCycle);
+  });
+}
+
+function getIdentityReadCacheKey_(kind) {
+  return ['faro', 'identity-read', IDENTITY_READ_CACHE_VERSION, String(kind || '')].join(':');
+}
+
+function invalidateIdentityReadCache_(kinds) {
+  var cache = getDirectoryReadCache_();
+  if (!cache) return;
+  var keys = (kinds || []).map(getIdentityReadCacheKey_);
+  if (!keys.length) return;
+  try {
+    cache.removeAll(keys);
+  } catch (error) {
+    keys.forEach(function(key) {
+      try { cache.remove(key); } catch (removeError) { /* degradación segura */ }
+    });
+  }
+}
+
+function writeStaffReadCacheJson_(cache, key, value) {
+  if (!cache) return;
+  try {
+    cache.put(key, JSON.stringify(value), STAFF_READ_CACHE_TTL_SECONDS);
+  } catch (error) {
+    // La lectura directa de Staff permanece como fallback.
+  }
+}
+
+function getLegacyStudentIndex_(ss, timing) {
+  var cache = getDirectoryReadCache_();
+  var cacheKey = getIdentityReadCacheKey_('legacy-student-index');
+  var cached = readDirectoryCacheJson_(cache, cacheKey, timing, 'legacyStudentIndex');
+  if (cached && cached.version === IDENTITY_READ_CACHE_VERSION) return cached;
+
+  var context = getReadOnlySheetContext_(ss, 'Students');
+  if (!context || context.sheet.getLastRow() < 2) {
+    var empty = { version: IDENTITY_READ_CACHE_VERSION, headers: context ? context.headers : [], width: context ? context.width : 0, rowsByMatricula: {} };
+    writeDirectoryCacheJson_(cache, cacheKey, empty);
+    return empty;
+  }
+  var matriculaIndex = getHeaderColumnIndex_(context, ['Matrícula', 'Matricula']);
+  if (matriculaIndex < 0) throw new Error('Students no contiene la columna Matrícula.');
+  var rowCount = context.sheet.getLastRow() - 1;
+  var values = context.sheet.getRange(2, matriculaIndex + 1, rowCount, 1).getValues();
+  var rowsByMatricula = {};
+  values.forEach(function(row, index) {
+    var matricula = String(row[0] || '').trim().toUpperCase();
+    if (matricula) rowsByMatricula[matricula] = index + 2;
+  });
+  var built = {
+    version: IDENTITY_READ_CACHE_VERSION,
+    headers: context.headers,
+    width: context.width,
+    rowsByMatricula: rowsByMatricula,
+  };
+  writeDirectoryCacheJson_(cache, cacheKey, built);
+  return built;
+}
+
+function findLegacyStudentFast_(ss, matricula, timing) {
+  var normalizedMatricula = String(matricula || '').trim().toUpperCase();
+  var index = getLegacyStudentIndex_(ss, timing);
+  var rowNumber = Number(index.rowsByMatricula[normalizedMatricula]);
+  if (!Number.isFinite(rowNumber) || rowNumber < 2) return null;
+  var sheet = ss.getSheetByName('Students');
+  if (!sheet) throw new Error('No existe la hoja Students.');
+  var row = sheet.getRange(rowNumber, 1, 1, index.width).getValues()[0];
+  var record = rowToRecord_(index.headers, row);
+  if (!record || String(record.matricula || '').trim().toUpperCase() !== normalizedMatricula) {
+    invalidateIdentityReadCache_(['legacy-student-index']);
+    throw new Error('El índice de Students perdió consistencia. Reintenta la consulta.');
+  }
+  return record;
+}
+
+function getSanitizedStaffDirectory_(ss, timing) {
+  var cache = getDirectoryReadCache_();
+  var cacheKey = getIdentityReadCacheKey_('sanitized-staff');
+  var cached = readDirectoryCacheJson_(cache, cacheKey, timing, 'staffDirectory');
+  if (cached && cached.version === IDENTITY_READ_CACHE_VERSION && Array.isArray(cached.records)) return cached.records;
+
+  var context = getReadOnlySheetContext_(ss, 'Staff');
+  var records = !context || context.sheet.getLastRow() < 2
+    ? []
+    : parseSheetData(context.sheet.getDataRange().getValues()).map(function(record) {
+      return {
+        mentorid: String(record.mentorid || record.mentor_id || '').trim(),
+        nombre: String(record.nombre || '').trim(),
+        alias: String(record.alias || '').trim(),
+        rol: String(record.rol || 'mentor').trim(),
+        comunidad: String(record.comunidad || '').trim(),
+        hex: String(record.hex || '').trim(),
+        slogan: String(record.slogan || '').trim(),
+        whatsappe164: String(record.whatsappe164 || record.whatsapp || record.telefono || '').replace(/[^0-9]/g, ''),
+        whatsappactivo: normalizeIdentityValue_(record.whatsappactivo || 'Si') !== 'no' ? 'Si' : 'No',
+        activo: normalizeIdentityValue_(record.activo || 'Si') !== 'no' ? 'Si' : 'No',
+      };
+    });
+  writeStaffReadCacheJson_(cache, cacheKey, { version: IDENTITY_READ_CACHE_VERSION, records: records });
+  return records;
+}
+
+function getProductReadIndexKey_(sheetName) {
+  return ['faro', 'product-read-index', PRODUCT_READ_INDEX_VERSION, String(sheetName || '').toLowerCase()].join(':');
+}
+
+function getProductUniqueIndexKey_(sheetName) {
+  return ['faro', 'product-unique-index', PRODUCT_UNIQUE_INDEX_VERSION, String(sheetName || '').toLowerCase()].join(':');
+}
+
+function invalidateProductReadIndexes_(sheetNames) {
+  var cache = getDirectoryReadCache_();
+  if (!cache) return;
+  var keys = [];
+  (sheetNames || []).forEach(function(sheetName) {
+    keys.push(getProductReadIndexKey_(sheetName));
+    if (PRODUCT_UNIQUE_INDEX_ALIASES[sheetName]) keys.push(getProductUniqueIndexKey_(sheetName));
+  });
+  if (!keys.length) return;
+  try {
+    cache.removeAll(keys);
+  } catch (error) {
+    keys.forEach(function(key) {
+      try { cache.remove(key); } catch (removeError) { /* degradación segura */ }
+    });
+  }
+}
+
+function getProductUniqueIndex_(ss, sheetName, keyAliases, timing, cacheName) {
+  var cache = getDirectoryReadCache_();
+  var cacheKey = getProductUniqueIndexKey_(sheetName);
+  var cached = readDirectoryCacheJson_(cache, cacheKey, timing, cacheName);
+  if (
+    cached
+    && cached.version === PRODUCT_UNIQUE_INDEX_VERSION
+    && Array.isArray(cached.headers)
+    && cached.rowsByKey
+  ) return cached;
+
+  var context = getReadOnlySheetContext_(ss, sheetName);
+  if (!context || context.sheet.getLastRow() < 2) {
+    var empty = {
+      version: PRODUCT_UNIQUE_INDEX_VERSION,
+      headers: context ? context.headers : [],
+      width: context ? context.width : 0,
+      rowsByKey: {},
+    };
+    writeProductReadIndexJson_(cache, cacheKey, empty);
+    return empty;
+  }
+  var keyIndex = getHeaderColumnIndex_(context, keyAliases);
+  if (keyIndex < 0) throw new Error('La hoja ' + sheetName + ' no contiene su identificador único.');
+  var values = context.sheet.getRange(2, keyIndex + 1, context.sheet.getLastRow() - 1, 1).getValues();
+  var rowsByKey = {};
+  values.forEach(function(row, index) {
+    var key = String(row[0] || '').trim();
+    if (!key) return;
+    if (!rowsByKey[key]) rowsByKey[key] = [];
+    rowsByKey[key].push(index + 2);
+  });
+  var built = {
+    version: PRODUCT_UNIQUE_INDEX_VERSION,
+    headers: context.headers,
+    width: context.width,
+    rowsByKey: rowsByKey,
+  };
+  writeProductReadIndexJson_(cache, cacheKey, built);
+  return built;
+}
+
+function findIndexedUniqueProductRecord_(ss, sheetName, key, timing, cacheName) {
+  var normalizedKey = String(key || '').trim();
+  var aliases = PRODUCT_UNIQUE_INDEX_ALIASES[sheetName];
+  if (!aliases) throw new Error('No existe configuración de índice único para ' + sheetName + '.');
+  var index = getProductUniqueIndex_(ss, sheetName, aliases, timing, cacheName);
+  var rowNumbers = index.rowsByKey[normalizedKey] || [];
+  if (!rowNumbers.length) return null;
+  if (rowNumbers.length > 1) throw new Error('El identificador de ' + sheetName + ' está duplicado.');
+  var sheet = ss.getSheetByName(sheetName);
+  var rowNumber = rowNumbers[0];
+  var row = sheet.getRange(rowNumber, 1, 1, index.width).getValues()[0];
+  var record = rowToRecord_(index.headers, row);
+  var keyColumn = getHeaderColumnIndex_({ normalizedHeaders: index.headers.map(normalizeHeaderKey_) }, aliases);
+  if (!record || String(row[keyColumn] || '').trim() !== normalizedKey) {
+    invalidateProductReadIndexes_([sheetName]);
+    throw new Error('El índice único de ' + sheetName + ' perdió consistencia. Reintenta la operación.');
+  }
+  return { rowNumber: rowNumber, record: record };
+}
+
+function writeProductReadIndexJson_(cache, key, value) {
+  if (!cache) return;
+  try {
+    cache.put(key, JSON.stringify(value), PRODUCT_READ_INDEX_TTL_SECONDS);
+  } catch (error) {
+    // Los índices sólo reducen escaneos de columnas; la lectura directa sigue disponible.
+  }
+}
+
+function getProductSheetIndex_(ss, sheetName, matriculaAliases, timing, cacheName, targetedMatricula) {
+  var cache = getDirectoryReadCache_();
+  var cacheKey = getProductReadIndexKey_(sheetName);
+  var cached = readDirectoryCacheJson_(cache, cacheKey, timing, cacheName);
+  if (
+    cached
+    && cached.version === PRODUCT_READ_INDEX_VERSION
+    && Array.isArray(cached.headers)
+    && cached.rowsByMatricula
+  ) return cached;
+
+  var context = getReadOnlySheetContext_(ss, sheetName);
+  if (!context || context.sheet.getLastRow() < 2) {
+    var empty = {
+      version: PRODUCT_READ_INDEX_VERSION,
+      headers: context ? context.headers : [],
+      width: context ? context.width : 0,
+      rowsByMatricula: {},
+    };
+    if (!targetedMatricula) writeProductReadIndexJson_(cache, cacheKey, empty);
+    return empty;
+  }
+  var matriculaIndex = getHeaderColumnIndex_(context, matriculaAliases || ['Matrícula', 'Matricula']);
+  if (matriculaIndex < 0) throw new Error('La hoja ' + sheetName + ' no contiene la columna Matrícula.');
+  var rowCount = context.sheet.getLastRow() - 1;
+  if (targetedMatricula) {
+    // A cold interactive lookup does not need a global index of every student.
+    // Do not cache this partial result under the shared full-index key.
+    var normalizedTarget = String(targetedMatricula).trim().toUpperCase();
+    if (!/^A[0-9]{8}$/.test(normalizedTarget)) throw new Error('La matrícula de búsqueda no es válida.');
+    var matches = context.sheet.getRange(2, matriculaIndex + 1, rowCount, 1)
+      .createTextFinder('^\\s*' + normalizedTarget + '\\s*$')
+      .matchEntireCell(true).matchCase(false).useRegularExpression(true).findAll();
+    var targetedRows = {};
+    targetedRows[normalizedTarget] = matches.map(function(match) { return match.getRow(); }).sort(function(a, b) { return a - b; });
+    markRequestCache_(timing, cacheName + 'Strategy', 'targeted');
+    return { version: PRODUCT_READ_INDEX_VERSION, headers: context.headers, width: context.width, rowsByMatricula: targetedRows };
+  }
+  var values = context.sheet.getRange(2, matriculaIndex + 1, rowCount, 1).getValues();
+  var rowsByMatricula = {};
+  values.forEach(function(row, index) {
+    var matricula = String(row[0] || '').trim().toUpperCase();
+    if (!matricula) return;
+    if (!rowsByMatricula[matricula]) rowsByMatricula[matricula] = [];
+    rowsByMatricula[matricula].push(index + 2);
+  });
+  var built = {
+    version: PRODUCT_READ_INDEX_VERSION,
+    headers: context.headers,
+    width: context.width,
+    rowsByMatricula: rowsByMatricula,
+  };
+  writeProductReadIndexJson_(cache, cacheKey, built);
+  return built;
+}
+
+function findIndexedProductRecords_(ss, sheetName, matricula, timing, cacheName, targeted) {
+  var normalizedMatricula = String(matricula || '').trim().toUpperCase();
+  var index = getProductSheetIndex_(ss, sheetName, ['Matrícula', 'Matricula'], timing, cacheName, targeted ? normalizedMatricula : null);
+  var rowNumbers = index.rowsByMatricula[normalizedMatricula] || [];
+  if (!rowNumbers.length) return [];
+  var sheet = ss.getSheetByName(sheetName);
+  if (!sheet) throw new Error('No existe la hoja ' + sheetName + '.');
+  return rowNumbers.map(function(rowNumber) {
+    var row = sheet.getRange(rowNumber, 1, 1, index.width).getValues()[0];
+    var record = rowToRecord_(index.headers, row);
+    if (!record || String(record.matricula || '').trim().toUpperCase() !== normalizedMatricula) {
+      invalidateProductReadIndexes_([sheetName]);
+      throw new Error('El índice de ' + sheetName + ' perdió consistencia. Reintenta la consulta.');
+    }
+    return { rowNumber: rowNumber, record: record };
+  });
+}
+
+function findLatestIndexedProductRecord_(ss, sheetName, matricula, timing, cacheName, predicate, targeted) {
+  var normalizedMatricula = String(matricula || '').trim().toUpperCase();
+  var index = getProductSheetIndex_(ss, sheetName, ['Matrícula', 'Matricula'], timing, cacheName, targeted ? normalizedMatricula : null);
+  var rows = (index.rowsByMatricula[normalizedMatricula] || []).slice().sort(function(a, b) { return b - a; });
+  if (!rows.length) return null;
+  var sheet = ss.getSheetByName(sheetName);
+  if (!sheet) throw new Error('No existe la hoja ' + sheetName + '.');
+  for (var position = 0; position < rows.length; position++) {
+    var row = sheet.getRange(rows[position], 1, 1, index.width).getValues()[0];
+    var record = rowToRecord_(index.headers, row);
+    if (!record || String(record.matricula || '').trim().toUpperCase() !== normalizedMatricula) {
+      invalidateProductReadIndexes_([sheetName]);
+      throw new Error('El índice de ' + sheetName + ' perdió consistencia. Reintenta la consulta.');
+    }
+    if (!predicate || predicate(record)) return record;
+  }
+  return null;
+}
+
+function getReadOnlySheetContext_(ss, sheetName) {
+  var sheet = ss.getSheetByName(sheetName);
+  if (!sheet || sheet.getLastRow() < 1 || sheet.getLastColumn() < 1) return null;
+  var width = sheet.getLastColumn();
+  var headers = sheet.getRange(1, 1, 1, width).getValues()[0];
+  return {
+    sheet: sheet,
+    width: width,
+    headers: headers,
+    normalizedHeaders: headers.map(normalizeHeaderKey_),
+  };
+}
+
+function getHeaderColumnIndex_(context, aliases) {
+  var normalizedAliases = aliases.map(normalizeHeaderKey_);
+  for (var index = 0; index < normalizedAliases.length; index++) {
+    var found = context.normalizedHeaders.indexOf(normalizedAliases[index]);
+    if (found > -1) return found;
+  }
+  return -1;
+}
+
+function rowToRecord_(headers, row) {
+  return parseSheetData([headers, row])[0] || null;
+}
+
+function findReadOnlyRecords_(ss, sheetName, columnAliases, expectedValue) {
+  var context = getReadOnlySheetContext_(ss, sheetName);
+  if (!context || context.sheet.getLastRow() < 2) return [];
+  var columnIndex = getHeaderColumnIndex_(context, columnAliases);
+  if (columnIndex < 0) throw new Error('La hoja ' + sheetName + ' no contiene la columna de búsqueda requerida.');
+  var normalizedExpected = String(expectedValue || '').trim().toUpperCase();
+  var values = context.sheet.getRange(2, columnIndex + 1, context.sheet.getLastRow() - 1, 1).getValues();
+  var rowNumbers = [];
+  values.forEach(function(row, index) {
+    if (String(row[0] || '').trim().toUpperCase() === normalizedExpected) rowNumbers.push(index + 2);
+  });
+  return rowNumbers.map(function(rowNumber) {
+    var row = context.sheet.getRange(rowNumber, 1, 1, context.width).getValues()[0];
+    return { rowNumber: rowNumber, record: rowToRecord_(context.headers, row) };
+  }).filter(function(item) { return Boolean(item.record); });
+}
+
+function findLatestReadOnlyRecord_(ss, sheetName, columnAliases, expectedValue, predicate) {
+  var matches = findReadOnlyRecords_(ss, sheetName, columnAliases, expectedValue)
+    .filter(function(item) { return !predicate || predicate(item.record); })
+    .sort(function(left, right) { return right.rowNumber - left.rowNumber; });
+  return matches.length ? matches[0].record : null;
+}
+
+function hasReadOnlyRecord_(ss, sheetName, columnAliases, expectedValue, predicate) {
+  return findReadOnlyRecords_(ss, sheetName, columnAliases, expectedValue).some(function(item) {
+    return !predicate || predicate(item.record);
+  });
+}
+
 /** Lógica: Sincronización masiva desde el Dashboard */
 function syncBulkData(ss, data) {
   validateSyncBulkPayload_(ss, data);
   const studentSheet = ss.getSheetByName('Students');
+  const studentsToWrite = mergeDemoStudentFixtures_(readLegacyStudents_(ss), data.students || []);
 
-  // Limpiar y escribir Alumnos (Staff se gestiona directamente en la hoja, no desde syncBulk)
+  // Compatibilidad transitoria: conserva fixtures demo aunque el payload histórico no los incluya.
+  // Staff se gestiona directamente en la hoja, no desde syncBulk.
   studentSheet.clearContents();
   studentSheet.appendRow(STUDENT_HEADERS);
-  (data.students || []).forEach(s => {
+  studentsToWrite.forEach(s => {
     studentSheet.appendRow([
       s.matricula,
-      s.name,
+      s.name || s.nombre,
       s.preferredName || s.nombrepreferido || '',
       s.email,
-      s.mentor,
-      s.status,
-      s.checkIn,
-      s.agenciaCheckIn || '',
-      s.ultimoAviso || '',
+      s.mentor || s.nicknamementor || '',
+      s.status || 'Pendiente',
+      s.checkIn || s.checkin || 'No',
+      s.agenciaCheckIn || s.agenciacheckin || '',
+      s.ultimoAviso || s.ultimoaviso || '',
     ]);
   });
+
+  invalidateIdentityReadCache_(['legacy-student-index']);
 
   setConfigValue_(ss, CONFIG_KEYS.lastSync, new Date().toISOString(), 'Última sincronización masiva');
 
@@ -306,54 +1094,2202 @@ function updateStudentStatus(ss, data) {
   return jsonResponse_({ status: 'error', message: 'Alumno no encontrado' });
 }
 
-function findStudent(ss, data) {
-  const matricula = String(data && data.matricula ? data.matricula : '').trim().toUpperCase();
-  if (!matricula) {
-    return jsonResponse_({ status: 'error', message: 'Falta la matrícula del alumno' });
-  }
-
-  const students = parseSheetData(ss.getSheetByName('Students').getDataRange().getValues());
-  const staff = parseSheetData(ensureSheetWithHeaders_(ss, 'Staff', STAFF_HEADERS).getDataRange().getValues());
-  const student = students.find(item => String(item.matricula || item.matrcula || '').toUpperCase() === matricula);
-
-  if (!student) {
-    return jsonResponse_({ status: 'success', data: { student: null, mentor: null } });
-  }
-
-  const mentor = staff.find(item => item.alias === student.nicknamementor) || null;
-  return jsonResponse_({ status: 'success', data: { student, mentor } });
+function normalizeStudentMatricula_(value) {
+  var matricula = String(value || '').trim().toUpperCase();
+  if (!/^A\d{8}$/.test(matricula)) throw new Error('La matrícula no es válida.');
+  return matricula;
 }
 
-function resolveUserByEmail(ss, data) {
-  const email = String(data && data.email ? data.email : '').trim().toLowerCase();
-  const pin = String(data && data.pin ? data.pin : '').trim();
-  if (!email) {
-    return jsonResponse_({ status: 'error', message: 'Falta el correo institucional.' });
+function readStudentPreferencesByMatricula_(ss) {
+  var sheet = ss.getSheetByName('StudentPreferences');
+  if (!sheet || sheet.getLastRow() < 2) return {};
+  var preferences = parseSheetData(sheet.getDataRange().getValues());
+  var byMatricula = {};
+  preferences.forEach(function(preference) {
+    var matricula = String(preference.matricula || '').trim().toUpperCase();
+    if (matricula) byMatricula[matricula] = preference;
+  });
+  return byMatricula;
+}
+
+function readLatestCheckInsByMatricula_(ss) {
+  var sheet = ss.getSheetByName('CheckIns');
+  if (!sheet || sheet.getLastRow() < 2) return {};
+  var checkIns = parseSheetData(sheet.getDataRange().getValues());
+  var byMatricula = {};
+  checkIns.forEach(function(checkIn) {
+    var matricula = String(checkIn.matricula || '').trim().toUpperCase();
+    if (!matricula) return;
+    var current = byMatricula[matricula];
+    var timestamp = String(checkIn.timestampiso || checkIn.createdat || '');
+    var currentTimestamp = current ? String(current.timestampiso || current.createdat || '') : '';
+    if (!current || timestamp >= currentTimestamp) byMatricula[matricula] = checkIn;
+  });
+  return byMatricula;
+}
+
+function getLegacyOperationalCycle_() {
+  return String(PropertiesService.getScriptProperties().getProperty('LEGACY_PRODUCT_OPERATIONAL_CYCLE') || 'AD26-FJ27').trim();
+}
+
+function getRecordOperationalCycle_(record) {
+  return String(record && record.operationalcycle ? record.operationalcycle : getLegacyOperationalCycle_()).trim();
+}
+
+function recordMatchesOperationalCycle_(record, operationalCycle) {
+  var expectedCycle = String(operationalCycle || '').trim();
+  return !expectedCycle || getRecordOperationalCycle_(record) === expectedCycle;
+}
+
+function sessionMatchesOperationalCycle_(session, operationalCycle) {
+  var expectedCycle = String(operationalCycle || '').trim().toUpperCase();
+  if (!expectedCycle) return true;
+  var period = String(session && session.periodo ? session.periodo : '').trim().toUpperCase();
+  if (!period) return false;
+  if (period === expectedCycle) return true;
+
+  var match = period.match(/^(\d{4})-(1|2)$/);
+  if (!match) return false;
+  var year = Number(match[1]);
+  var shortYear = String(year).slice(-2);
+  var sessionCycle = match[2] === '2'
+    ? 'AD' + shortYear + '-FJ' + String(year + 1).slice(-2)
+    : 'AD' + String(year - 1).slice(-2) + '-FJ' + shortYear;
+  return sessionCycle === expectedCycle;
+}
+
+function readLatestCheckInsByMatriculaForCycle_(ss, operationalCycle) {
+  var sheet = ss.getSheetByName('CheckIns');
+  if (!sheet || sheet.getLastRow() < 2) return {};
+  var checkIns = parseSheetData(sheet.getDataRange().getValues());
+  var byMatricula = {};
+  checkIns.forEach(function(checkIn) {
+    if (!recordMatchesOperationalCycle_(checkIn, operationalCycle)) return;
+    var matricula = String(checkIn.matricula || '').trim().toUpperCase();
+    if (!matricula) return;
+    var current = byMatricula[matricula];
+    var timestamp = String(checkIn.timestampiso || checkIn.createdat || '');
+    var currentTimestamp = current ? String(current.timestampiso || current.createdat || '') : '';
+    if (!current || timestamp >= currentTimestamp) byMatricula[matricula] = checkIn;
+  });
+  return byMatricula;
+}
+
+function overlayStudentProductState_(student, preferencesByMatricula, checkInsByMatricula) {
+  var matricula = String(student.matricula || '').trim().toUpperCase();
+  var preference = preferencesByMatricula[matricula];
+  var checkIn = checkInsByMatricula[matricula];
+  return {
+    ...student,
+    nombrepreferido: preference
+      ? String(preference.nombrepreferido || '').trim()
+      : String(student.nombrepreferido || '').trim(),
+    checkin: checkIn ? 'Si' : String(student.checkin || 'No').trim(),
+    agenciacheckin: checkIn && checkIn.pretestresumen
+      ? String(checkIn.pretestresumen).trim()
+      : String(student.agenciacheckin || '').trim(),
+    checkinid: checkIn ? String(checkIn.checkinid || '').trim() : '',
+    checkinsessionid: checkIn ? String(checkIn.sessionid || '').trim() : '',
+    checkintimestamp: checkIn ? String(checkIn.timestampiso || '').trim() : '',
+    goalselectionid: checkIn ? String(checkIn.goalselectionid || '').trim() : '',
+    encountermanaged: Boolean(checkIn && checkIn.source === 'live-encounter-v2'),
+  };
+}
+
+function saveStudentPreference(ss, data, requestTiming) {
+  var timing = requestTiming || createRequestTiming_(data || {});
+  var matricula = normalizeStudentMatricula_(data && data.matricula);
+  var preferredName = String(data && data.preferredName ? data.preferredName : '').trim();
+  if (!preferredName) throw new Error('El nombre preferido no puede estar vacío.');
+  if (preferredName.length > 80) throw new Error('El nombre preferido es demasiado largo.');
+  var lock = LockService.getScriptLock();
+  measureRequestStage_(timing, 'preferenceLockWait', function() {
+    lock.waitLock(INTERACTIVE_WRITE_LOCK_TIMEOUT_MS);
+  });
+  try {
+    var sheet = ensureSheetWithHeaders_(ss, 'StudentPreferences', STUDENT_PREFERENCE_HEADERS);
+    var now = new Date().toISOString();
+    var existing = measureRequestStage_(timing, 'preferenceLookup', function() {
+      var matches = findIndexedProductRecords_(ss, 'StudentPreferences', matricula, timing, 'preferenceIndex');
+      return matches.length ? matches[matches.length - 1] : null;
+    });
+    if (existing && String(existing.record.nombrepreferido || '').trim() === preferredName) {
+      return jsonResponseWithTiming_({
+        status: 'success',
+        data: { matricula: matricula, preferredName: preferredName, updatedAt: existing.record.updatedat || '', unchanged: true },
+      }, timing);
+    }
+    if (existing) {
+      sheet.getRange(existing.rowNumber, 2, 1, 4).setValues([[preferredName, now, 'live', '']]);
+    } else {
+      sheet.appendRow([matricula, preferredName, now, 'live', '']);
+    }
+    invalidateStudentProductSnapshot_(matricula);
+    invalidateProductReadIndexes_(['StudentPreferences']);
+    return jsonResponseWithTiming_({
+      status: 'success',
+      data: { matricula: matricula, preferredName: preferredName, updatedAt: now, unchanged: false },
+    }, timing);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// Calendar formatting is informational; elapsed days never reopen a student journey.
+function encounterCalendarDay_(value) {
+  var date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return '';
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Monterrey', year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);
+}
+
+function encounterContinuation_(ss, record, timing) {
+  var result = { checkInId: String(record.checkinid || ''), preTestSummary: String(record.pretestresumen || ''), plan: null };
+  var selectionId = String(record.goalselectionid || '');
+  if (selectionId) {
+    var context = getReadOnlySheetContext_(ss, 'GoalSelections');
+    var goal = context && findGoalSelectionForWrite_(context, selectionId);
+    if (!goal || String(goal.matricula || '').trim().toUpperCase() !== String(record.matricula || '').trim().toUpperCase()
+      || !recordMatchesOperationalCycle_(goal, getActiveOperationalCycle_())) throw new Error('No pudimos recuperar el plan de este encuentro. Pide apoyo a tu mentor o mentora.');
+    result.plan = sanitizeConfirmedStudentPlan_(goal);
+  }
+  return result;
+}
+
+function sanitizeConfirmedStudentPlan_(goal) {
+  return goal ? { selectionId: String(goal.selectionid || ''), metaPrioritaria: String(goal.metaprioritaria || ''),
+    metaComplementaria: String(goal.metacomplementaria || ''), tiempo: String(goal.tiempo || ''),
+    obstaculo: String(goal.obstaculo || ''), plan: String(goal.plan || ''), completedAt: String(goal.timestamp || '') } : null;
+}
+
+function studentContinuation_(ss, snapshot, timing) {
+  var continuation = snapshot.checkIn ? encounterContinuation_(ss, snapshot.checkIn, timing) : null;
+  // Historic/remote plans remain consultable without inventing an encounter link.
+  // A mentor-opened managed encounter must never inherit a previous plan.
+  if (!snapshot.checkIn || snapshot.checkIn.source !== 'live-encounter-v2') {
+    if (snapshot.confirmedPlan) {
+      continuation = continuation || { checkInId: '', preTestSummary: '', plan: null };
+      if (!continuation.plan) continuation.plan = snapshot.confirmedPlan;
+    }
+  }
+  return continuation;
+}
+
+// Closure/admission decisions read the authoritative rows, never a possibly
+// stale shared index or product snapshot. Only matching rows are transferred.
+function latestStudentRecordForClosure_(ss, sheetName, matricula, cycle) {
+  var context = getReadOnlySheetContext_(ss, sheetName);
+  if (!context || context.sheet.getLastRow() < 2) return null;
+  var column = getHeaderColumnIndex_(context, ['Matricula', 'Matrícula']);
+  if (column < 0) throw new Error('La hoja no contiene Matrícula.');
+  var normalized = normalizeStudentMatricula_(matricula);
+  var rows = context.sheet.getRange(2, column + 1, context.sheet.getLastRow() - 1, 1)
+    .createTextFinder('^\\s*' + normalized + '\\s*$').matchEntireCell(true).matchCase(false).useRegularExpression(true).findAll()
+    .map(function(match) { return match.getRow(); }).sort(function(a, b) { return b - a; });
+  for (var index = 0; index < rows.length; index++) {
+    var record = rowToRecord_(context.headers, context.sheet.getRange(rows[index], 1, 1, context.width).getValues()[0]);
+    if (String(record.matricula || '').trim().toUpperCase() !== normalized) throw new Error('La matrícula del registro cambió.');
+    if (recordMatchesOperationalCycle_(record, cycle)) return record;
+  }
+  return null;
+}
+
+function currentStudentContinuation_(ss, matricula, cycle, timing) {
+  var checkIn = latestStudentRecordForClosure_(ss, 'CheckIns', matricula, cycle);
+  var goal = !checkIn || checkIn.source !== 'live-encounter-v2'
+    ? latestStudentRecordForClosure_(ss, 'GoalSelections', matricula, cycle) : null;
+  return studentContinuation_(ss, { checkIn: checkIn, confirmedPlan: sanitizeConfirmedStudentPlan_(goal) }, timing);
+}
+
+function requireEncounterForWrite_(ss, data, timing) {
+  if (!data.checkInId) return null; // Existing remote and legacy clients keep their protected writer contract.
+  var match = findIndexedUniqueProductRecord_(ss, 'CheckIns', String(data.checkInId), timing, 'checkInIdIndex');
+  if (!match || String(match.record.matricula || '') !== String(data.matricula || '').trim().toUpperCase()
+    || !recordMatchesOperationalCycle_(match.record, getActiveOperationalCycle_())) throw new Error('La llegada no corresponde a este estudiante y ciclo.');
+  return match;
+}
+
+function requireCurrentStudentEncounter_(ss, data, timing) {
+  var encounter = requireEncounterForWrite_(ss, data, timing);
+  var latest = latestStudentRecordForClosure_(ss, 'CheckIns', data.matricula, getActiveOperationalCycle_());
+  if ((encounter && (!latest || String(latest.checkinid) !== String(encounter.record.checkinid)))
+    || (latest && latest.source === 'live-encounter-v2' && !encounter)) {
+    throw new Error('El encuentro cambió. Confirma nuevamente tu matrícula antes de continuar.');
+  }
+  return encounter;
+}
+
+function linkEncounterRecord_(ss, encounter, column, value) {
+  if (!encounter) return;
+  var sheet = ensureSheetWithHeaders_(ss, 'CheckIns', CHECKIN_HEADERS);
+  sheet.getRange(encounter.rowNumber, column).setValues([[value]]);
+  invalidateProductReadIndexes_(['CheckIns']);
+  invalidateStudentProductSnapshot_(String(encounter.record.matricula || ''));
+}
+
+function startNewMentoringEncounter(ss, data, timing) {
+  var dashboard = JSON.parse(getMentorDashboard(ss, data, timing).getContent()).data;
+  if (!dashboard || !dashboard.students.some(function(student) { return String(student.matricula) === String(data.matricula || '').trim().toUpperCase(); })) throw new Error('No tienes permisos para iniciar esta sesión.');
+  return registerCheckIn(ss, { matricula: data.matricula, requestId: data.requestId, modality: 'presencial' }, timing, { newEncounter: true, validate: function() {
+    var fresh = JSON.parse(getMentorDashboard(ss, data, timing).getContent()).data;
+    if (!fresh || !fresh.students.some(function(student) { return String(student.matricula) === String(data.matricula || '').trim().toUpperCase(); })) throw new Error('No tienes permisos para iniciar esta sesión.');
+  } });
+}
+
+function registerCheckIn(ss, data, requestTiming, options) {
+  var timing = requestTiming || createRequestTiming_(data || {});
+  var matricula = normalizeStudentMatricula_(data && data.matricula);
+  var requestId = String(data && data.requestId ? data.requestId : '').trim();
+  if (!/^[A-Za-z0-9_-]{8,80}$/.test(requestId)) throw new Error('El identificador de check-in no es válido.');
+  var checkInId = matricula + ':' + requestId;
+  var modality = normalizeIdentityValue_(data && data.modality ? data.modality : 'presencial');
+  if (modality !== 'presencial' && modality !== 'remoto') throw new Error('La modalidad del check-in no es válida.');
+  var preferredName = String(data && data.preferredName ? data.preferredName : '').trim();
+  if (preferredName) measureRequestStage_(timing, 'preferenceWrite', function() {
+    return saveStudentPreference(ss, { matricula: matricula, preferredName: preferredName }, timing);
+  });
+
+  var lock = LockService.getScriptLock();
+  measureRequestStage_(timing, 'lockWait', function() { lock.waitLock(INTERACTIVE_WRITE_LOCK_TIMEOUT_MS); });
+  try {
+    if (options && options.validate) options.validate();
+    var sheet = measureRequestStage_(timing, 'checkInSheet', function() {
+      return ensureSheetWithHeaders_(ss, 'CheckIns', CHECKIN_HEADERS);
+    });
+    var existing = measureRequestStage_(timing, 'deduplicate', function() {
+      return findIndexedUniqueProductRecord_(ss, 'CheckIns', checkInId, timing, 'checkInIdIndex');
+    });
+    // A browser can retain its request ID while coordination changes the cycle.
+    // Keep the old arrival intact and use a deterministic ID in the new cycle.
+    if (existing && !recordMatchesOperationalCycle_(existing.record, getActiveOperationalCycle_())) {
+      checkInId += ':' + getActiveOperationalCycle_();
+      existing = findIndexedUniqueProductRecord_(ss, 'CheckIns', checkInId, timing, 'checkInIdIndex');
+    }
+    if (!options?.newEncounter) {
+      var latest = latestStudentRecordForClosure_(ss, 'CheckIns', matricula, getActiveOperationalCycle_());
+      if (latest) {
+        existing = { record: latest };
+        checkInId = String(latest.checkinid);
+      }
+      if (!latest) {
+        var prior = currentStudentContinuation_(ss, matricula, getActiveOperationalCycle_(), timing);
+        if (prior && prior.plan) return jsonResponseWithTiming_({ status: 'success', data: {
+          checkInId: '', reused: true, continuation: prior,
+        } }, timing);
+      }
+    }
+    if (existing) {
+      return jsonResponseWithTiming_({
+        status: 'success',
+        data: { checkInId: checkInId, timestamp: existing.record.timestampiso, reused: true,
+          continuation: currentStudentContinuation_(ss, matricula, getActiveOperationalCycle_(), timing) },
+      }, timing);
+    }
+    var now = new Date().toISOString();
+    var operationalCycle = getActiveOperationalCycle_();
+    measureRequestStage_(timing, 'appendCheckIn', function() {
+      sheet.appendRow([checkInId, matricula, now, '', modality, '', now, now, 'live-encounter-v2', '', operationalCycle, '']);
+    });
+    invalidateStudentProductSnapshot_(matricula, operationalCycle);
+    invalidateProductReadIndexes_(['CheckIns']);
+    return jsonResponseWithTiming_({
+      status: 'success',
+      data: { checkInId: checkInId, timestamp: now, operationalCycle: operationalCycle, reused: false },
+    }, timing);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function startStudentCheckIn(ss, data, requestTiming) {
+  var timing = requestTiming || createRequestTiming_(data || {});
+  try {
+    var lookup = measureRequestStage_(timing, 'studentEntry', function() {
+      return buildStudentLookupFast_(ss, data || {}, timing);
+    });
+    if (!lookup.student) {
+      return jsonResponseWithTiming_({
+        status: 'success',
+        data: { student: null, mentor: null, testResponse: null, registration: null },
+      }, timing);
+    }
+    var requestedPreferredName = String(data && data.preferredName ? data.preferredName : '').trim();
+    var currentPreferredName = String(lookup.student.nombrepreferido || '').trim();
+    var registrationOutput = registerCheckIn(ss, {
+      matricula: data.matricula,
+      requestId: data.requestId,
+      modality: data.modality,
+      preferredName: requestedPreferredName && requestedPreferredName !== currentPreferredName
+        ? requestedPreferredName
+        : '',
+    }, timing);
+    var registrationPayload = JSON.parse(registrationOutput.getContent());
+    if (registrationPayload.status === 'error') throw new Error(registrationPayload.message || 'No pudimos registrar la llegada.');
+    if (requestedPreferredName) lookup.student.nombrepreferido = requestedPreferredName;
+    return jsonResponseWithTiming_({
+      status: 'success',
+      data: {
+        student: lookup.student,
+        mentor: lookup.mentor,
+        testResponse: lookup.testResponse || null,
+        operationalCycle: lookup.operationalCycle,
+        registration: registrationPayload.data,
+      },
+    }, timing);
+  } catch (error) {
+    return jsonResponseWithTiming_({ status: 'error', message: error.toString() }, timing);
+  }
+}
+
+function completeCheckInPreTest(ss, data, requestTiming) {
+  var timing = requestTiming || createRequestTiming_(data || {});
+  var matricula = normalizeStudentMatricula_(data && data.matricula);
+  var preTestSummary = String(data && data.preTestSummary ? data.preTestSummary : '').trim();
+  if (!preTestSummary) throw new Error('Falta el resumen del pre-test.');
+  if (preTestSummary.length > 500) throw new Error('El resumen del pre-test es demasiado largo.');
+  var requestedCheckInId = String(data && data.checkInId ? data.checkInId : '').trim();
+  if (requestedCheckInId && requestedCheckInId.indexOf(matricula + ':') !== 0) {
+    throw new Error('El check-in no pertenece a la matrícula autenticada.');
   }
 
-  const staff = parseSheetData(ensureSheetWithHeaders_(ss, 'Staff', STAFF_HEADERS).getDataRange().getValues());
-  const user = staff.find(function(item) {
-    return String(item.email || '').trim().toLowerCase() === email &&
-      String(item.activo || 'Si').trim().toLowerCase() !== 'no';
+  var lock = LockService.getScriptLock();
+  measureRequestStage_(timing, 'lockWait', function() {
+    lock.waitLock(INTERACTIVE_WRITE_LOCK_TIMEOUT_MS);
+  });
+  try {
+    var matches = measureRequestStage_(timing, 'checkInLookup', function() {
+      return findIndexedProductRecords_(ss, 'CheckIns', matricula, timing, 'checkInIndex')
+        .filter(function(item) {
+          return !requestedCheckInId || String(item.record.checkinid || '').trim() === requestedCheckInId;
+        })
+        .sort(function(left, right) { return right.rowNumber - left.rowNumber; });
+    });
+    if (!matches.length) throw new Error('No encontramos un check-in previo para guardar el pre-test.');
+    var target = matches[0];
+    var latest = latestStudentRecordForClosure_(ss, 'CheckIns', matricula, getActiveOperationalCycle_());
+    if (!recordMatchesOperationalCycle_(target.record, getActiveOperationalCycle_())
+      || !latest || String(latest.checkinid) !== String(target.record.checkinid)) throw new Error('El encuentro cambió. Confirma nuevamente tu matrícula.');
+    if (target.record.pretestresumen && String(target.record.pretestresumen) !== preTestSummary) {
+      throw new Error('Las respuestas de llegada de este encuentro ya están registradas.');
+    }
+    if (target.record.goalselectionid && !target.record.pretestresumen) throw new Error('Este plan ya está confirmado. Puedes consultarlo al ingresar tu matrícula.');
+    var targetRow = target.rowNumber;
+    var sheet = ss.getSheetByName('CheckIns');
+    if (!sheet) throw new Error('No existe la hoja CheckIns.');
+    var now = new Date().toISOString();
+    measureRequestStage_(timing, 'preTestWrite', function() {
+      sheet.getRange(targetRow, 4).setValue(preTestSummary);
+      sheet.getRange(targetRow, 8).setValue(now);
+    });
+    invalidateStudentProductSnapshot_(matricula);
+    invalidateProductReadIndexes_(['CheckIns']);
+    return jsonResponseWithTiming_({
+      status: 'success',
+      data: { checkInId: String(target.record.checkinid || '').trim(), preTestSummary: preTestSummary, updatedAt: now },
+    }, timing);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function buildLegacyStudentProductMigration_(ss) {
+  var students = readLegacyStudents_(ss);
+  var preferences = readStudentPreferencesByMatricula_(ss);
+  var checkInSheet = ss.getSheetByName('CheckIns');
+  var checkIns = checkInSheet && checkInSheet.getLastRow() > 1
+    ? parseSheetData(checkInSheet.getDataRange().getValues())
+    : [];
+  var checkInsById = {};
+  checkIns.forEach(function(checkIn) {
+    var checkInId = String(checkIn.checkinid || '').trim();
+    if (checkInId) checkInsById[checkInId] = checkIn;
+  });
+  var preferenceInserts = [];
+  var checkInInserts = [];
+  var warnings = [];
+  var errors = [];
+  var sourceRecords = [];
+
+  var seenRelevantMatriculas = {};
+  students.forEach(function(student) {
+    var matricula = String(student.matricula || '').trim().toUpperCase();
+    var preferredName = String(student.nombrepreferido || '').trim();
+    var legacyCheckIn = ['si', 'sí', 'true', '1'].indexOf(normalizeIdentityValue_(student.checkin)) > -1;
+    var preTestSummary = String(student.agenciacheckin || '').trim();
+    if (!preferredName && !legacyCheckIn && !preTestSummary) return;
+    if (!/^A\d{8}$/.test(matricula)) {
+      errors.push({ code: 'INVALID_MATRICULA', entityKey: matricula || 'SIN_MATRICULA' });
+      return;
+    }
+    if (seenRelevantMatriculas[matricula]) {
+      errors.push({ code: 'DUPLICATE_MATRICULA', entityKey: matricula });
+      return;
+    }
+    seenRelevantMatriculas[matricula] = true;
+    sourceRecords.push({
+      matricula: matricula,
+      preferredName: preferredName,
+      checkIn: legacyCheckIn,
+      preTestSummary: preTestSummary,
+    });
+
+    if (preferredName) {
+      var existingPreference = preferences[matricula];
+      if (!existingPreference) {
+        preferenceInserts.push({ matricula: matricula, preferredName: preferredName });
+      } else if (String(existingPreference.nombrepreferido || '').trim() !== preferredName) {
+        warnings.push({ code: 'PREFERENCE_CONFLICT_CANONICAL_WINS', entityKey: matricula });
+      }
+    }
+
+    if (legacyCheckIn || preTestSummary) {
+      var checkInId = matricula + ':legacy-students-v1';
+      var existingCheckIn = checkInsById[checkInId];
+      if (!existingCheckIn) {
+        checkInInserts.push({ checkInId: checkInId, matricula: matricula, preTestSummary: preTestSummary });
+      } else if (String(existingCheckIn.pretestresumen || '').trim() !== preTestSummary) {
+        warnings.push({ code: 'CHECKIN_CONFLICT_CANONICAL_WINS', entityKey: matricula });
+      }
+    }
+  });
+
+  sourceRecords.sort(function(left, right) { return left.matricula.localeCompare(right.matricula); });
+  return {
+    fingerprint: sha256Hex_(JSON.stringify({ source: 'Students', records: sourceRecords })),
+    sourceRows: students.length,
+    sourceRecords: sourceRecords.length,
+    preferenceInserts: preferenceInserts,
+    checkInInserts: checkInInserts,
+    warnings: warnings,
+    errors: errors,
+  };
+}
+
+function getActiveDirectoryMatriculas_(ss) {
+  var activeVersionId = String(PropertiesService.getScriptProperties().getProperty('ACTIVE_DIRECTORY_VERSION') || '').trim();
+  var sheet = ss.getSheetByName('DirectoryStudents');
+  if (!activeVersionId || !sheet || sheet.getLastRow() < 2) return new Set();
+  return new Set(parseSheetData(sheet.getDataRange().getValues()).filter(function(student) {
+    return String(student.versionid || '').trim() === activeVersionId;
+  }).map(function(student) {
+    return String(student.matricula || '').trim().toUpperCase();
+  }).filter(Boolean));
+}
+
+function classifyLegacyMigrationCandidates_(items, activeMatriculas, includeSummaryFlag) {
+  var candidates = items.map(function(item) {
+    var matricula = String(item.matricula || '').trim().toUpperCase();
+    var classified = {
+      matricula: matricula,
+      demoFixture: isDemoStudentMatricula_(matricula),
+      activeDirectory: activeMatriculas.has(matricula),
+    };
+    if (includeSummaryFlag) classified.hasPreTestSummary = Boolean(String(item.preTestSummary || '').trim());
+    return classified;
+  });
+  return {
+    total: candidates.length,
+    demoFixtures: candidates.filter(function(item) { return item.demoFixture; }).length,
+    activeDirectory: candidates.filter(function(item) { return item.activeDirectory; }).length,
+    outsideActiveDirectory: candidates.filter(function(item) { return !item.demoFixture && !item.activeDirectory; }).length,
+    candidates: candidates,
+  };
+}
+
+function sanitizeLegacyStudentProductMigration_(ss, migration) {
+  var properties = PropertiesService.getScriptProperties();
+  var activeMatriculas = getActiveDirectoryMatriculas_(ss);
+  return {
+    fingerprint: migration.fingerprint,
+    sourceRows: migration.sourceRows,
+    sourceRecords: migration.sourceRecords,
+    preferenceInsertCount: migration.preferenceInserts.length,
+    checkInInsertCount: migration.checkInInserts.length,
+    warningCount: migration.warnings.length,
+    errorCount: migration.errors.length,
+    warnings: migration.warnings.slice(0, 100),
+    errors: migration.errors.slice(0, 100),
+    preferenceClassification: classifyLegacyMigrationCandidates_(migration.preferenceInserts, activeMatriculas, false),
+    checkInClassification: classifyLegacyMigrationCandidates_(migration.checkInInserts, activeMatriculas, true),
+    publishEnabled: normalizeIdentityValue_(properties.getProperty('PRODUCT_MIGRATION_ENABLED')) === 'true',
+    rollbackEnabled: normalizeIdentityValue_(properties.getProperty('PRODUCT_MIGRATION_ROLLBACK_ENABLED')) === 'true',
+  };
+}
+
+function previewLegacyStudentProductMigration(ss) {
+  var migration = buildLegacyStudentProductMigration_(ss);
+  return jsonResponse_({
+    status: 'success',
+    data: sanitizeLegacyStudentProductMigration_(ss, migration),
+  });
+}
+
+function findProductMigrationRunRow_(sheet, migrationId) {
+  var values = sheet.getDataRange().getValues();
+  if (values.length < 2) return null;
+  for (var rowIndex = 1; rowIndex < values.length; rowIndex++) {
+    if (String(values[rowIndex][0] || '').trim() === migrationId) {
+      return { rowNumber: rowIndex + 1, values: values[rowIndex] };
+    }
+  }
+  return null;
+}
+
+function countRowsByMigrationId_(sheet, migrationId) {
+  if (!sheet || sheet.getLastRow() < 2) return 0;
+  var values = sheet.getDataRange().getValues();
+  var migrationIdIndex = values[0].map(normalizeHeaderKey_).indexOf('migrationid');
+  if (migrationIdIndex < 0) return 0;
+  return values.slice(1).filter(function(row) {
+    return String(row[migrationIdIndex] || '').trim() === migrationId;
+  }).length;
+}
+
+function publishLegacyStudentProductMigration(ss, data) {
+  return publishLegacyStudentProductMigration_(ss, data, {});
+}
+
+function publishLegacyStudentProductMigration_(ss, data, options) {
+  var payload = data || {};
+  var settings = options || {};
+  var properties = PropertiesService.getScriptProperties();
+  if (!settings.skipFeatureFlag && normalizeIdentityValue_(properties.getProperty('PRODUCT_MIGRATION_ENABLED')) !== 'true') {
+    throw new Error('La migración está bloqueada. Configura PRODUCT_MIGRATION_ENABLED=true sólo durante una ventana autorizada.');
+  }
+  if (payload.confirmPublish !== true) throw new Error('La migración requiere confirmPublish=true.');
+  var approvedFingerprint = String(payload.previewFingerprint || '').trim();
+  if (!approvedFingerprint) throw new Error('La migración requiere la huella de una vista previa revisada.');
+  var actorSubject = String(payload.actor && payload.actor.sub ? payload.actor.sub : '').trim();
+  if (!actorSubject) throw new Error('No se pudo identificar al administrador que publica la migración.');
+
+  var lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    var migration = buildLegacyStudentProductMigration_(ss);
+    if (migration.fingerprint !== approvedFingerprint) {
+      throw new Error('Students cambió desde la vista previa. Revisa nuevamente antes de migrar.');
+    }
+    if (migration.errors.length) throw new Error('La migración contiene errores y no puede publicarse.');
+    var migrationId = 'legacy-' + migration.fingerprint.substring(0, 16);
+    var runsSheet = ensureSheetWithHeaders_(ss, 'ProductMigrationRuns', PRODUCT_MIGRATION_RUN_HEADERS);
+    var existingRun = findProductMigrationRunRow_(runsSheet, migrationId);
+    if (existingRun && String(existingRun.values[2] || '').trim().toUpperCase() === 'PUBLISHED') {
+      throw new Error('Esta migración ya fue publicada.');
+    }
+    var preferenceSheet = ensureSheetWithHeaders_(ss, 'StudentPreferences', STUDENT_PREFERENCE_HEADERS);
+    var checkInSheet = ensureSheetWithHeaders_(ss, 'CheckIns', CHECKIN_HEADERS);
+    var now = new Date().toISOString();
+    appendDirectoryRows_(preferenceSheet, migration.preferenceInserts.map(function(item) {
+      return [item.matricula, item.preferredName, now, 'legacy_students', migrationId];
+    }));
+    appendDirectoryRows_(checkInSheet, migration.checkInInserts.map(function(item) {
+      return [item.checkInId, item.matricula, '', item.preTestSummary, 'presencial', '', now, now, 'legacy_students', migrationId, getLegacyOperationalCycle_()];
+    }));
+    invalidateStudentProductSnapshots_(migration.preferenceInserts.concat(migration.checkInInserts).map(function(item) {
+      return item.matricula;
+    }));
+    invalidateProductReadIndexes_(['StudentPreferences', 'CheckIns']);
+    var preferenceCount = countRowsByMigrationId_(preferenceSheet, migrationId);
+    var checkInCount = countRowsByMigrationId_(checkInSheet, migrationId);
+    var runValues = [migrationId, migration.fingerprint, 'PUBLISHED', preferenceCount, checkInCount, now, actorSubject, '', ''];
+    if (existingRun) {
+      runsSheet.getRange(existingRun.rowNumber, 1, 1, PRODUCT_MIGRATION_RUN_HEADERS.length).setValues([runValues]);
+    } else {
+      runsSheet.appendRow(runValues);
+    }
+    return jsonResponse_({
+      status: 'success',
+      data: {
+        migrationId: migrationId,
+        fingerprint: migration.fingerprint,
+        preferenceInserted: preferenceCount,
+        checkInInserted: checkInCount,
+        warningCount: migration.warnings.length,
+        publishedAt: now,
+      },
+    });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function deleteRowsByMigrationId_(sheet, migrationId) {
+  if (!sheet || sheet.getLastRow() < 2) return 0;
+  var values = sheet.getDataRange().getValues();
+  var migrationIdIndex = values[0].map(normalizeHeaderKey_).indexOf('migrationid');
+  if (migrationIdIndex < 0) return 0;
+  var deleted = 0;
+  for (var rowIndex = values.length - 1; rowIndex > 0; rowIndex--) {
+    if (String(values[rowIndex][migrationIdIndex] || '').trim() === migrationId) {
+      sheet.deleteRow(rowIndex + 1);
+      deleted += 1;
+    }
+  }
+  return deleted;
+}
+
+function readMatriculasByMigrationId_(sheet, migrationId) {
+  if (!sheet || sheet.getLastRow() < 2) return [];
+  var values = sheet.getDataRange().getValues();
+  var headers = values[0].map(normalizeHeaderKey_);
+  var migrationIdIndex = headers.indexOf('migrationid');
+  var matriculaIndex = headers.indexOf('matricula');
+  if (migrationIdIndex < 0 || matriculaIndex < 0) return [];
+  return values.slice(1).filter(function(row) {
+    return String(row[migrationIdIndex] || '').trim() === migrationId;
+  }).map(function(row) {
+    return String(row[matriculaIndex] || '').trim().toUpperCase();
+  }).filter(Boolean);
+}
+
+function rollbackLegacyStudentProductMigration(ss, data) {
+  return rollbackLegacyStudentProductMigration_(ss, data, {});
+}
+
+function rollbackLegacyStudentProductMigration_(ss, data, options) {
+  var payload = data || {};
+  var settings = options || {};
+  var properties = PropertiesService.getScriptProperties();
+  if (!settings.skipFeatureFlag && normalizeIdentityValue_(properties.getProperty('PRODUCT_MIGRATION_ROLLBACK_ENABLED')) !== 'true') {
+    throw new Error('El rollback de migración está bloqueado.');
+  }
+  if (payload.confirmRollback !== true) throw new Error('El rollback requiere confirmRollback=true.');
+  var migrationId = String(payload.migrationId || '').trim();
+  if (!migrationId) throw new Error('Falta MigrationId.');
+  var actorSubject = String(payload.actor && payload.actor.sub ? payload.actor.sub : '').trim();
+  if (!actorSubject) throw new Error('No se pudo identificar al administrador que revierte la migración.');
+
+  var lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    var runsSheet = ensureSheetWithHeaders_(ss, 'ProductMigrationRuns', PRODUCT_MIGRATION_RUN_HEADERS);
+    var run = findProductMigrationRunRow_(runsSheet, migrationId);
+    if (!run || String(run.values[2] || '').trim().toUpperCase() !== 'PUBLISHED') {
+      throw new Error('MigrationId no corresponde a una migración publicada.');
+    }
+    var affectedMatriculas = readMatriculasByMigrationId_(ss.getSheetByName('StudentPreferences'), migrationId)
+      .concat(readMatriculasByMigrationId_(ss.getSheetByName('CheckIns'), migrationId));
+    var deletedPreferences = deleteRowsByMigrationId_(ss.getSheetByName('StudentPreferences'), migrationId);
+    var deletedCheckIns = deleteRowsByMigrationId_(ss.getSheetByName('CheckIns'), migrationId);
+    var now = new Date().toISOString();
+    runsSheet.getRange(run.rowNumber, 3).setValue('ROLLED_BACK');
+    runsSheet.getRange(run.rowNumber, 8, 1, 2).setValues([[now, actorSubject]]);
+    invalidateStudentProductSnapshots_(affectedMatriculas);
+    invalidateProductReadIndexes_(['StudentPreferences', 'CheckIns']);
+    return jsonResponse_({
+      status: 'success',
+      data: {
+        migrationId: migrationId,
+        deletedPreferences: deletedPreferences,
+        deletedCheckIns: deletedCheckIns,
+        rolledBackAt: now,
+      },
+    });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function getApprovedLegacyProductMigration_(scope, approval) {
+  var settings = approval || {
+    fingerprint: APPROVED_LEGACY_PRODUCT_FINGERPRINT,
+    preferenceCount: APPROVED_LEGACY_PREFERENCE_COUNT,
+    checkInCount: APPROVED_LEGACY_CHECKIN_COUNT,
+  };
+  var normalizedScope = normalizeIdentityValue_(scope);
+  if (normalizedScope === 'preferences') {
+    return {
+      scope: 'preferences',
+      fingerprint: settings.fingerprint,
+      expectedCount: Number(settings.preferenceCount),
+      migrationId: 'legacy-preferences-' + String(settings.fingerprint).substring(0, 16),
+    };
+  }
+  if (normalizedScope === 'checkins_undated') {
+    return {
+      scope: 'checkins_undated',
+      fingerprint: settings.fingerprint,
+      expectedCount: Number(settings.checkInCount),
+      migrationId: 'legacy-checkins-undated-' + String(settings.fingerprint).substring(0, 16),
+    };
+  }
+  throw new Error('El alcance de migración aprobado no es válido.');
+}
+
+function publishApprovedLegacyProductMigrationScope(ss, data) {
+  return publishApprovedLegacyProductMigrationScope_(ss, data, null);
+}
+
+function publishApprovedLegacyProductMigrationScope_(ss, data, approval) {
+  var payload = data || {};
+  if (payload.confirmPublish !== true) throw new Error('La migración selectiva requiere confirmPublish=true.');
+  var user = resolveWorkspaceStaffUser_(ss, { actor: payload.actor });
+  if (sanitizeWorkspaceUser_(user).role !== 'admin') {
+    throw new Error('La migración selectiva requiere permisos de administración.');
+  }
+  var approved = getApprovedLegacyProductMigration_(payload.scope, approval);
+  var suppliedFingerprint = String(payload.previewFingerprint || '').trim();
+  if (suppliedFingerprint !== approved.fingerprint) {
+    throw new Error('La huella no corresponde a la vista previa aprobada.');
+  }
+
+  var lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    var migration = buildLegacyStudentProductMigration_(ss);
+    if (migration.fingerprint !== approved.fingerprint) {
+      throw new Error('Students cambió desde la aprobación. Genera y revisa una nueva vista previa.');
+    }
+    if (migration.errors.length) throw new Error('La migración contiene errores y no puede publicarse.');
+    var runsSheet = ensureSheetWithHeaders_(ss, 'ProductMigrationRuns', PRODUCT_MIGRATION_RUN_HEADERS);
+    var existingRun = findProductMigrationRunRow_(runsSheet, approved.migrationId);
+    if (existingRun && String(existingRun.values[2] || '').trim().toUpperCase() === 'PUBLISHED') {
+      return jsonResponse_({
+        status: 'success',
+        data: {
+          scope: approved.scope,
+          migrationId: approved.migrationId,
+          fingerprint: approved.fingerprint,
+          inserted: approved.scope === 'preferences' ? Number(existingRun.values[3] || 0) : Number(existingRun.values[4] || 0),
+          reused: true,
+        },
+      });
+    }
+
+    var candidates = approved.scope === 'preferences' ? migration.preferenceInserts : migration.checkInInserts;
+    if (candidates.length !== approved.expectedCount) {
+      throw new Error('El conteo pendiente cambió desde la aprobación. Genera y revisa una nueva vista previa.');
+    }
+
+    var now = new Date().toISOString();
+    var preferenceInserted = 0;
+    var checkInInserted = 0;
+    if (approved.scope === 'preferences') {
+      var preferenceSheet = ensureSheetWithHeaders_(ss, 'StudentPreferences', STUDENT_PREFERENCE_HEADERS);
+      appendDirectoryRows_(preferenceSheet, candidates.map(function(item) {
+        return [item.matricula, item.preferredName, now, 'legacy_students', approved.migrationId];
+      }));
+      preferenceInserted = countRowsByMigrationId_(preferenceSheet, approved.migrationId);
+      if (preferenceInserted !== approved.expectedCount) throw new Error('La verificación de preferencias insertadas no coincide.');
+    } else {
+      var checkInSheet = ensureSheetWithHeaders_(ss, 'CheckIns', CHECKIN_HEADERS);
+      appendDirectoryRows_(checkInSheet, candidates.map(function(item) {
+        return [item.checkInId, item.matricula, '', item.preTestSummary, 'presencial', '', now, now, 'legacy_students', approved.migrationId, LEGACY_UNDATED_OPERATIONAL_CYCLE];
+      }));
+      checkInInserted = countRowsByMigrationId_(checkInSheet, approved.migrationId);
+      if (checkInInserted !== approved.expectedCount) throw new Error('La verificación de check-ins insertados no coincide.');
+    }
+    invalidateStudentProductSnapshots_(candidates.map(function(item) { return item.matricula; }));
+    invalidateProductReadIndexes_([approved.scope === 'preferences' ? 'StudentPreferences' : 'CheckIns']);
+
+    var actorSubject = String(payload.actor && payload.actor.sub ? payload.actor.sub : '').trim();
+    var runValues = [approved.migrationId, approved.fingerprint, 'PUBLISHED', preferenceInserted, checkInInserted, now, actorSubject, '', ''];
+    if (existingRun) {
+      runsSheet.getRange(existingRun.rowNumber, 1, 1, PRODUCT_MIGRATION_RUN_HEADERS.length).setValues([runValues]);
+    } else {
+      runsSheet.appendRow(runValues);
+    }
+    return jsonResponse_({
+      status: 'success',
+      data: {
+        scope: approved.scope,
+        migrationId: approved.migrationId,
+        fingerprint: approved.fingerprint,
+        inserted: approved.scope === 'preferences' ? preferenceInserted : checkInInserted,
+        operationalCycle: approved.scope === 'checkins_undated' ? LEGACY_UNDATED_OPERATIONAL_CYCLE : '',
+        reused: false,
+      },
+    });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function rollbackApprovedLegacyProductMigration(ss, data) {
+  var payload = data || {};
+  var approved = getApprovedLegacyProductMigration_(payload.scope, null);
+  if (String(payload.migrationId || '').trim() !== approved.migrationId) {
+    throw new Error('MigrationId no pertenece al lote aprobado.');
+  }
+  var user = resolveWorkspaceStaffUser_(ss, { actor: payload.actor });
+  if (sanitizeWorkspaceUser_(user).role !== 'admin') {
+    throw new Error('El rollback selectivo requiere permisos de administración.');
+  }
+  return rollbackLegacyStudentProductMigration_(ss, payload, { skipFeatureFlag: true });
+}
+
+function readLegacyStudents_(ss) {
+  var sheet = ss.getSheetByName('Students');
+  return sheet ? parseSheetData(sheet.getDataRange().getValues()) : [];
+}
+
+function findStaffMentorForLegacyStudent_(staff, student) {
+  var alias = String(student && student.nicknamementor ? student.nicknamementor : '').trim();
+  return staff.find(function(item) { return String(item.alias || '').trim() === alias; }) || null;
+}
+
+function isDemoStudentMatricula_(value) {
+  return DEMO_STUDENT_MATRICULAS.indexOf(String(value || '').trim().toUpperCase()) > -1;
+}
+
+function mergeDemoStudentFixtures_(currentStudents, incomingStudents) {
+  var merged = (incomingStudents || []).slice();
+  var incomingMatriculas = new Set(merged.map(function(student) {
+    return String(student.matricula || '').trim().toUpperCase();
+  }));
+  (currentStudents || []).forEach(function(student) {
+    var matricula = String(student.matricula || '').trim().toUpperCase();
+    if (!isDemoStudentMatricula_(matricula) || incomingMatriculas.has(matricula)) return;
+    merged.push({
+      matricula: matricula,
+      name: String(student.nombre || '').trim(),
+      preferredName: String(student.nombrepreferido || '').trim(),
+      email: normalizeIdentityValue_(student.email) || matricula.toLowerCase() + '@tec.mx',
+      mentor: '',
+      status: String(student.status || 'Pendiente').trim(),
+      checkIn: String(student.checkin || 'No').trim(),
+      agenciaCheckIn: String(student.agenciacheckin || '').trim(),
+      ultimoAviso: String(student.ultimoaviso || '').trim(),
+    });
+  });
+  return merged;
+}
+
+function deleteRowsByMatricula_(sheet, matricula) {
+  if (!sheet || sheet.getLastRow() < 2) return 0;
+  var values = sheet.getDataRange().getValues();
+  var headers = values[0].map(normalizeHeaderKey_);
+  var matriculaIndex = headers.indexOf('matricula');
+  if (matriculaIndex < 0) throw new Error('La hoja ' + sheet.getName() + ' no contiene la columna Matrícula.');
+  var deleted = 0;
+  for (var rowIndex = values.length - 1; rowIndex >= 1; rowIndex--) {
+    if (String(values[rowIndex][matriculaIndex] || '').trim().toUpperCase() !== matricula) continue;
+    sheet.deleteRow(rowIndex + 1);
+    deleted += 1;
+  }
+  return deleted;
+}
+
+function resetDemoStudentJourney(ss, data) {
+  var payload = data || {};
+  var matricula = normalizeStudentMatricula_(payload.matricula);
+  if (!isDemoStudentMatricula_(matricula)) {
+    throw new Error('El reinicio sólo está disponible para las matrículas demo autorizadas.');
+  }
+  if (payload.confirmReset !== true) {
+    throw new Error('El reinicio requiere confirmReset=true.');
+  }
+  var user = resolveWorkspaceStaffUser_(ss, { actor: payload.actor });
+  if (sanitizeWorkspaceUser_(user).role !== 'admin') {
+    throw new Error('El reinicio de demostración requiere permisos de administración.');
+  }
+  var exists = readLegacyStudents_(ss).some(function(student) {
+    return String(student.matricula || '').trim().toUpperCase() === matricula;
+  });
+  if (!exists) throw new Error('La matrícula demo no existe en Students.');
+
+  var lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    var deletedResponses = deleteRowsByMatricula_(ss.getSheetByName('Responses'), matricula);
+    var deletedGoalSelections = deleteRowsByMatricula_(ss.getSheetByName('GoalSelections'), matricula);
+    invalidateStudentProductSnapshot_(matricula);
+    invalidateProductReadIndexes_(['Responses', 'GoalSelections']);
+    return jsonResponse_({
+      status: 'success',
+      data: {
+        matricula: matricula,
+        deletedResponses: deletedResponses,
+        deletedGoalSelections: deletedGoalSelections,
+        preserved: ['Students', 'StudentPreferences', 'CheckIns', 'Sesiones'],
+      },
+    });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+const SYNTHETIC_DIRECTORY_PROPERTY_KEYS = Object.freeze([
+  'DIRECTORY_STUDENT_SOURCE_SPREADSHEET_ID',
+  'DIRECTORY_STUDENT_SOURCE_SHEET_NAME',
+  'DIRECTORY_MENTOR_SOURCE_SPREADSHEET_ID',
+  'DIRECTORY_MENTOR_SOURCE_SHEET_NAME',
+  'DIRECTORY_SOURCE_PERIOD',
+  'DIRECTORY_TARGET_PERIOD',
+  'DIRECTORY_SEMESTER_INCREMENT',
+  'DIRECTORY_SOURCE_CUTOFF_AT',
+  'DIRECTORY_PUBLISH_ENABLED',
+  'DIRECTORY_ROLLBACK_ENABLED',
+  'DIRECTORY_EXPANSION_ENABLED',
+  'ACTIVE_DIRECTORY_VERSION',
+]);
+
+function snapshotScriptProperties_(properties, keys) {
+  var all = properties.getProperties();
+  var snapshot = {};
+  keys.forEach(function(key) {
+    snapshot[key] = {
+      exists: Object.prototype.hasOwnProperty.call(all, key),
+      value: String(all[key] || ''),
+    };
+  });
+  return snapshot;
+}
+
+function restoreScriptProperties_(properties, snapshot) {
+  Object.keys(snapshot).forEach(function(key) {
+    properties.deleteProperty(key);
+    if (snapshot[key].exists) properties.setProperty(key, snapshot[key].value);
+  });
+}
+
+function parseInternalJsonResponse_(output) {
+  var content = output && typeof output.getContent === 'function' ? output.getContent() : output.text;
+  var parsed = JSON.parse(String(content || '{}'));
+  if (parsed.status !== 'success') throw new Error(parsed.message || 'La operación interna no fue exitosa.');
+  return parsed.data || parsed;
+}
+
+function assertSyntheticDirectoryStaging_(sheet) {
+  if (!sheet) throw new Error('No existe la pestaña Carga estudiantes en el staging sintético.');
+  var values = sheet.getDataRange().getValues().filter(function(row, index) {
+    return index === 0 || row.some(function(cell) { return cell !== '' && cell !== null && cell !== undefined; });
+  });
+  var expectedHeaders = ['matricula', 'nombre', 'semestrefj26', 'mentorid'];
+  var actualHeaders = (values[0] || []).slice(0, 4).map(normalizeHeaderKey_);
+  if (actualHeaders.join('|') !== expectedHeaders.join('|')) {
+    throw new Error('El staging sintético no conserva los cuatro encabezados autorizados.');
+  }
+  if (values.length !== 4) throw new Error('El staging sintético debe contener exactamente tres estudiantes.');
+  var matriculas = values.slice(1).map(function(row) { return String(row[0] || '').trim().toUpperCase(); });
+  if (matriculas.join('|') !== SYNTHETIC_DIRECTORY_MATRICULAS.join('|')) {
+    throw new Error('El staging contiene matrículas distintas de las tres autorizadas.');
+  }
+  if (values.slice(1).some(function(row) { return String(row[3] || '').trim() !== 'AD26-KARENG'; })) {
+    throw new Error('El staging sintético sólo puede usar AD26-KARENG.');
+  }
+  return values;
+}
+
+function runSyntheticDirectoryLifecycle(ss, data) {
+  var payload = data || {};
+  if (payload.confirmRun !== true) throw new Error('La prueba sintética requiere confirmRun=true.');
+  var user = resolveWorkspaceStaffUser_(ss, { actor: payload.actor });
+  if (sanitizeWorkspaceUser_(user).role !== 'admin') {
+    throw new Error('La prueba sintética requiere permisos de administración.');
+  }
+
+  var properties = PropertiesService.getScriptProperties();
+  var snapshot = snapshotScriptProperties_(properties, SYNTHETIC_DIRECTORY_PROPERTY_KEYS);
+  var staging = SpreadsheetApp.openById(SYNTHETIC_DIRECTORY_STAGING_ID);
+  var stagingSheet = staging.getSheetByName('Carga estudiantes');
+  var stagingValues = assertSyntheticDirectoryStaging_(stagingSheet);
+  var originalFirstName = stagingValues[1][1];
+  var originalSecondName = stagingValues[2][1];
+  var runSuffix = String(Utilities.getUuid()).replace(/[^A-Za-z0-9]/g, '').slice(0, 10);
+  var report = null;
+
+  try {
+    properties.setProperty('DIRECTORY_STUDENT_SOURCE_SPREADSHEET_ID', SYNTHETIC_DIRECTORY_STAGING_ID);
+    properties.setProperty('DIRECTORY_STUDENT_SOURCE_SHEET_NAME', 'Carga estudiantes');
+    properties.setProperty('DIRECTORY_MENTOR_SOURCE_SPREADSHEET_ID', SYNTHETIC_DIRECTORY_MENTOR_SOURCE_ID);
+    properties.setProperty('DIRECTORY_MENTOR_SOURCE_SHEET_NAME', 'Datos mentor');
+    properties.setProperty('DIRECTORY_SOURCE_PERIOD', 'FJ26');
+    properties.setProperty('DIRECTORY_TARGET_PERIOD', 'AD26');
+    properties.setProperty('DIRECTORY_SEMESTER_INCREMENT', '1');
+    properties.setProperty('DIRECTORY_SOURCE_CUTOFF_AT', '2026-06-30');
+    properties.setProperty('DIRECTORY_PUBLISH_ENABLED', 'true');
+    properties.setProperty('DIRECTORY_ROLLBACK_ENABLED', 'true');
+    properties.setProperty('DIRECTORY_EXPANSION_ENABLED', 'false');
+
+    stagingSheet.getRange(2, 2).setValue('Estudiante Sintético Uno ' + runSuffix);
+    stagingSheet.getRange(3, 2).setValue('Estudiante Sintético Dos v1 ' + runSuffix);
+    var previewOne = parseInternalJsonResponse_(previewDirectoryImport(ss, { scope: 'pilot' }));
+    if (previewOne.errorCount !== 0 || previewOne.summary.eligible !== 2 || previewOne.summary.excludedActualSemester7OrMore !== 1) {
+      throw new Error('La primera vista previa no produjo 2 elegibles y 1 exclusión esperada.');
+    }
+    var publicationOne = parseInternalJsonResponse_(publishDirectoryImport(ss, {
+      scope: 'pilot',
+      previewFingerprint: previewOne.fingerprint,
+      confirmPublish: true,
+      actor: payload.actor,
+    }));
+
+    stagingSheet.getRange(3, 2).setValue('Estudiante Sintético Dos v2 ' + runSuffix);
+    var previewTwo = parseInternalJsonResponse_(previewDirectoryImport(ss, { scope: 'pilot' }));
+    if (previewTwo.errorCount !== 0 || previewTwo.fingerprint === previewOne.fingerprint) {
+      throw new Error('La segunda vista previa no generó una huella nueva y válida.');
+    }
+    var publicationTwo = parseInternalJsonResponse_(publishDirectoryImport(ss, {
+      scope: 'pilot',
+      previewFingerprint: previewTwo.fingerprint,
+      confirmPublish: true,
+      actor: payload.actor,
+    }));
+    var rollback = parseInternalJsonResponse_(rollbackDirectoryImport(ss, {
+      confirmRollback: true,
+      targetVersionId: publicationOne.versionId,
+      actor: payload.actor,
+    }));
+    if (rollback.activeVersionId !== publicationOne.versionId) {
+      throw new Error('El rollback no regresó a la primera versión sintética.');
+    }
+
+    report = {
+      runId: runSuffix,
+      firstVersionId: publicationOne.versionId,
+      secondVersionId: publicationTwo.versionId,
+      rolledBackToVersionId: rollback.activeVersionId,
+      firstFingerprint: previewOne.fingerprint,
+      secondFingerprint: previewTwo.fingerprint,
+      eligibleCount: previewOne.summary.eligible,
+      excludedCount: previewOne.summary.excludedActualSemester7OrMore,
+      configurationRestored: true,
+      stagingRestored: true,
+    };
+  } finally {
+    stagingSheet.getRange(2, 2).setValue(originalFirstName);
+    stagingSheet.getRange(3, 2).setValue(originalSecondName);
+    restoreScriptProperties_(properties, snapshot);
+  }
+
+  return jsonResponse_({ status: 'success', data: report });
+}
+
+function createMappedSpreadsheet_(ss, sheetNames) {
+  return {
+    getSheetByName: function(name) {
+      return ss.getSheetByName(sheetNames[name] || name);
+    },
+    insertSheet: function(name) {
+      return ss.insertSheet(sheetNames[name] || name);
+    },
+  };
+}
+
+function runSyntheticProductMigrationLifecycle(ss, data) {
+  var payload = data || {};
+  if (payload.confirmRun !== true) throw new Error('La prueba sintética de producto requiere confirmRun=true.');
+  var user = resolveWorkspaceStaffUser_(ss, { actor: payload.actor });
+  if (sanitizeWorkspaceUser_(user).role !== 'admin') {
+    throw new Error('La prueba sintética de producto requiere permisos de administración.');
+  }
+
+  var runSuffix = String(Utilities.getUuid()).replace(/[^A-Za-z0-9]/g, '').slice(0, 10);
+  var sheetNames = {
+    Students: '_tmp_product_students_' + runSuffix,
+    StudentPreferences: '_tmp_product_preferences_' + runSuffix,
+    CheckIns: '_tmp_product_checkins_' + runSuffix,
+    ProductMigrationRuns: '_tmp_product_runs_' + runSuffix,
+  };
+  var mappedSpreadsheet = createMappedSpreadsheet_(ss, sheetNames);
+  var report = null;
+
+  try {
+    var studentsSheet = mappedSpreadsheet.insertSheet('Students');
+    studentsSheet.appendRow(STUDENT_HEADERS);
+    studentsSheet.appendRow(['A99998001', 'Sintético Uno', 'Ani', 'a99998001@tec.mx', '', 'Pendiente', 'Si', 'Llega con una pregunta concreta', '']);
+    studentsSheet.appendRow(['A99998002', 'Sintético Dos', 'Beto', 'a99998002@tec.mx', '', 'Pendiente', 'No', '', '']);
+    studentsSheet.appendRow(['A99998003', 'Sintético Tres', 'Nombre legacy', 'a99998003@tec.mx', '', 'Pendiente', 'Si', 'Quiere ordenar sus siguientes pasos', '']);
+
+    var preferenceSheet = mappedSpreadsheet.insertSheet('StudentPreferences');
+    preferenceSheet.appendRow(STUDENT_PREFERENCE_HEADERS);
+    preferenceSheet.appendRow(['A99998003', 'Nombre canónico', new Date().toISOString(), 'live', '']);
+
+    var preview = buildLegacyStudentProductMigration_(mappedSpreadsheet);
+    if (
+      preview.errors.length !== 0
+      || preview.preferenceInserts.length !== 2
+      || preview.checkInInserts.length !== 2
+      || preview.warnings.length !== 1
+    ) {
+      throw new Error('La vista previa sintética no produjo 2 preferencias, 2 check-ins y 1 conflicto esperado.');
+    }
+
+    var publication = parseInternalJsonResponse_(publishLegacyStudentProductMigration_(mappedSpreadsheet, {
+      confirmPublish: true,
+      previewFingerprint: preview.fingerprint,
+      actor: payload.actor,
+    }, { skipFeatureFlag: true }));
+
+    var repeatedPreview = buildLegacyStudentProductMigration_(mappedSpreadsheet);
+    if (repeatedPreview.preferenceInserts.length !== 0 || repeatedPreview.checkInInserts.length !== 0) {
+      throw new Error('La publicación sintética no fue idempotente.');
+    }
+
+    var rollback = parseInternalJsonResponse_(rollbackLegacyStudentProductMigration_(mappedSpreadsheet, {
+      confirmRollback: true,
+      migrationId: publication.migrationId,
+      actor: payload.actor,
+    }, { skipFeatureFlag: true }));
+
+    var preservedPreferences = parseSheetData(mappedSpreadsheet.getSheetByName('StudentPreferences').getDataRange().getValues());
+    if (
+      rollback.deletedPreferences !== 2
+      || rollback.deletedCheckIns !== 2
+      || preservedPreferences.length !== 1
+      || String(preservedPreferences[0].matricula || '').trim() !== 'A99998003'
+      || String(preservedPreferences[0].source || '').trim() !== 'live'
+    ) {
+      throw new Error('El rollback sintético no conservó exclusivamente el dato canónico previo.');
+    }
+
+    report = {
+      runId: runSuffix,
+      migrationId: publication.migrationId,
+      fingerprint: publication.fingerprint,
+      preferenceInserted: publication.preferenceInserted,
+      checkInInserted: publication.checkInInserted,
+      canonicalConflictsPreserved: preview.warnings.length,
+      deletedPreferences: rollback.deletedPreferences,
+      deletedCheckIns: rollback.deletedCheckIns,
+      temporarySheetsRemoved: true,
+    };
+  } finally {
+    Object.keys(sheetNames).forEach(function(key) {
+      var temporarySheet = ss.getSheetByName(sheetNames[key]);
+      if (temporarySheet) ss.deleteSheet(temporarySheet);
+    });
+  }
+
+  return jsonResponse_({ status: 'success', data: report });
+}
+
+function getActiveDirectoryContext_(ss, staff, legacyStudents, preferencesByMatricula, checkInsByMatricula) {
+  var activeVersionId = String(PropertiesService.getScriptProperties().getProperty('ACTIVE_DIRECTORY_VERSION') || '').trim();
+  if (!activeVersionId) return null;
+  var versionsSheet = ss.getSheetByName('DirectoryVersions');
+  var studentsSheet = ss.getSheetByName('DirectoryStudents');
+  if (!versionsSheet || !studentsSheet) {
+    throw new Error('ACTIVE_DIRECTORY_VERSION está configurada, pero faltan las hojas del directorio.');
+  }
+  var version = findDirectoryVersionRow_(versionsSheet, activeVersionId);
+  if (!version) throw new Error('La versión activa no existe en DirectoryVersions.');
+  var statusIndex = version.headers.indexOf('status');
+  if (String(version.values[statusIndex] || '').trim().toUpperCase() !== 'PUBLISHED') {
+    throw new Error('La versión activa no está marcada como PUBLISHED.');
+  }
+
+  var directoryRows = getDirectorySheetRows_(ss, 'DirectoryStudents', DIRECTORY_STUDENT_HEADERS).filter(function(student) {
+    return String(student.versionid || '').trim() === activeVersionId;
+  });
+  var expectedCount = Number(version.values[version.headers.indexOf('studentcount')]);
+  if (!Number.isFinite(expectedCount) || expectedCount !== directoryRows.length) {
+    throw new Error('La versión activa no pasó la verificación de integridad de estudiantes.');
+  }
+
+  var staffByMentorId = {};
+  staff.forEach(function(item) {
+    var mentorId = String(item.mentorid || item.mentor_id || '').trim();
+    if (!mentorId || normalizeIdentityValue_(item.activo || 'Si') === 'no') return;
+    if (staffByMentorId[mentorId]) throw new Error('MentorId duplicado en Staff: ' + mentorId + '.');
+    staffByMentorId[mentorId] = item;
+  });
+  var legacyByMatricula = {};
+  legacyStudents.forEach(function(student) {
+    legacyByMatricula[String(student.matricula || '').trim().toUpperCase()] = student;
+  });
+  var preferences = preferencesByMatricula || readStudentPreferencesByMatricula_(ss);
+  var checkIns = checkInsByMatricula || readLatestCheckInsByMatriculaForCycle_(ss, getActiveOperationalCycle_());
+  var activeMentorIds = new Set();
+  var students = directoryRows.map(function(directoryStudent) {
+    var matricula = String(directoryStudent.matricula || '').trim().toUpperCase();
+    var mentorId = String(directoryStudent.mentorid || '').trim();
+    var mentor = staffByMentorId[mentorId];
+    if (!mentor) throw new Error('El MentorId ' + mentorId + ' de la versión activa no existe como Staff activo.');
+    activeMentorIds.add(mentorId);
+    var legacy = legacyByMatricula[matricula] || {};
+    return overlayStudentProductState_({
+      matricula: matricula,
+      nombre: String(directoryStudent.nombre || '').trim(),
+      nombrepreferido: String(legacy.nombrepreferido || '').trim(),
+      email: normalizeIdentityValue_(directoryStudent.email),
+      mentorid: mentorId,
+      nicknamementor: String(mentor.alias || '').trim(),
+      status: 'Pendiente',
+      checkin: String(legacy.checkin || 'No').trim(),
+      agenciacheckin: String(legacy.agenciacheckin || '').trim(),
+    }, preferences, checkIns);
+  });
+  return {
+    versionId: activeVersionId,
+    students: students,
+    activeMentorIds: activeMentorIds,
+    staffByMentorId: staffByMentorId,
+  };
+}
+
+function getScopedStudentsForWorkspaceUser_(user, directoryContext, legacyStudents) {
+  var sanitizedUser = sanitizeWorkspaceUser_(user);
+  if (directoryContext) {
+    if (sanitizedUser.role === 'admin') return directoryContext.students;
+    if (sanitizedUser.mentorId && directoryContext.activeMentorIds.has(sanitizedUser.mentorId)) {
+      return directoryContext.students.filter(function(student) {
+        return student.mentorid === sanitizedUser.mentorId;
+      });
+    }
+  }
+  return legacyStudents.filter(function(student) {
+    return String(student.nicknamementor || '').trim() === sanitizedUser.alias;
+  });
+}
+
+function getActivePublishedDirectoryVersionId_(ss, timing) {
+  var activeVersionId = String(PropertiesService.getScriptProperties().getProperty('ACTIVE_DIRECTORY_VERSION') || '').trim();
+  if (!activeVersionId) return '';
+  var cache = getDirectoryReadCache_();
+  var cacheKey = getDirectoryReadCacheKey_('published', activeVersionId);
+  var cached = readDirectoryCacheJson_(cache, cacheKey, timing, 'directoryVersion');
+  if (cached && cached.published === true) return activeVersionId;
+  var version = findLatestReadOnlyRecord_(ss, 'DirectoryVersions', ['VersionId'], activeVersionId);
+  if (!version) throw new Error('La versión activa no existe en DirectoryVersions.');
+  if (String(version.status || '').trim().toUpperCase() !== 'PUBLISHED') {
+    throw new Error('La versión activa no está marcada como PUBLISHED.');
+  }
+  writeDirectoryCacheJson_(cache, cacheKey, { published: true });
+  return activeVersionId;
+}
+
+function getActiveDirectoryStudentIndex_(ss, activeVersionId, timing) {
+  var cache = getDirectoryReadCache_();
+  var cacheKey = getDirectoryReadCacheKey_('student-index', activeVersionId);
+  var cached = readDirectoryCacheJson_(cache, cacheKey, timing, 'directoryStudentIndex');
+  if (
+    cached
+    && Array.isArray(cached.headers)
+    && cached.rowsByMatricula
+    && typeof cached.rowsByMatricula === 'object'
+  ) return cached;
+
+  var context = getReadOnlySheetContext_(ss, 'DirectoryStudents');
+  if (!context || context.sheet.getLastRow() < 2) {
+    var emptyIndex = { headers: context ? context.headers : [], width: context ? context.width : 0, rowsByMatricula: {} };
+    writeDirectoryCacheJson_(cache, cacheKey, emptyIndex);
+    return emptyIndex;
+  }
+  var versionIndex = getHeaderColumnIndex_(context, ['VersionId']);
+  var matriculaIndex = getHeaderColumnIndex_(context, ['Matricula']);
+  if (versionIndex < 0 || matriculaIndex < 0) {
+    throw new Error('DirectoryStudents no contiene VersionId y Matricula.');
+  }
+  var firstColumn = Math.min(versionIndex, matriculaIndex);
+  var lastColumn = Math.max(versionIndex, matriculaIndex);
+  var rowCount = context.sheet.getLastRow() - 1;
+  var values = context.sheet.getRange(2, firstColumn + 1, rowCount, lastColumn - firstColumn + 1).getValues();
+  var rowsByMatricula = {};
+  values.forEach(function(row, index) {
+    var versionId = String(row[versionIndex - firstColumn] || '').trim();
+    var matricula = String(row[matriculaIndex - firstColumn] || '').trim().toUpperCase();
+    if (versionId === activeVersionId && matricula) rowsByMatricula[matricula] = index + 2;
+  });
+  var built = { headers: context.headers, width: context.width, rowsByMatricula: rowsByMatricula };
+  writeDirectoryCacheJson_(cache, cacheKey, built);
+  return built;
+}
+
+function findActiveDirectoryStudent_(ss, matricula, activeVersionId, timing) {
+  if (!activeVersionId) return null;
+  var index = getActiveDirectoryStudentIndex_(ss, activeVersionId, timing);
+  var rowNumber = Number(index.rowsByMatricula[String(matricula || '').trim().toUpperCase()]);
+  if (!Number.isFinite(rowNumber) || rowNumber < 2) return null;
+  var sheet = ss.getSheetByName('DirectoryStudents');
+  if (!sheet) throw new Error('No existe la hoja DirectoryStudents.');
+  var row = sheet.getRange(rowNumber, 1, 1, index.width).getValues()[0];
+  var record = rowToRecord_(index.headers, row);
+  if (
+    !record
+    || String(record.versionid || '').trim() !== activeVersionId
+    || String(record.matricula || '').trim().toUpperCase() !== String(matricula || '').trim().toUpperCase()
+  ) {
+    invalidateDirectoryReadCache_([activeVersionId]);
+    throw new Error('El índice de DirectoryStudents perdió consistencia. Reintenta la consulta.');
+  }
+  return record;
+}
+
+function findStaffRecord_(ss, columnAliases, value, timing) {
+  var normalizedExpected = normalizeIdentityValue_(value);
+  var normalizedAliases = (columnAliases || []).map(normalizeHeaderKey_);
+  return getSanitizedStaffDirectory_(ss, timing).find(function(record) {
+    if (normalizeIdentityValue_(record.activo || 'Si') === 'no') return false;
+    return normalizedAliases.some(function(alias) {
+      return normalizeIdentityValue_(record[alias]) === normalizedExpected;
+    });
+  }) || null;
+}
+
+function hasActiveDirectoryMentor_(ss, mentorId, activeVersionId) {
+  if (!mentorId || !activeVersionId) return false;
+  var context = getReadOnlySheetContext_(ss, 'DirectoryStudents');
+  if (!context || context.sheet.getLastRow() < 2) return false;
+  var versionIndex = getHeaderColumnIndex_(context, ['VersionId']);
+  var mentorIndex = getHeaderColumnIndex_(context, ['MentorId']);
+  if (versionIndex < 0 || mentorIndex < 0) throw new Error('DirectoryStudents no contiene VersionId y MentorId.');
+  var rowCount = context.sheet.getLastRow() - 1;
+  var versions = context.sheet.getRange(2, versionIndex + 1, rowCount, 1).getValues();
+  var mentors = context.sheet.getRange(2, mentorIndex + 1, rowCount, 1).getValues();
+  for (var index = 0; index < rowCount; index++) {
+    if (
+      String(versions[index][0] || '').trim() === activeVersionId
+      && String(mentors[index][0] || '').trim() === mentorId
+    ) return true;
+  }
+  return false;
+}
+
+function findLatestCheckInForStudentCycle_(ss, matricula, operationalCycle, timing) {
+  var matches = findIndexedProductRecords_(ss, 'CheckIns', matricula, timing, 'checkInIndex', true)
+    .map(function(item) { return item.record; })
+    .filter(function(record) { return recordMatchesOperationalCycle_(record, operationalCycle); });
+  return matches.reduce(function(latest, record) {
+    var timestamp = String(record.timestampiso || record.createdat || '');
+    var latestTimestamp = latest ? String(latest.timestampiso || latest.createdat || '') : '';
+    return !latest || timestamp >= latestTimestamp ? record : latest;
+  }, null);
+}
+
+function getStudentProductSnapshot_(ss, matricula, operationalCycle, timing) {
+  var cache = getDirectoryReadCache_();
+  var cacheKey = getStudentProductCacheKey_(matricula, operationalCycle);
+  var cached = readDirectoryCacheJson_(cache, cacheKey, timing, 'studentProductSnapshot');
+  if (cached && cached.version === STUDENT_PRODUCT_CACHE_VERSION) return cached;
+
+  var preference = measureRequestStage_(timing, 'preference', function() {
+    return findLatestIndexedProductRecord_(ss, 'StudentPreferences', matricula, timing, 'preferenceIndex', null, true);
+  });
+  var checkIn = measureRequestStage_(timing, 'checkIn', function() {
+    return findLatestCheckInForStudentCycle_(ss, matricula, operationalCycle, timing);
+  });
+  var responses = measureRequestStage_(timing, 'testResponse', function() {
+    return findLatestIndexedProductRecord_(ss, 'Responses', matricula, timing, 'responseIndex', function(record) {
+      return recordMatchesOperationalCycle_(record, operationalCycle);
+    }, true);
+  });
+  var goals = measureRequestStage_(timing, 'progressGoals', function() {
+    return findLatestIndexedProductRecord_(ss, 'GoalSelections', matricula, timing, 'goalSelectionIndex', function(record) {
+      return recordMatchesOperationalCycle_(record, operationalCycle);
+    }, true);
+  });
+  var sessions = measureRequestStage_(timing, 'progressSessions', function() {
+    return findLatestIndexedProductRecord_(ss, 'Sesiones', matricula, timing, 'sessionIndex', function(record) {
+      return sessionMatchesOperationalCycle_(record, operationalCycle);
+    }, true);
+  });
+  var snapshot = {
+    version: STUDENT_PRODUCT_CACHE_VERSION,
+    preference: preference ? { nombrepreferido: String(preference.nombrepreferido || '').trim() } : null,
+    checkIn: checkIn ? {
+      matricula: matricula,
+      checkinid: String(checkIn.checkinid || '').trim(),
+      pretestresumen: String(checkIn.pretestresumen || '').trim(),
+      timestampiso: String(checkIn.timestampiso || ''), sessionid: String(checkIn.sessionid || ''),
+      goalselectionid: String(checkIn.goalselectionid || ''), source: String(checkIn.source || ''),
+    } : null,
+    hasResponse: Boolean(responses),
+    hasGoalSelection: Boolean(goals),
+    hasSessionRecord: Boolean(sessions),
+    testResponse: responses ? sanitizeTestResponse_(responses) : null,
+  };
+  writeStudentProductCacheJson_(cache, cacheKey, snapshot);
+  return snapshot;
+}
+
+function buildStudentLookupFast_(ss, data, timing) {
+  var matricula = String(data && data.matricula ? data.matricula : '').trim().toUpperCase();
+  if (!matricula) throw new Error('Falta la matrícula del alumno');
+  var operationalCycle = getActiveOperationalCycle_();
+  var legacyStudent = measureRequestStage_(timing, 'legacyStudent', function() {
+    return findLegacyStudentFast_(ss, matricula, timing);
+  });
+  var activeVersionId = measureRequestStage_(timing, 'directoryVersion', function() {
+    return getActivePublishedDirectoryVersionId_(ss, timing);
+  });
+  var directoryStudent = measureRequestStage_(timing, 'directoryStudent', function() {
+    return findActiveDirectoryStudent_(ss, matricula, activeVersionId, timing);
+  });
+  var mentorRecord = null;
+  var student = null;
+
+  if (directoryStudent) {
+    mentorRecord = measureRequestStage_(timing, 'staff', function() {
+      return findStaffRecord_(ss, ['MentorId'], directoryStudent.mentorid, timing);
+    });
+    if (!mentorRecord) throw new Error('El MentorId ' + directoryStudent.mentorid + ' no existe como Staff activo.');
+    student = {
+      matricula: matricula,
+      nombre: String(directoryStudent.nombre || '').trim(),
+      nombrepreferido: String(legacyStudent && legacyStudent.nombrepreferido || '').trim(),
+      email: normalizeIdentityValue_(directoryStudent.email),
+      mentorid: String(directoryStudent.mentorid || '').trim(),
+      nicknamementor: String(mentorRecord.alias || '').trim(),
+      status: 'Pendiente',
+      checkin: String(legacyStudent && legacyStudent.checkin || 'No').trim(),
+      agenciacheckin: String(legacyStudent && legacyStudent.agenciacheckin || '').trim(),
+    };
+  } else if (legacyStudent) {
+    mentorRecord = String(legacyStudent.nicknamementor || '').trim()
+      ? measureRequestStage_(timing, 'staff', function() {
+        return findStaffRecord_(ss, ['Alias'], legacyStudent.nicknamementor, timing);
+      })
+      : null;
+    var legacyMentorId = mentorRecord ? String(mentorRecord.mentorid || mentorRecord.mentor_id || '').trim() : '';
+    var managedByActiveDirectory = !isDemoStudentMatricula_(matricula) && measureRequestStage_(timing, 'directoryScope', function() {
+      return hasActiveDirectoryMentor_(ss, legacyMentorId, activeVersionId);
+    });
+    if (!managedByActiveDirectory) student = legacyStudent;
+  }
+
+  if (!student) return { student: null, mentor: null };
+
+  var productSnapshot = getStudentProductSnapshot_(ss, matricula, operationalCycle, timing);
+  var preferences = {};
+  var checkIns = {};
+  if (productSnapshot.preference) preferences[matricula] = productSnapshot.preference;
+  if (productSnapshot.checkIn) checkIns[matricula] = productSnapshot.checkIn;
+  student = overlayStudentProductState_(student, preferences, checkIns);
+  student = deriveStudentProgress_(
+    [student],
+    productSnapshot.hasResponse ? [{ matricula: matricula }] : [],
+    productSnapshot.hasGoalSelection ? [{ matricula: matricula }] : [],
+    productSnapshot.hasSessionRecord ? [{ matricula: matricula }] : []
+  )[0];
+  return {
+    student: student,
+    mentor: mentorRecord ? sanitizeStudentMentor_(mentorRecord) : null,
+    testResponse: productSnapshot.testResponse || null,
+    operationalCycle: operationalCycle,
+    continuation: currentStudentContinuation_(ss, matricula, operationalCycle, timing),
+  };
+}
+
+function findStudent(ss, data, requestTiming) {
+  var timing = requestTiming || createRequestTiming_(data || {});
+  try {
+    var result = buildStudentLookupFast_(ss, data || {}, timing);
+    return jsonResponseWithTiming_({
+      status: 'success',
+      data: { student: result.student, mentor: result.mentor },
+    }, timing);
+  } catch (error) {
+    return jsonResponseWithTiming_({ status: 'error', message: error.toString() }, timing);
+  }
+}
+
+function getStudentEntry(ss, data, requestTiming) {
+  var timing = requestTiming || createRequestTiming_(data || {});
+  try {
+    var lookup = buildStudentLookupFast_(ss, data || {}, timing);
+    return jsonResponseWithTiming_({
+      status: 'success',
+      data: { student: lookup.student, mentor: lookup.mentor, testResponse: lookup.testResponse || null, operationalCycle: lookup.operationalCycle, continuation: lookup.continuation || null },
+    }, timing);
+  } catch (error) {
+    return jsonResponseWithTiming_({ status: 'error', message: error.toString() }, timing);
+  }
+}
+
+function normalizeIdentityValue_(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function resolveWorkspaceStaffUser_(ss, data) {
+  var actor = data && data.actor ? data.actor : {};
+  var actorEmail = normalizeIdentityValue_(actor.email);
+  var actorSubject = String(actor.sub || '').trim();
+  if (!actorEmail || !actorSubject) {
+    throw new Error('La identidad institucional no está completa.');
+  }
+
+  var staffSheet = ensureSheetWithHeaders_(ss, 'Staff', STAFF_HEADERS);
+  var staffValues = staffSheet.getDataRange().getValues();
+  var staff = parseSheetData(staffValues);
+  var user = staff.find(function(item) {
+    var emailMatches = normalizeIdentityValue_(item.email) === actorEmail;
+    var storedSubject = String(item.googlesubject || item.google_subject || '').trim();
+    var subjectMatches = !storedSubject || storedSubject === actorSubject;
+    var isActive = normalizeIdentityValue_(item.activo || 'Si') !== 'no';
+    return emailMatches && subjectMatches && isActive;
   });
 
   if (!user) {
-    return jsonResponse_({ status: 'error', message: 'No encontramos permisos vigentes para este correo.' });
+    throw new Error('No encontramos permisos activos para esta cuenta institucional.');
   }
 
-  if (String(user.pin || '').trim() !== pin) {
-    return jsonResponse_({ status: 'error', message: 'El PIN ingresado es incorrecto.' });
+  var headerKeys = staffValues[0].map(normalizeHeaderKey_);
+  var emailColumn = headerKeys.indexOf('email');
+  var subjectColumn = headerKeys.indexOf('googlesubject');
+  if (emailColumn > -1 && subjectColumn > -1 && !String(user.googlesubject || '').trim()) {
+    for (var rowIndex = 1; rowIndex < staffValues.length; rowIndex++) {
+      if (normalizeIdentityValue_(staffValues[rowIndex][emailColumn]) === actorEmail) {
+        staffSheet.getRange(rowIndex + 1, subjectColumn + 1).setValue(actorSubject);
+        user.googlesubject = actorSubject;
+        break;
+      }
+    }
   }
-
-  return jsonResponse_({ status: 'success', data: { user: user } });
+  return user;
 }
 
-/** Utilidad: Limpia datos para nueva cohorte */
+function sanitizeWorkspaceUser_(user) {
+  return {
+    mentorId: String(user.mentorid || user.mentor_id || '').trim(),
+    email: normalizeIdentityValue_(user.email),
+    name: String(user.nombre || '').trim(),
+    alias: String(user.alias || '').trim(),
+    role: normalizeIdentityValue_(user.rol || 'mentor'),
+    community: String(user.comunidad || '').trim(),
+    hex: String(user.hex || '').trim(),
+    slogan: String(user.slogan || '').trim(),
+    whatsappE164: String(user.whatsappe164 || user.whatsapp || user.telefono || '').replace(/[^0-9]/g, ''),
+    whatsappActive: normalizeIdentityValue_(user.whatsappactivo || 'Si') !== 'no',
+    active: true,
+  };
+}
+
+function sanitizeStudentMentor_(user) {
+  var sanitized = sanitizeWorkspaceUser_(user);
+  return {
+    nombre: sanitized.name,
+    alias: sanitized.alias,
+    comunidad: sanitized.community,
+    hex: sanitized.hex,
+    slogan: sanitized.slogan,
+    whatsappe164: sanitized.whatsappActive ? sanitized.whatsappE164 : '',
+    whatsappactivo: sanitized.whatsappActive,
+  };
+}
+
+function resolveWorkspaceUser(ss, data) {
+  var user = resolveWorkspaceStaffUser_(ss, data);
+  return jsonResponse_({ status: 'success', data: { user: sanitizeWorkspaceUser_(user) } });
+}
+
+function filterRecordsByMatriculas_(records, matriculas) {
+  return records.filter(function(item) {
+    return matriculas.has(String(item.matricula || '').trim().toUpperCase());
+  });
+}
+
+function filterRecordsByOperationalCycle_(records, operationalCycle) {
+  return records.filter(function(record) {
+    return recordMatchesOperationalCycle_(record, operationalCycle);
+  });
+}
+
+function readSheetRecordsIfPresent_(ss, sheetName) {
+  var sheet = ss.getSheetByName(sheetName);
+  return sheet && sheet.getLastRow() > 1 ? parseSheetData(sheet.getDataRange().getValues()) : [];
+}
+
+function getActiveOperationalCycle_() {
+  return String(PropertiesService.getScriptProperties().getProperty('ACTIVE_OPERATIONAL_CYCLE') || 'AD26-FJ27').trim();
+}
+
+function getStudentCycleCompletion_(ss, matricula, operationalCycle) {
+  var normalizedMatricula = String(matricula || '').trim().toUpperCase();
+  var cycle = String(operationalCycle || getActiveOperationalCycle_()).trim();
+  var responses = readSheetRecordsIfPresent_(ss, 'Responses');
+  var hasResponse = responses.some(function(response) {
+    return String(response.matricula || '').trim().toUpperCase() === normalizedMatricula
+      && recordMatchesOperationalCycle_(response, cycle);
+  });
+  var currentCheckIns = readLatestCheckInsByMatriculaForCycle_(ss, cycle);
+  var hasCheckIn = Boolean(currentCheckIns[normalizedMatricula]);
+  return {
+    operationalCycle: cycle,
+    hasResponse: hasResponse,
+    hasCheckIn: hasCheckIn,
+    complete: hasResponse && hasCheckIn,
+  };
+}
+
+function getActiveQuestionnaireVersion_() {
+  return String(PropertiesService.getScriptProperties().getProperty('ACTIVE_QUESTIONNAIRE_VERSION') || '2026-01').trim();
+}
+
+function deriveStudentProgress_(students, responses, goalSelections, sessions) {
+  var responseMatriculas = new Set(responses.map(function(item) {
+    return String(item.matricula || '').trim().toUpperCase();
+  }).filter(Boolean));
+  var goalMatriculas = new Set(goalSelections.map(function(item) {
+    return String(item.matricula || '').trim().toUpperCase();
+  }).filter(Boolean));
+  var sessionMatriculas = new Set((sessions || []).map(function(item) {
+    return String(item.matricula || '').trim().toUpperCase();
+  }).filter(Boolean));
+  return students.map(function(student) {
+    var matricula = String(student.matricula || '').trim().toUpperCase();
+    var hasResponse = responseMatriculas.has(matricula);
+    var hasGoalSelection = student.encountermanaged ? Boolean(student.goalselectionid) : goalMatriculas.has(matricula);
+    var hasCheckIn = normalizeIdentityValue_(student.checkin) === 'si';
+    var hasSession = hasCheckIn || sessionMatriculas.has(matricula);
+    var derivedStatus = hasGoalSelection
+      ? 'Metas Seleccionadas'
+      : (hasSession ? 'Sesión Iniciada' : (hasResponse ? 'Test Completado' : 'Pendiente'));
+    return {
+      ...student,
+      status: derivedStatus,
+      progressState: hasGoalSelection ? 'plan_defined' : (hasSession ? 'session_started' : (hasResponse ? 'test_complete' : 'test_pending')),
+      hasResponse: hasResponse,
+      hasGoalSelection: hasGoalSelection,
+      hasCheckIn: hasCheckIn,
+      hasSession: hasSession,
+    };
+  });
+}
+
+function isDashboardReadModelEnabled_() {
+  return normalizeIdentityValue_(PropertiesService.getScriptProperties().getProperty('DASHBOARD_READ_MODEL_ENABLED')) === 'true';
+}
+
+function getDashboardStudentFlags_(student) {
+  return (student.hasResponse ? 1 : 0)
+    | (student.hasGoalSelection ? 2 : 0)
+    | (student.hasCheckIn ? 4 : 0)
+    | (student.hasSession ? 8 : 0);
+}
+
+function compactDashboardStudent_(student) {
+  return [
+    String(student.matricula || '').trim().toUpperCase(),
+    String(student.nombre || student.name || '').trim(),
+    String(student.nombrepreferido || student.preferredName || '').trim(),
+    normalizeIdentityValue_(student.email),
+    String(student.mentorid || student.mentorId || '').trim(),
+    String(student.nicknamementor || student.mentor || '').trim(),
+    normalizeIdentityValue_(student.checkin || student.checkIn) === 'si' ? 'Si' : 'No',
+    String(student.agenciacheckin || student.agenciaCheckIn || '').trim(),
+    String(student.progressState || student.progressstate || 'test_pending').trim(),
+    getDashboardStudentFlags_(student),
+    student.checkinid || '', student.checkinsessionid || '', student.checkintimestamp || '', student.goalselectionid || '', Boolean(student.encountermanaged),
+  ];
+}
+
+function expandDashboardStudent_(record) {
+  if (!Array.isArray(record) || record.length < 10) throw new Error('El registro compacto del tablero es inválido.');
+  var progressState = String(record[8] || 'test_pending').trim();
+  var flags = Number(record[9]) || 0;
+  return {
+    matricula: String(record[0] || '').trim().toUpperCase(),
+    nombre: String(record[1] || '').trim(),
+    nombrepreferido: String(record[2] || '').trim(),
+    email: normalizeIdentityValue_(record[3]),
+    mentorid: String(record[4] || '').trim(),
+    nicknamementor: String(record[5] || '').trim(),
+    checkin: String(record[6] || 'No').trim(),
+    agenciacheckin: String(record[7] || '').trim(),
+    progressState: progressState,
+    status: progressState === 'plan_defined'
+      ? 'Metas Seleccionadas'
+      : (progressState === 'session_started' ? 'Sesión Iniciada' : (progressState === 'test_complete' ? 'Test Completado' : 'Pendiente')),
+    hasResponse: Boolean(flags & 1),
+    hasGoalSelection: Boolean(flags & 2),
+    hasCheckIn: Boolean(flags & 4),
+    hasSession: Boolean(flags & 8),
+    checkinid: String(record[10] || ''), checkinsessionid: String(record[11] || ''), checkintimestamp: String(record[12] || ''),
+    goalselectionid: String(record[13] || ''), encountermanaged: Boolean(record[14]),
+  };
+}
+
+function buildDashboardReadModel_(versionId, operationalCycle, students, createdAt) {
+  return {
+    schemaVersion: DASHBOARD_READ_MODEL_SCHEMA_VERSION,
+    versionId: String(versionId || '').trim(),
+    operationalCycle: String(operationalCycle || '').trim(),
+    createdAt: String(createdAt || new Date().toISOString()),
+    students: (students || []).map(compactDashboardStudent_),
+  };
+}
+
+function expandDashboardReadModel_(model) {
+  if (!model || model.schemaVersion !== DASHBOARD_READ_MODEL_SCHEMA_VERSION || !Array.isArray(model.students)) {
+    throw new Error('El read model del tablero es incompatible.');
+  }
+  return model.students.map(expandDashboardStudent_);
+}
+
+function getUtf8ByteLength_(value) {
+  return unescape(encodeURIComponent(String(value || ''))).length;
+}
+
+function getDashboardReadModelCacheKey_(versionId, operationalCycle, suffix) {
+  return [
+    'faro',
+    'dashboard-read-model',
+    DASHBOARD_READ_MODEL_SCHEMA_VERSION,
+    String(versionId || '').trim(),
+    String(operationalCycle || '').trim(),
+    String(suffix || 'manifest').trim(),
+  ].join(':');
+}
+
+function splitDashboardReadModelStudents_(students) {
+  var chunks = [];
+  var current = [];
+  var currentBytes = 2;
+  (students || []).forEach(function(student) {
+    var serialized = JSON.stringify(student);
+    var recordBytes = getUtf8ByteLength_(serialized) + (current.length ? 1 : 0);
+    if (current.length && currentBytes + recordBytes > DASHBOARD_READ_MODEL_CHUNK_MAX_BYTES) {
+      chunks.push(current);
+      current = [];
+      currentBytes = 2;
+      recordBytes = getUtf8ByteLength_(serialized);
+    }
+    if (recordBytes + 2 > DASHBOARD_READ_MODEL_CHUNK_MAX_BYTES) {
+      throw new Error('Un registro del read model excede el tamaño máximo permitido.');
+    }
+    current.push(student);
+    currentBytes += recordBytes;
+  });
+  if (current.length || !chunks.length) chunks.push(current);
+  return chunks;
+}
+
+function writeDashboardReadModelCache_(model) {
+  if (!model || model.schemaVersion !== DASHBOARD_READ_MODEL_SCHEMA_VERSION || !Array.isArray(model.students)) {
+    throw new Error('No se puede guardar un read model incompatible.');
+  }
+  var cache = getDirectoryReadCache_();
+  var chunks = splitDashboardReadModelStudents_(model.students);
+  var studentPayload = JSON.stringify(model.students);
+  chunks.forEach(function(chunk, index) {
+    cache.put(
+      getDashboardReadModelCacheKey_(model.versionId, model.operationalCycle, 'chunk-' + index),
+      JSON.stringify(chunk),
+      DASHBOARD_READ_MODEL_CACHE_TTL_SECONDS
+    );
+  });
+  var manifest = {
+    schemaVersion: model.schemaVersion,
+    versionId: model.versionId,
+    operationalCycle: model.operationalCycle,
+    createdAt: model.createdAt,
+    chunkCount: chunks.length,
+    studentCount: model.students.length,
+    checksum: sha256Hex_(studentPayload),
+  };
+  cache.put(
+    getDashboardReadModelCacheKey_(model.versionId, model.operationalCycle, 'manifest'),
+    JSON.stringify(manifest),
+    DASHBOARD_READ_MODEL_CACHE_TTL_SECONDS
+  );
+  return manifest;
+}
+
+function readDashboardReadModelCache_(versionId, operationalCycle) {
+  var cache = getDirectoryReadCache_();
+  var manifestRaw = cache.get(getDashboardReadModelCacheKey_(versionId, operationalCycle, 'manifest'));
+  if (!manifestRaw) return null;
+  try {
+    var manifest = JSON.parse(manifestRaw);
+    if (
+      manifest.schemaVersion !== DASHBOARD_READ_MODEL_SCHEMA_VERSION
+      || manifest.versionId !== String(versionId || '').trim()
+      || manifest.operationalCycle !== String(operationalCycle || '').trim()
+      || !Number.isFinite(Number(manifest.chunkCount))
+      || Number(manifest.chunkCount) < 1
+    ) return null;
+    var students = [];
+    for (var index = 0; index < Number(manifest.chunkCount); index++) {
+      var chunkRaw = cache.get(getDashboardReadModelCacheKey_(versionId, operationalCycle, 'chunk-' + index));
+      if (!chunkRaw) return null;
+      var chunk = JSON.parse(chunkRaw);
+      if (!Array.isArray(chunk)) return null;
+      students = students.concat(chunk);
+    }
+    if (students.length !== Number(manifest.studentCount)) return null;
+    if (sha256Hex_(JSON.stringify(students)) !== manifest.checksum) return null;
+    return {
+      schemaVersion: manifest.schemaVersion,
+      versionId: manifest.versionId,
+      operationalCycle: manifest.operationalCycle,
+      createdAt: manifest.createdAt,
+      students: students,
+    };
+  } catch (error) {
+    return null;
+  }
+}
+
+function getDashboardScopedStudents_(students, user, requestedScope) {
+  var resolvedUser = user || {};
+  var role = normalizeIdentityValue_(resolvedUser.role || resolvedUser.rol || 'mentor');
+  var mentorId = String(resolvedUser.mentorId || resolvedUser.mentorid || resolvedUser.mentor_id || '').trim();
+  var scope = String(requestedScope || 'own').trim().toLowerCase();
+  if (scope !== 'own' && scope !== 'all') throw new Error('El alcance solicitado no es válido.');
+  if (role !== 'admin') scope = 'own';
+  if (scope === 'all') return (students || []).slice();
+  return (students || []).filter(function(student) {
+    return String(student.mentorid || student.mentorId || '').trim() === mentorId;
+  });
+}
+
+function summarizeDashboardStudents_(students) {
+  var summary = {
+    total: 0,
+    testPending: 0,
+    testComplete: 0,
+    sessionStarted: 0,
+    planDefined: 0,
+    sessionReady: 0,
+  };
+  (students || []).forEach(function(student) {
+    summary.total += 1;
+    var state = String(student.progressState || student.progressstate || 'test_pending').trim();
+    if (state === 'plan_defined') summary.planDefined += 1;
+    else if (state === 'session_started') summary.sessionStarted += 1;
+    else if (state === 'test_complete') summary.testComplete += 1;
+    else summary.testPending += 1;
+    if (student.hasResponse && !student.hasSession) summary.sessionReady += 1;
+  });
+  return summary;
+}
+
+function normalizeDashboardSearch_(value) {
+  return normalizeIdentityValue_(value)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+function filterDashboardStudents_(students, statusFilter, searchTerm) {
+  var normalizedStatus = String(statusFilter || 'all').trim().toLowerCase();
+  var acceptedStatuses = ['all', 'pending', 'test', 'session', 'plan'];
+  if (acceptedStatuses.indexOf(normalizedStatus) < 0) throw new Error('El filtro de estado no es válido.');
+  var statusMap = {
+    pending: 'test_pending',
+    test: 'test_complete',
+    session: 'session_started',
+    plan: 'plan_defined',
+  };
+  var normalizedSearch = normalizeDashboardSearch_(searchTerm);
+  return (students || []).filter(function(student) {
+    var matchesStatus = normalizedStatus === 'all'
+      || String(student.progressState || student.progressstate || '').trim() === statusMap[normalizedStatus];
+    if (!matchesStatus) return false;
+    if (!normalizedSearch) return true;
+    return [student.matricula, student.nombre, student.name, student.nombrepreferido, student.preferredName, student.email]
+      .some(function(value) { return normalizeDashboardSearch_(value).indexOf(normalizedSearch) > -1; });
+  });
+}
+
+function buildDashboardPage_(students, options) {
+  var settings = options || {};
+  var requestedPage = Math.floor(Number(settings.page));
+  var page = Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+  var requestedPageSize = Math.floor(Number(settings.pageSize));
+  var pageSize = Number.isFinite(requestedPageSize) && requestedPageSize > 0
+    ? Math.min(DASHBOARD_PAGE_SIZE_MAX, requestedPageSize)
+    : DASHBOARD_PAGE_SIZE_DEFAULT;
+  var filtered = filterDashboardStudents_(students, settings.status, settings.search);
+  var totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  var boundedPage = Math.min(page, totalPages);
+  var start = (boundedPage - 1) * pageSize;
+  return {
+    page: boundedPage,
+    pageSize: pageSize,
+    total: filtered.length,
+    totalPages: totalPages,
+    hasNextPage: boundedPage < totalPages,
+    students: filtered.slice(start, start + pageSize),
+  };
+}
+
+function selectLatestDashboardRecords_(records, getTimestamp) {
+  var latestByMatricula = {};
+  (records || []).forEach(function(record, index) {
+    var matricula = String(record.matricula || '').trim().toUpperCase();
+    if (!matricula) return;
+    var timestamp = Number(getTimestamp(record)) || 0;
+    var current = latestByMatricula[matricula];
+    if (!current || timestamp > current.timestamp || (timestamp === current.timestamp && index > current.index)) {
+      latestByMatricula[matricula] = { record: record, timestamp: timestamp, index: index };
+    }
+  });
+  return Object.keys(latestByMatricula).map(function(matricula) {
+    return latestByMatricula[matricula].record;
+  });
+}
+
+function getDashboardRecordTimestamp_(record, aliases) {
+  for (var index = 0; index < aliases.length; index++) {
+    var value = record[aliases[index]];
+    if (!value) continue;
+    var parsed = new Date(value).getTime();
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return 0;
+}
+
+function getMentorDashboard(ss, data, requestTiming) {
+  var timing = requestTiming || createRequestTiming_(data || {});
+  var user = measureRequestStage_(timing, 'dashboardIdentity', function() {
+    return resolveWorkspaceStaffUser_(ss, data);
+  });
+  var sanitizedUser = sanitizeWorkspaceUser_(user);
+  var isAdmin = sanitizedUser.role === 'admin';
+  var preferences = measureRequestStage_(timing, 'dashboardPreferences', function() {
+    return readStudentPreferencesByMatricula_(ss);
+  });
+  var activeOperationalCycle = getActiveOperationalCycle_();
+  var checkIns = measureRequestStage_(timing, 'dashboardCheckIns', function() {
+    return readLatestCheckInsByMatriculaForCycle_(ss, activeOperationalCycle);
+  });
+  var legacyStudents = measureRequestStage_(timing, 'dashboardLegacyStudents', function() {
+    return readLegacyStudents_(ss).map(function(student) {
+      return overlayStudentProductState_(student, preferences, checkIns);
+    });
+  });
+  var staff = measureRequestStage_(timing, 'dashboardStaff', function() {
+    return parseSheetData(ensureSheetWithHeaders_(ss, 'Staff', STAFF_HEADERS).getDataRange().getValues());
+  });
+  var directoryContext = measureRequestStage_(timing, 'dashboardDirectory', function() {
+    return getActiveDirectoryContext_(ss, staff, legacyStudents, preferences, checkIns);
+  });
+  var scopedStudents = measureRequestStage_(timing, 'dashboardScope', function() {
+    return getScopedStudentsForWorkspaceUser_(user, directoryContext, legacyStudents);
+  });
+  var matriculas = new Set(scopedStudents.map(function(student) {
+    return String(student.matricula || '').trim().toUpperCase();
+  }).filter(Boolean));
+  var mentors = isAdmin
+    ? staff.filter(function(item) {
+      return normalizeIdentityValue_(item.activo || 'Si') !== 'no';
+    }).map(sanitizeWorkspaceUser_)
+    : [sanitizedUser];
+  var goalSelections = measureRequestStage_(timing, 'dashboardGoalSelections', function() {
+    return filterRecordsByMatriculas_(readSheetRecordsIfPresent_(ss, 'GoalSelections'), matriculas);
+  });
+  var responses = measureRequestStage_(timing, 'dashboardResponses', function() {
+    return filterRecordsByMatriculas_(readSheetRecordsIfPresent_(ss, 'Responses'), matriculas);
+  });
+  var currentGoalSelections = filterRecordsByOperationalCycle_(goalSelections, activeOperationalCycle);
+  var currentResponses = filterRecordsByOperationalCycle_(responses, activeOperationalCycle);
+  var sessions = measureRequestStage_(timing, 'dashboardSessions', function() {
+    return filterRecordsByMatriculas_(
+      parseSheetData(ensureSessionsSheet_(ss).getDataRange().getValues()),
+      matriculas
+    );
+  });
+  var currentSessions = sessions.filter(function(session) {
+    return sessionMatchesOperationalCycle_(session, activeOperationalCycle);
+  });
+  scopedStudents = measureRequestStage_(timing, 'dashboardProgress', function() {
+    return deriveStudentProgress_(scopedStudents, currentResponses, currentGoalSelections, currentSessions);
+  });
+  var latestGoalSelections = measureRequestStage_(timing, 'dashboardLatestGoals', function() {
+    return selectLatestDashboardRecords_(goalSelections.filter(function(record) {
+      var student = scopedStudents.find(function(item) { return item.matricula === record.matricula; });
+      return !student || !student.encountermanaged || String(record.selectionid || '') === String(student.goalselectionid || '');
+    }), function(record) {
+      return getDashboardRecordTimestamp_(record, ['timestamp', 'timestampactualizado', 'timestampguardado']);
+    });
+  });
+  var latestResponses = measureRequestStage_(timing, 'dashboardLatestResponses', function() {
+    return selectLatestDashboardRecords_(responses, function(record) {
+      return getDashboardRecordTimestamp_(record, ['fechatest', 'timestamp', 'timestampguardado']);
+    });
+  });
+  var latestSessions = measureRequestStage_(timing, 'dashboardLatestSessions', function() {
+    return selectLatestDashboardRecords_(sessions.filter(function(record) {
+      var student = scopedStudents.find(function(item) { return item.matricula === record.matricula; });
+      return !student || !student.checkinsessionid || String(record.sessionid || '') === String(student.checkinsessionid);
+    }), function(record) {
+      return getDashboardRecordTimestamp_(record, ['timestampactualizado', 'timestampguardado', 'fechasesion', 'timestampcreacion']);
+    });
+  });
+
+  return jsonResponseWithTiming_({
+    status: 'success',
+    data: {
+      user: sanitizedUser,
+      operationalCycle: activeOperationalCycle,
+      students: scopedStudents,
+      mentors: mentors,
+      emailingProfiles: [],
+      goalSelections: latestGoalSelections,
+      responses: latestResponses,
+      sessions: latestSessions,
+    },
+  }, timing);
+}
+
+function prepareDashboardReadModelPreview(ss, data, requestTiming, options) {
+  var settings = options || {};
+  if (!settings.skipFeatureFlag && !isDashboardReadModelEnabled_()) {
+    throw new Error('El read model del tablero está bloqueado.');
+  }
+  if (!data || data.confirmPrepare !== true) {
+    throw new Error('La preparación requiere confirmPrepare=true.');
+  }
+  var timing = requestTiming || createRequestTiming_(data || {});
+  var dashboardResponse = getMentorDashboard(ss, data, timing);
+  var dashboardPayload = JSON.parse(dashboardResponse.getContent());
+  var dashboard = dashboardPayload && dashboardPayload.data ? dashboardPayload.data : null;
+  if (!dashboard || !dashboard.user || dashboard.user.role !== 'admin') {
+    throw new Error('La preparación requiere permisos de administración.');
+  }
+  var versionId = String(PropertiesService.getScriptProperties().getProperty('ACTIVE_DIRECTORY_VERSION') || '').trim();
+  var model = buildDashboardReadModel_(versionId, dashboard.operationalCycle, dashboard.students);
+  var manifest = writeDashboardReadModelCache_(model);
+  return jsonResponseWithTiming_({
+    status: 'success',
+    data: {
+      manifest: manifest,
+      serializedBytes: getUtf8ByteLength_(JSON.stringify(model)),
+      summary: summarizeDashboardStudents_(dashboard.students),
+      activated: false,
+    },
+  }, timing);
+}
+
+function getDashboardReadModelPreview(ss, data, requestTiming, options) {
+  var settings = options || {};
+  if (!settings.skipFeatureFlag && !isDashboardReadModelEnabled_()) {
+    throw new Error('El read model del tablero está bloqueado.');
+  }
+  var timing = requestTiming || createRequestTiming_(data || {});
+  var user = measureRequestStage_(timing, 'dashboardPreviewIdentity', function() {
+    return resolveWorkspaceStaffUser_(ss, data);
+  });
+  var sanitizedUser = sanitizeWorkspaceUser_(user);
+  if (sanitizedUser.role !== 'admin') {
+    throw new Error('El preview del read model requiere permisos de administración.');
+  }
+  var versionId = String(PropertiesService.getScriptProperties().getProperty('ACTIVE_DIRECTORY_VERSION') || '').trim();
+  var operationalCycle = getActiveOperationalCycle_();
+  var expectedVersionId = String(data && data.expectedVersionId ? data.expectedVersionId : '').trim();
+  if (expectedVersionId && expectedVersionId !== versionId) {
+    return jsonResponseWithTiming_({
+      status: 'success',
+      data: {
+        available: false,
+        reason: 'VERSION_MISMATCH',
+        activeVersionId: versionId,
+        activated: false,
+      },
+    }, timing);
+  }
+  var model = measureRequestStage_(timing, 'dashboardPreviewCache', function() {
+    return readDashboardReadModelCache_(versionId, operationalCycle);
+  });
+  if (!model) {
+    return jsonResponseWithTiming_({
+      status: 'success',
+      data: {
+        available: false,
+        reason: 'CACHE_UNAVAILABLE',
+        activeVersionId: versionId,
+        activated: false,
+      },
+    }, timing);
+  }
+  var students = expandDashboardReadModel_(model);
+  var scopedStudents = getDashboardScopedStudents_(students, sanitizedUser, data && data.scope);
+  var page = buildDashboardPage_(scopedStudents, data || {});
+  return jsonResponseWithTiming_({
+    status: 'success',
+    data: {
+      available: true,
+      activated: false,
+      model: {
+        schemaVersion: model.schemaVersion,
+        versionId: model.versionId,
+        operationalCycle: model.operationalCycle,
+        createdAt: model.createdAt,
+      },
+      summary: summarizeDashboardStudents_(scopedStudents),
+      page: page,
+    },
+  }, timing);
+}
+
+function removeDashboardReadModelCache_(versionId, operationalCycle) {
+  var cache = getDirectoryReadCache_();
+  var manifestKey = getDashboardReadModelCacheKey_(versionId, operationalCycle, 'manifest');
+  var keys = [manifestKey];
+  try {
+    var manifestRaw = cache.get(manifestKey);
+    var manifest = manifestRaw ? JSON.parse(manifestRaw) : null;
+    var chunkCount = manifest && Number.isFinite(Number(manifest.chunkCount)) ? Number(manifest.chunkCount) : 0;
+    for (var index = 0; index < chunkCount; index++) {
+      keys.push(getDashboardReadModelCacheKey_(versionId, operationalCycle, 'chunk-' + index));
+    }
+  } catch (error) {
+    // El manifiesto se elimina aunque esté corrupto; los fragmentos expiran por TTL.
+  }
+  if (typeof cache.removeAll === 'function') cache.removeAll(keys);
+  else keys.forEach(function(key) { cache.remove(key); });
+  return keys.length;
+}
+
+function runDashboardReadModelEvaluation(ss, data, requestTiming) {
+  if (!data || data.confirmEvaluate !== true) {
+    throw new Error('La evaluación requiere confirmEvaluate=true.');
+  }
+  var timing = requestTiming || createRequestTiming_(data || {});
+  var versionId = String(PropertiesService.getScriptProperties().getProperty('ACTIVE_DIRECTORY_VERSION') || '').trim();
+  var operationalCycle = getActiveOperationalCycle_();
+  var report = null;
+  var preparedAt = Date.now();
+  try {
+    var preparedResponse = prepareDashboardReadModelPreview(ss, {
+      actor: data.actor,
+      confirmPrepare: true,
+    }, timing, { skipFeatureFlag: true });
+    var prepared = JSON.parse(preparedResponse.getContent()).data;
+    var prepareDurationMs = Date.now() - preparedAt;
+    var previewStartedAt = Date.now();
+    var previewResponse = getDashboardReadModelPreview(ss, {
+      actor: data.actor,
+      expectedVersionId: versionId,
+      scope: 'all',
+      page: 1,
+      pageSize: DASHBOARD_PAGE_SIZE_MAX,
+      status: 'all',
+    }, timing, { skipFeatureFlag: true });
+    var preview = JSON.parse(previewResponse.getContent()).data;
+    var previewDurationMs = Date.now() - previewStartedAt;
+    var integrityPassed = Boolean(
+      preview.available
+      && prepared.manifest.studentCount === prepared.summary.total
+      && preview.summary.total === prepared.summary.total
+      && preview.page.students.length <= DASHBOARD_PAGE_SIZE_MAX
+    );
+    report = {
+      passed: integrityPassed,
+      activated: false,
+      persistentFlagChanged: false,
+      versionId: versionId,
+      operationalCycle: operationalCycle,
+      studentCount: prepared.summary.total,
+      serializedBytes: prepared.serializedBytes,
+      chunkCount: prepared.manifest.chunkCount,
+      pageSize: preview.page.pageSize,
+      prepareDurationMs: prepareDurationMs,
+      previewDurationMs: previewDurationMs,
+    };
+    if (!integrityPassed) throw new Error('La evaluación del read model no pasó la verificación de integridad.');
+  } finally {
+    var removedKeys = removeDashboardReadModelCache_(versionId, operationalCycle);
+    if (report) report.cacheKeysRemoved = removedKeys;
+  }
+  return jsonResponseWithTiming_({ status: 'success', data: report }, timing);
+}
+
+/**
+ * Utilidad legacy: limpia Students pero conserva los fixtures demo.
+ * Ya no se expone en el menú porque no es el mecanismo operativo de renovación del padrón.
+ */
 function clearTestData() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   ensureCoreSheets_(ss);
-  ss.getSheetByName('Students').getRange('A2:I').clearContent();
-  SpreadsheetApp.getUi().alert('🧹 Datos de alumnos limpiados.');
+  const sheet = ss.getSheetByName('Students');
+  const values = sheet.getDataRange().getValues();
+  const demoRows = values.slice(1).filter(function(row) { return isDemoStudentMatricula_(row[0]); });
+  if (sheet.getLastRow() > 1) sheet.getRange(2, 1, sheet.getLastRow() - 1, STUDENT_HEADERS.length).clearContent();
+  if (demoRows.length) sheet.getRange(2, 1, demoRows.length, STUDENT_HEADERS.length).setValues(demoRows);
+  invalidateIdentityReadCache_(['legacy-student-index']);
+  SpreadsheetApp.getUi().alert('🧹 Se limpiaron los alumnos legacy y se conservaron ' + demoRows.length + ' fixtures de demostración.');
 }
 
 function seedCommunityTestData() {
@@ -377,6 +3313,195 @@ function seedRolesAndGoalsCatalog() {
   ensureGoalsConfig_(ss);
   ensureOperationsSheets_(ss);
   SpreadsheetApp.getUi().alert('✅ Roles, permisos base y banco de metas inicial listos.');
+}
+
+function syncEmailingProfileFromSource() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  ensureCoreSheets_(ss);
+  ensureOperationsSheets_(ss);
+
+  var sourceSheet = findEmailingSourceSheet_(ss);
+  if (!sourceSheet) {
+    throw new Error('No encontré una hoja fuente para EmailingProfile. Usa un nombre como "MATS_Raw", "MATS", "Mentoria_Tabla" o ejecuta syncEmailingProfileFromSheetName("NombreHoja").');
+  }
+
+  var result = syncEmailingProfileFromSheet_(ss, sourceSheet.getName());
+  SpreadsheetApp.getUi().alert('✅ EmailingProfile actualizado desde "' + sourceSheet.getName() + '". Filas: ' + result.rows + '.');
+}
+
+function syncEmailingProfileFromSheetName(sheetName) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  ensureCoreSheets_(ss);
+  ensureOperationsSheets_(ss);
+  var resolvedSheetName = String(sheetName || '').trim() || 'MATS_Raw';
+  return syncEmailingProfileFromSheet_(ss, resolvedSheetName);
+}
+
+function syncEmailingProfileFromSheet_(ss, sheetName) {
+  var sourceSheet = ss.getSheetByName(sheetName);
+  if (!sourceSheet) {
+    throw new Error('No existe la hoja fuente "' + sheetName + '".');
+  }
+
+  var values = sourceSheet.getDataRange().getValues();
+  if (!values || values.length < 2) {
+    throw new Error('La hoja fuente "' + sheetName + '" no tiene datos para procesar.');
+  }
+
+  var headerMap = buildHeaderIndexMap_(values[0]);
+  var requiredMatriculaIndex = resolveHeaderIndex_(headerMap, ['Matrícula']);
+  if (requiredMatriculaIndex === -1) {
+    throw new Error('La hoja fuente "' + sheetName + '" no contiene una columna identificable de matrícula.');
+  }
+
+  var programaIndex = resolveHeaderIndex_(headerMap, ['Programa']);
+  var semestreIndex = resolveHeaderIndex_(headerMap, ['Semestre']);
+  var mentorIndex = resolveHeaderIndex_(headerMap, ['Mentor(a)']);
+  var comunidadIndex = resolveHeaderIndex_(headerMap, ['Comunidad estudiantil']);
+  var promedioIndex = resolveHeaderIndex_(headerMap, ['Promedio Acumulado']);
+  var creditosReprobadosAd25Index = resolveHeaderIndex_(headerMap, ['Créditos Reprobados AD25']);
+  var creditosReprobadosFj26Index = resolveHeaderIndex_(headerMap, ['Créditos Reprobados FJ26 P1']);
+  var condicionalIndex = resolveHeaderIndex_(headerMap, ['Nuevo Condicional FJ26']);
+
+  var targetSheet = ensureSheetWithHeaders_(ss, 'EmailingProfile', EMAILING_PROFILE_HEADERS);
+  var rows = [];
+
+  values.slice(1).forEach(function(row) {
+    var matricula = normalizeTextCell_(row[requiredMatriculaIndex]).toUpperCase();
+    if (!matricula) return;
+
+    var promedio = parseNumberCell_(promedioIndex > -1 ? row[promedioIndex] : '');
+    var creditosReprobadosAd25 = creditosReprobadosAd25Index > -1 ? row[creditosReprobadosAd25Index] : '';
+    var creditosReprobadosFj26 = creditosReprobadosFj26Index > -1 ? row[creditosReprobadosFj26Index] : '';
+    var condicional = condicionalIndex > -1 ? row[condicionalIndex] : '';
+
+    var promedioBucket = promedio !== null && promedio >= 90 ? 'alto' : '';
+    var creditosReprobadosFlag = hasAnyAcademicRisk_(creditosReprobadosAd25, creditosReprobadosFj26) ? 'Si' : 'No';
+    var condicionalFJ26Flag = toBooleanFlag_(condicional);
+    var segmentoEmail = resolveEmailSegment_(promedioBucket, creditosReprobadosFlag, condicionalFJ26Flag);
+    var mensajeClave = resolveEmailMessage_(segmentoEmail);
+
+    rows.push([
+      matricula,
+      programaIndex > -1 ? normalizeTextCell_(row[programaIndex]) : '',
+      semestreIndex > -1 ? normalizeTextCell_(row[semestreIndex]) : '',
+      mentorIndex > -1 ? normalizeTextCell_(row[mentorIndex]) : '',
+      comunidadIndex > -1 ? normalizeTextCell_(row[comunidadIndex]) : '',
+      promedioBucket,
+      creditosReprobadosFlag,
+      condicionalFJ26Flag,
+      segmentoEmail,
+      mensajeClave,
+      new Date().toISOString(),
+    ]);
+  });
+
+  targetSheet.clearContents();
+  targetSheet.getRange(1, 1, 1, EMAILING_PROFILE_HEADERS.length).setValues([EMAILING_PROFILE_HEADERS]);
+  if (rows.length) {
+    targetSheet.getRange(2, 1, rows.length, EMAILING_PROFILE_HEADERS.length).setValues(rows);
+  }
+
+  return { sheetName: sheetName, rows: rows.length };
+}
+
+function findEmailingSourceSheet_(ss) {
+  var preferredNames = ['MATS_Raw', 'MATS', 'Mentoria_Tabla', 'Mentoría_Tabla', 'Mentoria Tabla', 'Mentoría Tabla'];
+  for (var i = 0; i < preferredNames.length; i++) {
+    var direct = ss.getSheetByName(preferredNames[i]);
+    if (direct) return direct;
+  }
+
+  var reserved = {
+    Students: true,
+    Staff: true,
+    Config: true,
+    GoalSelections: true,
+    Responses: true,
+    Sessions: true,
+    GoalsCatalog: true,
+    EmailingProfile: true,
+  };
+
+  var sheets = ss.getSheets();
+  for (var j = 0; j < sheets.length; j++) {
+    var name = sheets[j].getName();
+    var normalized = normalizeHeader_(name);
+    if (reserved[name]) continue;
+    if (normalized.indexOf('mats') > -1 || normalized.indexOf('mentoriatabla') > -1 || normalized.indexOf('mentoriatabla') > -1) {
+      return sheets[j];
+    }
+  }
+
+  return null;
+}
+
+function buildHeaderIndexMap_(headers) {
+  var map = {};
+  headers.forEach(function(header, index) {
+    map[normalizeHeader_(header)] = index;
+  });
+  return map;
+}
+
+function resolveHeaderIndex_(headerMap, aliases) {
+  for (var i = 0; i < aliases.length; i++) {
+    var key = normalizeHeader_(aliases[i]);
+    if (headerMap.hasOwnProperty(key)) return headerMap[key];
+  }
+  return -1;
+}
+
+function normalizeTextCell_(value) {
+  return String(value === null || value === undefined ? '' : value).trim();
+}
+
+function parseNumberCell_(value) {
+  if (value === null || value === undefined || value === '') return null;
+  if (typeof value === 'number') return value;
+  var normalized = String(value).replace(',', '.').replace(/[^0-9.\-]/g, '');
+  if (!normalized) return null;
+  var parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function toBooleanFlag_(value) {
+  if (typeof value === 'boolean') return value ? 'Si' : 'No';
+  if (typeof value === 'number') return value > 0 ? 'Si' : 'No';
+  var normalized = normalizeHeader_(value);
+  if (!normalized) return 'No';
+  if (['si', 'yes', 'true', '1', 'activo', 'vigente'].indexOf(normalized) > -1) return 'Si';
+  if (normalized.indexOf('nuevo') > -1 || normalized.indexOf('condicional') > -1) return 'Si';
+  var parsed = Number(String(value).replace(/[^0-9.\-]/g, ''));
+  if (Number.isFinite(parsed)) return parsed > 0 ? 'Si' : 'No';
+  return 'No';
+}
+
+function hasAnyAcademicRisk_() {
+  for (var i = 0; i < arguments.length; i++) {
+    if (toBooleanFlag_(arguments[i]) === 'Si') return true;
+  }
+  return false;
+}
+
+function resolveEmailSegment_(promedioBucket, creditosReprobadosFlag, condicionalFJ26Flag) {
+  if (condicionalFJ26Flag === 'Si' || creditosReprobadosFlag === 'Si') {
+    return 'acompanamiento_academico';
+  }
+  if (promedioBucket === 'alto') {
+    return 'alto_desempeno';
+  }
+  return 'general';
+}
+
+function resolveEmailMessage_(segmentoEmail) {
+  if (segmentoEmail === 'alto_desempeno') {
+    return '¡Felicidades por mantener un desempeño académico destacado! Queremos invitarte a reconocer ese avance y aprovechar este espacio para reflexionar, junto con tu mentor, sobre el siguiente reto que quieres establecer en tu trayectoria.';
+  }
+  if (segmentoEmail === 'acompanamiento_academico') {
+    return 'Sabemos que hay periodos en los que el reto académico exige más. Queremos acompañarte de forma cercana para revisar tu momento actual y definir contigo un siguiente paso que te ayude a avanzar con mayor claridad.';
+  }
+  return 'Este es un buen momento para hacer una pausa, revisar cómo va tu semestre y conversar con tu mentor sobre las prioridades que hoy merecen mayor atención en tu trayectoria.';
 }
 
 function getMetasData(ss, data) {
@@ -620,8 +3745,8 @@ function saveMetasConfig(ss, data) {
 }
 
 function getGoalsCatalogData(ss) {
-  const sheet = ensureSheetWithHeaders_(ss, 'GoalsCatalog', GOALS_CATALOG_HEADERS);
-  ensureGoalsCatalogSchema_(sheet);
+  const sheet = ss.getSheetByName('GoalsCatalog');
+  if (!sheet || sheet.getLastRow() < 2) return [];
   return parseSheetData(sheet.getDataRange().getValues());
 }
 
@@ -659,19 +3784,772 @@ function saveGoalsCatalog(ss, data) {
   return jsonResponse_({ status: 'success', items: items });
 }
 
-function requireAdminSecret_(params, action) {
-  var expected = String(PropertiesService.getScriptProperties().getProperty('NAVI_ADMIN_SECRET') || '').trim();
+function getManagedDirectoryMentors_(ss) {
+  var staff = parseSheetData(ensureSheetWithHeaders_(ss, 'Staff', STAFF_HEADERS).getDataRange().getValues());
+  var mentors = staff.filter(function(item) {
+    var role = normalizeIdentityValue_(item.rol || 'mentor');
+    var active = normalizeIdentityValue_(item.activo || 'si');
+    var mentorId = String(item.mentorid || item.mentor_id || '').trim();
+    return active !== 'no' && (role === 'mentor' || role === 'admin') && Boolean(mentorId);
+  }).map(function(item) {
+    return {
+      mentorId: String(item.mentorid || item.mentor_id || '').trim(),
+      name: String(item.nombre || '').trim(),
+      email: normalizeIdentityValue_(item.email),
+      role: normalizeIdentityValue_(item.rol || 'mentor'),
+    };
+  });
+  var seen = {};
+  mentors.forEach(function(mentor) {
+    if (seen[mentor.mentorId]) throw new Error('MentorId duplicado en Staff: ' + mentor.mentorId + '.');
+    seen[mentor.mentorId] = true;
+  });
+  if (!mentors.length) {
+    throw new Error('Staff no contiene mentores activos con MentorId. Completa Staff antes de generar la vista previa.');
+  }
+  return mentors;
+}
+
+function normalizeDirectorySemesterIncrement_(value) {
+  var rawValue = String(value === null || value === undefined ? '' : value).trim();
+  var semesterIncrement = rawValue === '' ? 1 : Number(rawValue);
+  if (!Number.isInteger(semesterIncrement) || (semesterIncrement !== 0 && semesterIncrement !== 1)) {
+    throw new Error('DIRECTORY_SEMESTER_INCREMENT debe ser 0 para un roster del periodo objetivo o 1 para avanzar un periodo.');
+  }
+  return semesterIncrement;
+}
+
+function normalizeDirectorySourceCutoff_(value) {
+  if (value && typeof value.getTime === 'function' && !Number.isNaN(value.getTime())) {
+    var month = String(value.getMonth() + 1).padStart(2, '0');
+    var day = String(value.getDate()).padStart(2, '0');
+    return value.getFullYear() + '-' + month + '-' + day;
+  }
+  var sourceCutoffAt = String(value === null || value === undefined ? '' : value).trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(sourceCutoffAt)) {
+    throw new Error('DIRECTORY_SOURCE_CUTOFF_AT debe usar el formato YYYY-MM-DD.');
+  }
+  return sourceCutoffAt;
+}
+
+function getManagedDirectoryConfig_(ss) {
+  var configSheet = ensureConfigSheet_(ss);
+  var studentSourceSpreadsheetId = String(getConfigValue_(configSheet, CONFIG_KEYS.directoryStudentSourceSpreadsheetId) || '').trim();
+  var mentorSourceSpreadsheetId = String(getConfigValue_(configSheet, CONFIG_KEYS.directoryMentorSourceSpreadsheetId) || '').trim();
+  if (!studentSourceSpreadsheetId || !mentorSourceSpreadsheetId) {
+    throw new Error('Completa en Config las fuentes de estudiantes y mentores antes de generar la vista previa.');
+  }
+
+  var semesterIncrement = normalizeDirectorySemesterIncrement_(
+    getConfigValue_(configSheet, CONFIG_KEYS.directorySemesterIncrement)
+  );
+  var sourceCutoffAt = normalizeDirectorySourceCutoff_(
+    getConfigValue_(configSheet, CONFIG_KEYS.directorySourceCutoffAt)
+  );
+
+  var managedMentors = getManagedDirectoryMentors_(ss);
+
+  return {
+    studentSourceSpreadsheetId: studentSourceSpreadsheetId,
+    studentSourceSheetName: String(getConfigValue_(configSheet, CONFIG_KEYS.directoryStudentSourceSheetName) || 'Carga estudiantes').trim(),
+    mentorSourceSpreadsheetId: mentorSourceSpreadsheetId,
+    mentorSourceSheetName: String(getConfigValue_(configSheet, CONFIG_KEYS.directoryMentorSourceSheetName) || 'Datos mentor').trim(),
+    sourcePeriod: String(getConfigValue_(configSheet, CONFIG_KEYS.directorySourcePeriod) || '').trim().toUpperCase(),
+    targetPeriod: String(getConfigValue_(configSheet, CONFIG_KEYS.directoryTargetPeriod) || '').trim().toUpperCase(),
+    sourceCutoffAt: sourceCutoffAt,
+    semesterIncrement: semesterIncrement,
+    publishEnabled: normalizeIdentityValue_(getConfigValue_(configSheet, CONFIG_KEYS.directoryPublishEnabled)) === 'true',
+    rollbackEnabled: normalizeIdentityValue_(getConfigValue_(configSheet, CONFIG_KEYS.directoryRollbackEnabled)) === 'true',
+    expansionEnabled: false,
+    managedMentors: managedMentors,
+    approvedMentorIds: managedMentors.map(function(mentor) { return mentor.mentorId; }),
+  };
+}
+
+function getDirectoryImportConfig_() {
+  var properties = PropertiesService.getScriptProperties();
+  var studentSourceSpreadsheetId = String(properties.getProperty('DIRECTORY_STUDENT_SOURCE_SPREADSHEET_ID') || '').trim();
+  var mentorSourceSpreadsheetId = String(properties.getProperty('DIRECTORY_MENTOR_SOURCE_SPREADSHEET_ID') || '').trim();
+  if (!studentSourceSpreadsheetId || !mentorSourceSpreadsheetId) {
+    throw new Error('Configura DIRECTORY_STUDENT_SOURCE_SPREADSHEET_ID y DIRECTORY_MENTOR_SOURCE_SPREADSHEET_ID antes de preparar la carga.');
+  }
+  return {
+    studentSourceSpreadsheetId: studentSourceSpreadsheetId,
+    studentSourceSheetName: String(properties.getProperty('DIRECTORY_STUDENT_SOURCE_SHEET_NAME') || 'Carga estudiantes').trim(),
+    mentorSourceSpreadsheetId: mentorSourceSpreadsheetId,
+    mentorSourceSheetName: String(properties.getProperty('DIRECTORY_MENTOR_SOURCE_SHEET_NAME') || 'Datos mentor').trim(),
+    sourcePeriod: String(properties.getProperty('DIRECTORY_SOURCE_PERIOD') || 'FJ26').trim().toUpperCase(),
+    targetPeriod: String(properties.getProperty('DIRECTORY_TARGET_PERIOD') || 'AD26').trim().toUpperCase(),
+    sourceCutoffAt: String(properties.getProperty('DIRECTORY_SOURCE_CUTOFF_AT') || '').trim(),
+    semesterIncrement: normalizeDirectorySemesterIncrement_(properties.getProperty('DIRECTORY_SEMESTER_INCREMENT')),
+    publishEnabled: normalizeIdentityValue_(properties.getProperty('DIRECTORY_PUBLISH_ENABLED')) === 'true',
+    rollbackEnabled: normalizeIdentityValue_(properties.getProperty('DIRECTORY_ROLLBACK_ENABLED')) === 'true',
+    expansionEnabled: normalizeIdentityValue_(properties.getProperty('DIRECTORY_EXPANSION_ENABLED')) === 'true',
+  };
+}
+
+function getDirectoryScope_(data, config) {
+  var requestedScope = normalizeIdentityValue_(data && data.scope ? data.scope : 'pilot');
+  if (requestedScope !== 'pilot' && requestedScope !== 'expanded' && requestedScope !== 'managed') {
+    throw new Error('El alcance del directorio no es válido.');
+  }
+  if (requestedScope === 'expanded' && data && data.forPublish && !config.expansionEnabled) {
+    throw new Error('La expansión está bloqueada. Configura DIRECTORY_EXPANSION_ENABLED=true sólo después de validar el piloto.');
+  }
+  return {
+    name: requestedScope,
+    mentorIds: requestedScope === 'managed'
+      ? config.approvedMentorIds.slice()
+      : requestedScope === 'pilot'
+      ? DIRECTORY_PILOT_MENTOR_IDS.slice()
+      : DIRECTORY_APPROVED_MENTORS.map(function(item) { return item.mentorId; }),
+  };
+}
+
+function getSheetByConfiguredName_(spreadsheetId, sheetName, sourceLabel) {
+  var source = SpreadsheetApp.openById(spreadsheetId);
+  var sheet = source.getSheetByName(sheetName);
+  if (!sheet) {
+    throw new Error('No existe la pestaña configurada para ' + sourceLabel + ': ' + sheetName + '.');
+  }
+  return sheet;
+}
+
+function findHeaderIndex_(headers, aliases, label) {
+  var normalizedHeaders = headers.map(normalizeHeaderKey_);
+  for (var i = 0; i < aliases.length; i++) {
+    var index = normalizedHeaders.indexOf(normalizeHeaderKey_(aliases[i]));
+    if (index > -1) return index;
+  }
+  throw new Error('Falta la columna requerida "' + label + '". Encabezados aceptados: ' + aliases.join(', ') + '.');
+}
+
+function normalizeDirectoryCell_(value) {
+  if (value instanceof Date) return value.toISOString();
+  return String(value === null || value === undefined ? '' : value).trim();
+}
+
+function readMentorDirectorySource_(config, selectedMentorIds) {
+  var sheet = getSheetByConfiguredName_(config.mentorSourceSpreadsheetId, config.mentorSourceSheetName, 'mentores');
+  var values = sheet.getDataRange().getValues();
+  if (values.length < 2) throw new Error('La pestaña Datos mentor no contiene registros.');
+
+  var headers = values[0];
+  var indexes = {
+    mentorId: findHeaderIndex_(headers, ['mentor_id', 'MentorId'], 'mentor_id'),
+    name: findHeaderIndex_(headers, ['nombre', 'nombre_completo', 'Nombre'], 'nombre'),
+    displayName: findHeaderIndex_(headers, ['nombre_visible', 'nombre_mostrar', 'NombreMostrar', 'nombre'], 'nombre visible'),
+    nickname: findHeaderIndex_(headers, ['nickname', 'alias', 'Nickname'], 'nickname'),
+    email: findHeaderIndex_(headers, ['correo', 'email', 'Email'], 'correo'),
+    community: findHeaderIndex_(headers, ['comunidad', 'Comunidad'], 'comunidad'),
+    phone: findHeaderIndex_(headers, ['celular', 'telefono', 'WhatsAppE164'], 'celular'),
+  };
+  var selectedSet = new Set(selectedMentorIds);
+  var byId = {};
+
+  values.slice(1).forEach(function(row) {
+    var mentorId = normalizeDirectoryCell_(row[indexes.mentorId]);
+    if (!mentorId || mentorId.indexOf('TEST-') === 0 || !selectedSet.has(mentorId)) return;
+    var name = normalizeDirectoryCell_(row[indexes.name]);
+    if (!name) throw new Error('El mentor ' + mentorId + ' no tiene nombre en Datos mentor.');
+    if (byId[mentorId]) throw new Error('MentorId duplicado en Datos mentor: ' + mentorId + '.');
+    var record = {
+      mentorId: mentorId,
+      name: name,
+      displayName: normalizeDirectoryCell_(row[indexes.displayName]) || name,
+      nickname: normalizeDirectoryCell_(row[indexes.nickname]),
+      email: normalizeIdentityValue_(row[indexes.email]),
+      community: normalizeDirectoryCell_(row[indexes.community]),
+      phone: normalizeDirectoryCell_(row[indexes.phone]).replace(/[^0-9]/g, ''),
+    };
+    byId[mentorId] = record;
+  });
+
+  selectedMentorIds.forEach(function(mentorId) {
+    if (!byId[mentorId]) throw new Error('El MentorId aprobado no existe en Datos mentor: ' + mentorId + '.');
+  });
+  return { byId: byId };
+}
+
+function createDirectoryImportSummary_() {
+  return {
+    sourceRows: 0,
+    selectedMentorRows: 0,
+    eligible: 0,
+    excludedActualSemester1OrLess: 0,
+    // Alias legado conservado para no romper consumidores de previews anteriores.
+    excludedActualSemesters1Or2: 0,
+    excludedActualSemester7OrMore: 0,
+    invalidSemester: 0,
+    invalidMatricula: 0,
+    missingName: 0,
+    duplicateMatricula: 0,
+    unresolvedMentor: 0,
+    outsideSelectedScope: 0,
+  };
+}
+
+function addDirectoryImportError_(errors, code, entityKey, message) {
+  errors.push({
+    severity: 'ERROR',
+    entityType: 'STUDENT',
+    entityKey: String(entityKey || '').trim().toUpperCase() || 'SIN_MATRICULA',
+    code: code,
+    message: message,
+  });
+}
+
+function addDirectoryImportWarning_(warnings, code, entityKey, message) {
+  warnings.push({
+    severity: 'WARNING',
+    entityType: 'STUDENT',
+    entityKey: String(entityKey || '').trim().toUpperCase() || 'SIN_MATRICULA',
+    code: code,
+    message: message,
+  });
+}
+
+function sha256Hex_(value) {
+  return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, value, Utilities.Charset.UTF_8)
+    .map(function(byte) { return ('0' + ((byte + 256) % 256).toString(16)).slice(-2); })
+    .join('');
+}
+
+function buildDirectoryImportPreview_(data, configOverride) {
+  var config = configOverride || getDirectoryImportConfig_();
+  var scope = getDirectoryScope_(data || {}, config);
+  var mentors = readMentorDirectorySource_(config, scope.mentorIds);
+  var studentSheet = getSheetByConfiguredName_(config.studentSourceSpreadsheetId, config.studentSourceSheetName, 'estudiantes');
+  var values = studentSheet.getDataRange().getValues();
+  if (values.length < 2) throw new Error('La fuente de estudiantes no contiene registros.');
+
+  var headers = values[0];
+  var periodSemesterHeader = 'Semestre' + String(config.sourcePeriod || '').trim().toUpperCase();
+  var indexes = {
+    matricula: findHeaderIndex_(headers, ['Matricula', 'Matrícula'], 'Matrícula'),
+    name: findHeaderIndex_(headers, ['Nombre', 'nombre_completo'], 'Nombre'),
+    semester: findHeaderIndex_(headers, [periodSemesterHeader, 'Semestre', 'SemestreFJ26'], periodSemesterHeader),
+    mentorId: findHeaderIndex_(headers, ['MentorId', 'mentor_id'], 'MentorId'),
+  };
+  var summary = createDirectoryImportSummary_();
+  var errors = [];
+  var warnings = [];
+  var eligible = [];
+  var seenMatriculas = {};
+  var approvedMentorIds = new Set((config.approvedMentorIds || DIRECTORY_APPROVED_MENTORS.map(function(item) { return item.mentorId; })).slice());
+  var selectedSet = new Set(scope.mentorIds);
+
+  values.slice(1).forEach(function(row) {
+    if (!row.some(function(cell) { return cell !== '' && cell !== null && cell !== undefined; })) return;
+    summary.sourceRows += 1;
+    var sourceMentorId = normalizeDirectoryCell_(row[indexes.mentorId]);
+    var rawMatricula = normalizeDirectoryCell_(row[indexes.matricula]).toUpperCase();
+    if (!approvedMentorIds.has(sourceMentorId)) {
+      summary.unresolvedMentor += 1;
+      addDirectoryImportError_(errors, 'UNASSIGNED_MENTOR', rawMatricula, 'MentorId no pertenece a la lista aprobada o no pudo resolverse.');
+      return;
+    }
+    if (!selectedSet.has(sourceMentorId)) {
+      summary.outsideSelectedScope += 1;
+      return;
+    }
+    summary.selectedMentorRows += 1;
+    var mentor = mentors.byId[sourceMentorId];
+    if (!mentor) {
+      summary.unresolvedMentor += 1;
+      addDirectoryImportError_(errors, 'UNASSIGNED_MENTOR', rawMatricula, 'El mentor aprobado no pudo resolverse contra Datos mentor.');
+      return;
+    }
+
+    var rawSemester = normalizeDirectoryCell_(row[indexes.semester]);
+    var sourceSemester = Number(rawSemester);
+    if (!rawSemester || !Number.isInteger(sourceSemester)) {
+      summary.invalidSemester += 1;
+      addDirectoryImportWarning_(warnings, 'INVALID_SEMESTER_EXCLUDED', rawMatricula, 'El registro quedó fuera de la campaña porque ' + periodSemesterHeader + ' no es un entero.');
+      return;
+    }
+    var actualSemester = sourceSemester + config.semesterIncrement;
+    if (actualSemester < DIRECTORY_MIN_ACTUAL_SEMESTER) {
+      summary.excludedActualSemester1OrLess += 1;
+      summary.excludedActualSemesters1Or2 += 1;
+      return;
+    }
+    if (actualSemester > DIRECTORY_MAX_ACTUAL_SEMESTER) {
+      summary.excludedActualSemester7OrMore += 1;
+      return;
+    }
+
+    if (!/^A\d{8}$/.test(rawMatricula)) {
+      summary.invalidMatricula += 1;
+      addDirectoryImportError_(errors, 'INVALID_MATRICULA', rawMatricula, 'La matrícula debe cumplir A + 8 dígitos.');
+      return;
+    }
+    var studentName = normalizeDirectoryCell_(row[indexes.name]);
+    if (!studentName) {
+      summary.missingName += 1;
+      addDirectoryImportError_(errors, 'MISSING_NAME', rawMatricula, 'El estudiante no tiene nombre.');
+      return;
+    }
+    if (seenMatriculas[rawMatricula]) {
+      summary.duplicateMatricula += 1;
+      addDirectoryImportError_(errors, 'DUPLICATE_MATRICULA', rawMatricula, 'La matrícula aparece más de una vez en la cohorte elegible.');
+      return;
+    }
+    seenMatriculas[rawMatricula] = true;
+    eligible.push({
+      matricula: rawMatricula,
+      name: studentName,
+      email: rawMatricula.toLowerCase() + '@tec.mx',
+      mentorId: mentor.mentorId,
+    });
+  });
+
+  eligible.sort(function(left, right) { return left.matricula.localeCompare(right.matricula); });
+  summary.eligible = eligible.length;
+  var fingerprintPayload = {
+    sourcePeriod: config.sourcePeriod,
+    targetPeriod: config.targetPeriod,
+    scope: scope.name,
+    students: eligible,
+  };
+  return {
+    config: config,
+    scope: scope,
+    mentors: scope.mentorIds.map(function(mentorId) { return mentors.byId[mentorId]; }),
+    students: eligible,
+    summary: summary,
+    errors: errors,
+    warnings: warnings,
+    fingerprint: sha256Hex_(JSON.stringify(fingerprintPayload)),
+    extractedAt: new Date().toISOString(),
+  };
+}
+
+function getDirectorySheetRows_(ss, sheetName, headers) {
+  var sheet = ss.getSheetByName(sheetName);
+  if (!sheet || sheet.getLastRow() < 2) return [];
+  var values = sheet.getDataRange().getValues();
+  var actualHeaders = values[0].slice(0, headers.length).map(normalizeHeaderKey_);
+  if (actualHeaders.join('|') !== headers.map(normalizeHeaderKey_).join('|')) {
+    throw new Error('La hoja ' + sheetName + ' tiene encabezados incompatibles.');
+  }
+  return parseSheetData(values);
+}
+
+function buildDirectoryDiff_(ss, students) {
+  var activeVersionId = String(PropertiesService.getScriptProperties().getProperty('ACTIVE_DIRECTORY_VERSION') || '').trim();
+  var current = activeVersionId
+    ? getDirectorySheetRows_(ss, 'DirectoryStudents', DIRECTORY_STUDENT_HEADERS).filter(function(student) {
+      return String(student.versionid || '').trim() === activeVersionId;
+    })
+    : [];
+  var currentByMatricula = {};
+  var nextByMatricula = {};
+  current.forEach(function(student) { currentByMatricula[String(student.matricula || '').trim().toUpperCase()] = student; });
+  students.forEach(function(student) { nextByMatricula[student.matricula] = student; });
+
+  var added = 0;
+  var removed = 0;
+  var reassigned = 0;
+  var renamed = 0;
+  var emailChanged = 0;
+  Object.keys(nextByMatricula).forEach(function(matricula) {
+    var before = currentByMatricula[matricula];
+    var after = nextByMatricula[matricula];
+    if (!before) {
+      added += 1;
+      return;
+    }
+    if (String(before.mentorid || '').trim() !== after.mentorId) reassigned += 1;
+    if (String(before.nombre || '').trim() !== after.name) renamed += 1;
+    if (normalizeIdentityValue_(before.email) !== after.email) emailChanged += 1;
+  });
+  Object.keys(currentByMatricula).forEach(function(matricula) {
+    if (!nextByMatricula[matricula]) removed += 1;
+  });
+
+  var previousCount = current.length;
+  return {
+    activeVersionId: activeVersionId,
+    previousStudentCount: previousCount,
+    nextStudentCount: students.length,
+    added: added,
+    removed: removed,
+    reassigned: reassigned,
+    renamed: renamed,
+    emailChanged: emailChanged,
+    netChange: students.length - previousCount,
+    variationPercent: previousCount ? Number((((students.length - previousCount) / previousCount) * 100).toFixed(2)) : null,
+  };
+}
+
+function sanitizeDirectoryPreview_(preview, diff) {
+  return {
+    scope: preview.scope.name,
+    sourcePeriod: preview.config.sourcePeriod,
+    targetPeriod: preview.config.targetPeriod,
+    sourceSheetName: preview.config.studentSourceSheetName,
+    mentorSheetName: preview.config.mentorSourceSheetName,
+    fingerprint: preview.fingerprint,
+    extractedAt: preview.extractedAt,
+    summary: preview.summary,
+    mentorCounts: preview.scope.mentorIds.reduce(function(counts, mentorId) {
+      counts[mentorId] = preview.students.filter(function(student) { return student.mentorId === mentorId; }).length;
+      return counts;
+    }, {}),
+    mentors: preview.mentors.map(function(mentor) {
+      return {
+        mentorId: mentor.mentorId,
+        name: mentor.displayName || mentor.name,
+        studentCount: preview.students.filter(function(student) { return student.mentorId === mentor.mentorId; }).length,
+      };
+    }),
+    errors: preview.errors.slice(0, 100),
+    errorCount: preview.errors.length,
+    warnings: preview.warnings.slice(0, 100),
+    warningCount: preview.warnings.length,
+    diff: diff,
+    publishEnabled: preview.config.publishEnabled,
+    rollbackEnabled: preview.config.rollbackEnabled,
+    expansionEnabled: preview.config.expansionEnabled,
+  };
+}
+
+function previewDirectoryImport(ss, data) {
+  var preview = buildDirectoryImportPreview_(data || {});
+  return jsonResponse_({ status: 'success', data: sanitizeDirectoryPreview_(preview, buildDirectoryDiff_(ss, preview.students)) });
+}
+
+function previewManagedDirectoryImport(ss, data) {
+  var payload = data || {};
+  var user = resolveWorkspaceStaffUser_(ss, { actor: payload.actor });
+  if (sanitizeWorkspaceUser_(user).role !== 'admin') {
+    throw new Error('La vista previa del padrón requiere permisos de administración.');
+  }
+  var config = getManagedDirectoryConfig_(ss);
+  var preview = buildDirectoryImportPreview_({ scope: 'managed' }, config);
+  var result = sanitizeDirectoryPreview_(preview, buildDirectoryDiff_(ss, preview.students));
+  result.readyForPublication = result.errorCount === 0 && result.publishEnabled;
+  return jsonResponse_({ status: 'success', data: result });
+}
+
+function getPilotDirectoryConfig_(publishEnabled) {
+  return {
+    studentSourceSpreadsheetId: PILOT_DIRECTORY_STAGING_ID,
+    studentSourceSheetName: 'Carga estudiantes',
+    mentorSourceSpreadsheetId: SYNTHETIC_DIRECTORY_MENTOR_SOURCE_ID,
+    mentorSourceSheetName: 'Datos mentor',
+    sourcePeriod: 'FJ26',
+    targetPeriod: 'AD26',
+    sourceCutoffAt: '2026-06-30',
+    semesterIncrement: 1,
+    publishEnabled: publishEnabled === true,
+    rollbackEnabled: false,
+    expansionEnabled: false,
+  };
+}
+
+function getPilotApprovedFingerprint_() {
+  return PILOT_DIRECTORY_APPROVED_FINGERPRINT;
+}
+
+function previewPilotDirectory(ss, data) {
+  var payload = data || {};
+  if (payload.confirmPreview !== true) throw new Error('La vista previa del piloto requiere confirmPreview=true.');
+  var user = resolveWorkspaceStaffUser_(ss, { actor: payload.actor });
+  if (sanitizeWorkspaceUser_(user).role !== 'admin') {
+    throw new Error('La vista previa del piloto requiere permisos de administración.');
+  }
+
+  var config = getPilotDirectoryConfig_(false);
+  var preview = buildDirectoryImportPreview_({ scope: 'pilot' }, config);
+  var result = sanitizeDirectoryPreview_(preview, buildDirectoryDiff_(ss, preview.students));
+  result.expectedPilotCount = PILOT_DIRECTORY_EXPECTED_COUNT;
+  result.readyForReview = result.summary.sourceRows === PILOT_DIRECTORY_EXPECTED_COUNT
+    && result.summary.eligible === PILOT_DIRECTORY_EXPECTED_COUNT
+    && result.errorCount === 0
+    && result.warningCount === 0;
+  result.configurationChanged = false;
+  result.publicationPerformed = false;
+  return jsonResponse_({ status: 'success', data: result });
+}
+
+function ensureCanonicalDirectorySheet_(ss, name, headers) {
+  var sheet = ss.getSheetByName(name);
+  if (!sheet) {
+    sheet = ss.insertSheet(name);
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    sheet.setFrozenRows(1);
+    return sheet;
+  }
+  var currentHeaders = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), headers.length)).getValues()[0].slice(0, headers.length);
+  if (currentHeaders.map(normalizeHeaderKey_).join('|') !== headers.map(normalizeHeaderKey_).join('|')) {
+    throw new Error('La hoja ' + name + ' tiene encabezados incompatibles. No se modificó el directorio.');
+  }
+  return sheet;
+}
+
+function appendDirectoryRows_(sheet, rows) {
+  if (!rows.length) return;
+  sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, rows[0].length).setValues(rows);
+}
+
+function assertDirectoryFingerprintNotPublished_(versionSheet, fingerprint) {
+  var values = versionSheet.getDataRange().getValues();
+  if (values.length < 2) return;
+  var headers = values[0].map(normalizeHeaderKey_);
+  var fingerprintIndex = headers.indexOf('sourcefingerprint');
+  var statusIndex = headers.indexOf('status');
+  var duplicate = values.slice(1).some(function(row) {
+    return String(row[fingerprintIndex] || '') === fingerprint && String(row[statusIndex] || '').toUpperCase() === 'PUBLISHED';
+  });
+  if (duplicate) throw new Error('Esta misma huella ya fue publicada. Genera una nueva vista previa sólo si cambió la fuente.');
+}
+
+function assertDirectoryMentorsAvailableInStaff_(ss, preview) {
+  var staff = parseSheetData(ensureSheetWithHeaders_(ss, 'Staff', STAFF_HEADERS).getDataRange().getValues());
+  var activeMentorIds = new Set(staff.filter(function(item) {
+    return normalizeIdentityValue_(item.activo || 'Si') !== 'no';
+  }).map(function(item) {
+    return String(item.mentorid || item.mentor_id || '').trim();
+  }).filter(Boolean));
+  preview.scope.mentorIds.forEach(function(mentorId) {
+    if (!activeMentorIds.has(mentorId)) {
+      throw new Error('El MentorId ' + mentorId + ' debe existir como Staff activo antes de publicar.');
+    }
+  });
+}
+
+function publishDirectoryImportWithConfig_(ss, data, config) {
+  var payload = data || {};
+  var scope = getDirectoryScope_({ scope: payload.scope, forPublish: true }, config);
+  if (!config.publishEnabled) {
+    throw new Error('La publicación está bloqueada. Configura DIRECTORY_PUBLISH_ENABLED=true sólo durante una ventana autorizada.');
+  }
+  if (payload.confirmPublish !== true) throw new Error('La publicación requiere confirmPublish=true.');
+  var approvedFingerprint = String(payload.previewFingerprint || '').trim();
+  if (!approvedFingerprint) throw new Error('La publicación requiere la huella de una vista previa revisada.');
+
+  var lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    var preview = buildDirectoryImportPreview_({ scope: scope.name }, config);
+    if (preview.fingerprint !== approvedFingerprint) {
+      throw new Error('La fuente cambió desde la vista previa. Revisa nuevamente antes de publicar.');
+    }
+    if (preview.errors.length) {
+      throw new Error('La versión contiene ' + preview.errors.length + ' errores y no puede publicarse.');
+    }
+    assertDirectoryMentorsAvailableInStaff_(ss, preview);
+
+    var versionsSheet = ensureCanonicalDirectorySheet_(ss, 'DirectoryVersions', DIRECTORY_VERSION_HEADERS);
+    var studentsSheet = ensureCanonicalDirectorySheet_(ss, 'DirectoryStudents', DIRECTORY_STUDENT_HEADERS);
+    assertDirectoryFingerprintNotPublished_(versionsSheet, preview.fingerprint);
+
+    var versionId = Utilities.getUuid();
+    var previousVersionId = String(PropertiesService.getScriptProperties().getProperty('ACTIVE_DIRECTORY_VERSION') || '').trim();
+    var now = new Date().toISOString();
+    var actorSubject = String(payload.actor && payload.actor.sub ? payload.actor.sub : '').trim();
+    if (!actorSubject) throw new Error('No se pudo identificar al administrador que publica.');
+    var versionRow = versionsSheet.getLastRow() + 1;
+    versionsSheet.getRange(versionRow, 1, 1, DIRECTORY_VERSION_HEADERS.length).setValues([[
+      versionId,
+      config.targetPeriod,
+      config.studentSourceSpreadsheetId,
+      config.sourceCutoffAt,
+      preview.extractedAt,
+      preview.fingerprint,
+      preview.students.length,
+      preview.mentors.length,
+      preview.students.length,
+      preview.errors.length,
+      preview.warnings.length,
+      'STAGED',
+      previousVersionId,
+      '',
+      '',
+      '',
+      '',
+      '',
+    ]]);
+
+    appendDirectoryRows_(studentsSheet, preview.students.map(function(student) {
+      return [versionId, student.matricula, student.name, student.email, student.mentorId, config.targetPeriod, config.sourceCutoffAt];
+    }));
+
+    versionsSheet.getRange(versionRow, 12, 1, 4).setValues([['PUBLISHED', previousVersionId, now, actorSubject]]);
+    PropertiesService.getScriptProperties().setProperty('ACTIVE_DIRECTORY_VERSION', versionId);
+    invalidateDirectoryReadCache_([previousVersionId, versionId]);
+    return jsonResponse_({
+      status: 'success',
+      data: {
+        versionId: versionId,
+        previousVersionId: previousVersionId,
+        fingerprint: preview.fingerprint,
+        scope: scope.name,
+        studentCount: preview.students.length,
+        mentorCount: preview.mentors.length,
+        publishedAt: now,
+      },
+    });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function publishDirectoryImport(ss, data) {
+  return publishDirectoryImportWithConfig_(ss, data, getDirectoryImportConfig_());
+}
+
+function publishManagedDirectoryImport(ss, data) {
+  var payload = data || {};
+  var user = resolveWorkspaceStaffUser_(ss, { actor: payload.actor });
+  if (sanitizeWorkspaceUser_(user).role !== 'admin') {
+    throw new Error('La publicación del padrón requiere permisos de administración.');
+  }
+  var managedPayload = Object.assign({}, payload, { scope: 'managed' });
+  return publishDirectoryImportWithConfig_(ss, managedPayload, getManagedDirectoryConfig_(ss));
+}
+
+function publishPilotDirectory(ss, data) {
+  var payload = data || {};
+  if (payload.confirmPublish !== true) {
+    throw new Error('La publicación del piloto requiere confirmPublish=true.');
+  }
+  var user = resolveWorkspaceStaffUser_(ss, { actor: payload.actor });
+  if (sanitizeWorkspaceUser_(user).role !== 'admin') {
+    throw new Error('La publicación del piloto requiere permisos de administración.');
+  }
+  var approvedFingerprint = String(payload.previewFingerprint || '').trim();
+  var expectedFingerprint = getPilotApprovedFingerprint_();
+  if (approvedFingerprint !== expectedFingerprint) {
+    throw new Error('La huella no corresponde a la vista previa del piloto que fue aprobada.');
+  }
+
+  var config = getPilotDirectoryConfig_(true);
+  var preview = buildDirectoryImportPreview_({ scope: 'pilot' }, config);
+  var diff = buildDirectoryDiff_(ss, preview.students);
+  var isApprovedFirstPublication = preview.fingerprint === expectedFingerprint
+    && preview.summary.sourceRows === PILOT_DIRECTORY_EXPECTED_COUNT
+    && preview.summary.eligible === PILOT_DIRECTORY_EXPECTED_COUNT
+    && preview.errors.length === 0
+    && preview.warnings.length === 0
+    && diff.added === PILOT_DIRECTORY_EXPECTED_COUNT
+    && diff.removed === 0
+    && diff.reassigned === 0
+    && diff.renamed === 0
+    && diff.emailChanged === 0;
+  if (!isApprovedFirstPublication) {
+    throw new Error('El piloto ya no coincide con el conteo, la huella o el diff aprobados. Genera y revisa otra vista previa.');
+  }
+
+  var published = parseInternalJsonResponse_(publishDirectoryImportWithConfig_(ss, {
+    scope: 'pilot',
+    previewFingerprint: approvedFingerprint,
+    confirmPublish: true,
+    actor: payload.actor,
+  }, config));
+  published.approvedDiff = diff;
+  published.pilotPublication = true;
+  return jsonResponse_({ status: 'success', data: published });
+}
+
+function findDirectoryVersionRow_(versionsSheet, versionId) {
+  var values = versionsSheet.getDataRange().getValues();
+  if (values.length < 2) return null;
+  var headers = values[0].map(normalizeHeaderKey_);
+  var versionIndex = headers.indexOf('versionid');
+  for (var rowIndex = 1; rowIndex < values.length; rowIndex++) {
+    if (String(values[rowIndex][versionIndex] || '').trim() === versionId) {
+      return { rowNumber: rowIndex + 1, values: values[rowIndex], headers: headers };
+    }
+  }
+  return null;
+}
+
+function countDirectoryStudentsForVersion_(studentsSheet, versionId) {
+  if (!studentsSheet || studentsSheet.getLastRow() < 2) return 0;
+  var values = studentsSheet.getDataRange().getValues();
+  var headers = values[0].map(normalizeHeaderKey_);
+  var versionIndex = headers.indexOf('versionid');
+  return values.slice(1).filter(function(row) {
+    return String(row[versionIndex] || '').trim() === versionId;
+  }).length;
+}
+
+function rollbackDirectoryImport(ss, data) {
+  var payload = data || {};
+  var rollbackEnabled = normalizeIdentityValue_(PropertiesService.getScriptProperties().getProperty('DIRECTORY_ROLLBACK_ENABLED')) === 'true';
+  if (!rollbackEnabled) {
+    throw new Error('El rollback está bloqueado. Configura DIRECTORY_ROLLBACK_ENABLED=true sólo durante una ventana autorizada.');
+  }
+  if (payload.confirmRollback !== true) throw new Error('El rollback requiere confirmRollback=true.');
+  var actorSubject = String(payload.actor && payload.actor.sub ? payload.actor.sub : '').trim();
+  if (!actorSubject) throw new Error('No se pudo identificar al administrador que ejecuta el rollback.');
+
+  var lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    var properties = PropertiesService.getScriptProperties();
+    var activeVersionId = String(properties.getProperty('ACTIVE_DIRECTORY_VERSION') || '').trim();
+    if (!activeVersionId) throw new Error('No existe una versión activa que pueda revertirse.');
+    var versionsSheet = ensureCanonicalDirectorySheet_(ss, 'DirectoryVersions', DIRECTORY_VERSION_HEADERS);
+    var studentsSheet = ensureCanonicalDirectorySheet_(ss, 'DirectoryStudents', DIRECTORY_STUDENT_HEADERS);
+    var activeVersion = findDirectoryVersionRow_(versionsSheet, activeVersionId);
+    if (!activeVersion) throw new Error('La versión activa no existe en DirectoryVersions.');
+
+    var previousIndex = activeVersion.headers.indexOf('previousversionid');
+    var targetVersionId = String(activeVersion.values[previousIndex] || '').trim();
+    var requestedTarget = String(payload.targetVersionId || '').trim();
+    if (!targetVersionId) throw new Error('La versión activa no tiene una versión anterior disponible.');
+    if (requestedTarget && requestedTarget !== targetVersionId) {
+      throw new Error('El rollback sólo puede apuntar a PreviousVersionId de la versión activa.');
+    }
+    var targetVersion = findDirectoryVersionRow_(versionsSheet, targetVersionId);
+    if (!targetVersion) throw new Error('La versión anterior no existe en DirectoryVersions.');
+    var statusIndex = targetVersion.headers.indexOf('status');
+    if (String(targetVersion.values[statusIndex] || '').trim().toUpperCase() !== 'PUBLISHED') {
+      throw new Error('La versión anterior no está marcada como PUBLISHED.');
+    }
+    var studentCountIndex = targetVersion.headers.indexOf('studentcount');
+    var expectedStudents = Number(targetVersion.values[studentCountIndex]);
+    var actualStudents = countDirectoryStudentsForVersion_(studentsSheet, targetVersionId);
+    if (!Number.isFinite(expectedStudents) || expectedStudents !== actualStudents) {
+      throw new Error('La versión anterior no pasó la verificación de integridad de estudiantes.');
+    }
+
+    var now = new Date().toISOString();
+    var activeStatusIndex = activeVersion.headers.indexOf('status');
+    var rolledBackAtIndex = activeVersion.headers.indexOf('rolledbackat');
+    var rolledBackByIndex = activeVersion.headers.indexOf('rolledbackbysubject');
+    var rollbackToIndex = activeVersion.headers.indexOf('rollbacktoversionid');
+    versionsSheet.getRange(activeVersion.rowNumber, activeStatusIndex + 1).setValue('ROLLED_BACK');
+    versionsSheet.getRange(activeVersion.rowNumber, rolledBackAtIndex + 1, 1, 3).setValues([[now, actorSubject, targetVersionId]]);
+    properties.setProperty('ACTIVE_DIRECTORY_VERSION', targetVersionId);
+    invalidateDirectoryReadCache_([activeVersionId, targetVersionId]);
+
+    return jsonResponse_({
+      status: 'success',
+      data: {
+        rolledBackVersionId: activeVersionId,
+        activeVersionId: targetVersionId,
+        rolledBackAt: now,
+      },
+    });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function requireServiceSecret_(params, action) {
+  var expected = String(PropertiesService.getScriptProperties().getProperty('NAVI_SERVICE_SECRET') || '').trim();
   if (!expected) {
-    throw new Error('El backend requiere NAVI_ADMIN_SECRET en Script Properties para permitir ' + action + '.');
+    throw new Error('El backend protegido requiere NAVI_SERVICE_SECRET para permitir ' + action + '.');
   }
 
-  var provided = String((params && params.adminSecret) || '').trim();
-  if (!provided) {
-    throw new Error('Falta la clave de administración para ejecutar ' + action + '.');
-  }
-
-  if (provided !== expected) {
-    throw new Error('La clave de administración no es válida para ' + action + '.');
+  var provided = String((params && params.serviceSecret) || '').trim();
+  if (!provided || provided !== expected) {
+    throw new Error('La conexión protegida no está autorizada para ejecutar ' + action + '.');
   }
 }
 
@@ -752,11 +4630,11 @@ function ensureCoreSheets_(ss) {
 
 function ensureOperationsSheets_(ss) {
   const goalsCatalogSheet = ensureSheetWithHeaders_(ss, 'GoalsCatalog', GOALS_CATALOG_HEADERS);
+  ensureSheetWithHeaders_(ss, 'EmailingProfile', EMAILING_PROFILE_HEADERS);
   ensureSheetWithHeaders_(ss, 'Responses', RESPONSES_HEADERS);
   ensureSheetWithHeaders_(ss, 'GoalSelections', GOAL_SELECTION_HEADERS);
   ensureSessionsSheet_(ss);
   ensureGoalsCatalogSchema_(goalsCatalogSheet);
-  applyGoalsCatalogValidation_(goalsCatalogSheet);
 
   if (goalsCatalogSheet.getLastRow() === 1) {
     seedGoalsCatalogSheet_(goalsCatalogSheet);
@@ -850,7 +4728,7 @@ function applyGoalsCatalogValidation_(sheet) {
   var rule = SpreadsheetApp.newDataValidation()
     .requireFormulaSatisfied(formula)
     .setAllowInvalid(false)
-    .setHelpText('Usa solo tags diagnósticos controlados separados por coma: ' + CONTROLLED_DIAGNOSTIC_TAGS.join(', '))
+    .setHelpText('Usa solo tags controlados del test, separados por coma: ' + CONTROLLED_DIAGNOSTIC_TAGS.join(', '))
     .build();
 
   targetRange.setDataValidation(rule);
@@ -865,12 +4743,16 @@ function upsertRowByKey_(sheet, keyColumnIndex, keyValue, rowValues) {
     for (var i = 0; i < values.length; i++) {
       if (String(values[i][0] || '').trim().toUpperCase() === normalizedKey) {
         sheet.getRange(i + 2, 1, 1, rowValues.length).setValues([rowValues]);
+        if (sheet.getName() === 'Students') invalidateIdentityReadCache_(['legacy-student-index']);
+        if (sheet.getName() === 'Staff') invalidateIdentityReadCache_(['sanitized-staff']);
         return;
       }
     }
   }
 
   sheet.appendRow(rowValues);
+  if (sheet.getName() === 'Students') invalidateIdentityReadCache_(['legacy-student-index']);
+  if (sheet.getName() === 'Staff') invalidateIdentityReadCache_(['sanitized-staff']);
 }
 
 function ensureStudentsSheetSchema_(sheet) {
@@ -937,6 +4819,15 @@ function ensureSheetWithHeaders_(ss, name, headers) {
 
   if (sheet.getLastRow() === 0) {
     sheet.appendRow(headers);
+  } else {
+    var currentHeaders = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 1)).getValues()[0];
+    var currentKeys = new Set(currentHeaders.map(normalizeHeaderKey_));
+    var missingHeaders = headers.filter(function(header) {
+      return !currentKeys.has(normalizeHeaderKey_(header));
+    });
+    if (missingHeaders.length) {
+      sheet.getRange(1, currentHeaders.length + 1, 1, missingHeaders.length).setValues([missingHeaders]);
+    }
   }
 
   return sheet;
@@ -1105,178 +4996,269 @@ function normalizeGoalsCatalogPayload_(items) {
     });
 }
 
-function sendCampaignHandler(ss, data) {
-  var destinatarios = data.destinatarios || [];
-  var subject = String(data.subject || '').trim();
-  var htmlBody = String(data.htmlBody || '').trim();
-
-  if (!subject || !htmlBody) {
-    return jsonResponse_({ status: 'error', message: 'Faltan asunto o cuerpo del correo.' });
-  }
-  if (destinatarios.length === 0) {
-    return jsonResponse_({ status: 'error', message: 'No hay destinatarios para esta campaña.' });
-  }
-
-  var enviados = [];
-  var fallidos = [];
-
-  destinatarios.forEach(function(estudiante) {
-    var email = String(estudiante.email || '').trim();
-    if (!email || email === 'sin@correo.com') {
-      fallidos.push({ matricula: estudiante.matricula, razon: 'Sin correo válido' });
-      return;
-    }
-
-    var nombre = String(estudiante.name || estudiante.preferredName || '').trim().split(' ')[0] || 'Estudiante';
-    var mentor = String(estudiante.mentor || '').trim();
-    var comunidad = String(estudiante.community || '').trim();
-
-    var subjectFinal = subject
-      .replace(/\{\{nombre\}\}/g, nombre)
-      .replace(/\{\{mentor\}\}/g, mentor)
-      .replace(/\{\{comunidad\}\}/g, comunidad);
-
-    var htmlFinal = htmlBody
-      .replace(/\{\{nombre\}\}/g, nombre)
-      .replace(/\{\{mentor\}\}/g, mentor)
-      .replace(/\{\{comunidad\}\}/g, comunidad);
-
-    try {
-      GmailApp.sendEmail(email, subjectFinal, '', {
-        htmlBody: htmlFinal,
-        name: 'Mentoría Estudiantil',
-      });
-      enviados.push(estudiante.matricula);
-      markUltimoAviso_(ss, estudiante.matricula, data.tipo || 'campaña');
-    } catch (err) {
-      fallidos.push({ matricula: estudiante.matricula, razon: err.toString() });
-    }
-  });
-
-  return jsonResponse_({
-    status: 'success',
-    enviados: enviados.length,
-    fallidos: fallidos.length,
-    detalleFallidos: fallidos,
-  });
-}
-
-function markUltimoAviso_(ss, matricula, tipo) {
-  var sheet = ss.getSheetByName('Students');
-  if (!sheet) return;
-  var values = sheet.getDataRange().getValues();
-  var headers = values[0];
-  var colIndex = headers.indexOf('UltimoAviso');
-  if (colIndex === -1) return;
-  var mat = String(matricula).toUpperCase();
-  for (var i = 1; i < values.length; i++) {
-    if (String(values[i][0]).toUpperCase() === mat) {
-      sheet.getRange(i + 1, colIndex + 1).setValue(tipo + ' · ' + new Date().toLocaleDateString('es-MX'));
-      return;
-    }
-  }
-}
-
 function jsonResponse_(payload) {
   return ContentService.createTextOutput(JSON.stringify(payload))
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-function saveTestResponse(ss, data) {
+function saveTestResponse(ss, data, requestTiming) {
+  var timing = requestTiming || createRequestTiming_(data || {});
+  var cycle = getActiveOperationalCycle_();
+  if (data.operationalCycle && data.operationalCycle !== cycle) {
+    return jsonResponseWithTiming_({ status: 'error', code: 'OPERATIONAL_CYCLE_CHANGED', message: 'El ciclo cambió. Confirma nuevamente tu matrícula.' }, timing);
+  }
   const sheet = ensureSheetWithHeaders_(ss, 'Responses', RESPONSES_HEADERS);
   const matricula = String(data.matricula || '').trim().toUpperCase();
-  
+  const responseId = String(data.responseId || Utilities.getUuid()).trim();
+  const stage = String(data.etapa || '').trim().toLowerCase();
+
   if (!matricula) {
     return jsonResponse_({ status: 'error', message: 'Falta la matrícula del alumno' });
   }
+  if (!/^[A-Za-z0-9_-]{8,100}$/.test(responseId)) {
+    return jsonResponse_({ status: 'error', message: 'El identificador de respuesta no es válido' });
+  }
+  if (!stage) {
+    return jsonResponse_({ status: 'error', message: 'La etapa del test no es válida' });
+  }
 
-  sheet.appendRow([
+  const lock = LockService.getScriptLock();
+  measureRequestStage_(timing, 'lockWait', function() {
+    lock.waitLock(INTERACTIVE_WRITE_LOCK_TIMEOUT_MS);
+  });
+  try {
+    const existing = measureRequestStage_(timing, 'deduplicate', function() {
+      return findIndexedUniqueProductRecord_(ss, 'Responses', responseId, timing, 'responseIdIndex');
+    });
+    if (existing) {
+      if (String(existing.record.matricula || '').trim().toUpperCase() !== matricula) {
+        return jsonResponseWithTiming_({ status: 'error', message: 'El identificador de respuesta ya pertenece a otra matrícula' }, timing);
+      }
+      if ((existing.record.operationalcycle && existing.record.operationalcycle !== cycle)
+        || !matchesIdempotentPayload_(existing.record, data, ['modalidad', 'etapa', 'scorePromedio', 'areasPrioritarias', 'claridad_carrera', 'desempeno_academico', 'plan_practicas', 'servicio_social', 'decision_semestre_tec', 'certificacion_idioma', 'source'])) {
+        return jsonResponseWithTiming_({ status: 'error', code: 'IDEMPOTENCY_CONFLICT', message: 'El envío pendiente tiene otro contenido o ciclo. No se guardaron cambios.' }, timing);
+      }
+      return jsonResponseWithTiming_({ status: 'success', data: { responseId: responseId, reused: true } }, timing);
+    }
+
+    var priorTest = latestStudentRecordForClosure_(ss, 'Responses', matricula, cycle);
+    var priorPlan = latestStudentRecordForClosure_(ss, 'GoalSelections', matricula, cycle);
+    if (priorTest || priorPlan) return jsonResponseWithTiming_({ status: 'error', code: 'TEST_ALREADY_COMPLETED',
+      message: 'Este ciclo ya tiene un test o un plan confirmado. Consulta tus resultados o pide apoyo a tu mentor o mentora.' }, timing);
+
+    const now = new Date().toISOString();
+    sheet.appendRow([
+      matricula,
+      now,
+      data.modalidad || 'remoto',
+      stage,
+      data.scorePromedio || '',
+      data.areasPrioritarias || '',
+      data.claridad_carrera || '',
+      data.desempeno_academico || '',
+      data.plan_practicas || '',
+      data.servicio_social || '',
+      data.decision_semestre_tec || '',
+      data.certificacion_idioma || '',
+      responseId,
+      cycle,
+      getActiveQuestionnaireVersion_(),
+      String(data.source || 'student').trim() || 'student'
+    ]);
+
+    invalidateStudentProductSnapshot_(matricula);
+    invalidateProductReadIndexes_(['Responses']);
+
+    return jsonResponseWithTiming_({ status: 'success', data: { responseId: responseId, completedAt: now, reused: false } }, timing);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function sanitizeTestResponse_(response) {
+  if (!response) return null;
+  return {
+    matricula: response.matricula,
+    fechaTest: response.fechatest,
+    modalidad: response.modalidad,
+    etapa: response.etapa,
+    scorePromedio: response.scorepromedio,
+    areasPrioritarias: response.areasprioritarias,
+    responseId: response.responseid || '',
+    operationalCycle: response.operationalcycle || '',
+    questionnaireVersion: response.questionnaireversion || '',
+    source: response.source || '',
+    scores: {
+      claridad_carrera: response.claridadcarrera,
+      desempeno_academico: response.desempenoacademico,
+      plan_practicas: response.planpracticas,
+      servicio_social: response.serviciosocial,
+      decision_semestre_tec: response.decisionsemestretec,
+      certificacion_idioma: response.certificacionidioma
+    }
+  };
+}
+
+function getTestResponseDataFast_(ss, data, timing) {
+  var matricula = String(data && data.matricula ? data.matricula : '').trim().toUpperCase();
+  if (!matricula) throw new Error('Falta la matrícula del alumno');
+  var cycleScope = normalizeIdentityValue_(data && data.cycleScope);
+  var operationalCycle = cycleScope === 'active' ? getActiveOperationalCycle_() : '';
+  var response = findLatestIndexedProductRecord_(
+    ss,
+    'Responses',
     matricula,
-    new Date().toISOString(),
-    data.modalidad || 'remoto',
-    data.etapa || '',
-    data.scorePromedio || '',
-    data.areasPrioritarias || '',
-    data.claridad_carrera || '',
-    data.desempeno_academico || '',
-    data.plan_practicas || '',
-    data.servicio_social || '',
-    data.decision_semestre_tec || '',
-    data.certificacion_idioma || ''
-  ]);
+    timing,
+    'responseIndex',
+    function(record) { return recordMatchesOperationalCycle_(record, operationalCycle); }
+  );
+  return sanitizeTestResponse_(response);
+}
 
-  return updateStudentStatus(ss, {
-    matricula: matricula,
-    status: 'Test Completado'
+function getTestResponse(ss, data, requestTiming) {
+  var timing = requestTiming || createRequestTiming_(data || {});
+  try {
+    var response = measureRequestStage_(timing, 'testResponse', function() {
+      return getTestResponseDataFast_(ss, data || {}, timing);
+    });
+    if (!response) {
+      return jsonResponseWithTiming_({
+        status: 'error',
+        message: 'No se encontraron respuestas para este alumno',
+      }, timing);
+    }
+    return jsonResponseWithTiming_({ status: 'success', data: response }, timing);
+  } catch (error) {
+    return jsonResponseWithTiming_({ status: 'error', message: error.toString() }, timing);
+  }
+}
+
+function buildLegacyGoalSelectionId_(data, matricula) {
+  var canonical = [
+    String(matricula || '').trim().toUpperCase(),
+    getActiveOperationalCycle_(),
+    String(data && data.metaPrioritaria || '').trim(),
+    String(data && data.metaComplementaria || '').trim(),
+    String(data && data.tiempo || '').trim(),
+    String(data && data.obstaculo || '').trim(),
+    String(data && data.plan || '').trim(),
+  ].join('\u001f');
+  var digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, canonical, Utilities.Charset.UTF_8);
+  var hex = digest.map(function(byte) {
+    return ('0' + ((byte + 256) % 256).toString(16)).slice(-2);
+  }).join('');
+  return 'legacy-goal-' + hex.slice(0, 32);
+}
+
+function matchesIdempotentPayload_(record, data, fields) {
+  return fields.every(function(field) {
+    if (!Object.prototype.hasOwnProperty.call(data, field)) return true;
+    return String(record[normalizeHeaderKey_(field)] || '').trim() === String(data[field] || '').trim();
   });
 }
 
-function getTestResponse(ss, data) {
-  const sheet = ensureSheetWithHeaders_(ss, 'Responses', RESPONSES_HEADERS);
-  const matricula = String(data.matricula || '').trim().toUpperCase();
-  
-  if (!matricula) {
-    return jsonResponse_({ status: 'error', message: 'Falta la matrícula del alumno' });
-  }
-
-  const values = sheet.getDataRange().getValues();
-  for (let i = values.length - 1; i > 0; i--) {
-    if (String(values[i][0]).toUpperCase() === matricula) {
-      const row = values[i];
-      return jsonResponse_({
-        status: 'success',
-        data: {
-          matricula: row[0],
-          fechaTest: row[1],
-          modalidad: row[2],
-          etapa: row[3],
-          scorePromedio: row[4],
-          areasPrioritarias: row[5],
-          scores: {
-            claridad_carrera: row[6],
-            desempeno_academico: row[7],
-            plan_practicas: row[8],
-            servicio_social: row[9],
-            decision_semestre_tec: row[10],
-            certificacion_idioma: row[11]
-          }
-        }
-      });
-    }
-  }
-
-  return jsonResponse_({ status: 'error', message: 'No se encontraron respuestas para este alumno' });
+function findGoalSelectionForWrite_(context, selectionId) {
+  var rowCount = context.sheet.getLastRow() - 1;
+  if (rowCount < 1) return null;
+  var keyColumn = getHeaderColumnIndex_(context, ['SelectionId']);
+  var matches = context.sheet.getRange(2, keyColumn + 1, rowCount, 1)
+    .createTextFinder(selectionId).matchEntireCell(true).matchCase(true).useRegularExpression(false).findAll();
+  if (matches.length > 1) throw new Error('El identificador de GoalSelections está duplicado.');
+  if (!matches.length) return null;
+  var row = context.sheet.getRange(matches[0].getRow(), 1, 1, context.width).getValues()[0];
+  if (String(row[keyColumn] || '').trim() !== selectionId) throw new Error('La selección de metas perdió consistencia.');
+  return rowToRecord_(context.headers, row);
 }
 
-function saveGoalSelection(ss, data) {
-  const sheet = ensureSheetWithHeaders_(ss, 'GoalSelections', GOAL_SELECTION_HEADERS);
+function saveGoalSelection(ss, data, requestTiming) {
+  var timing = requestTiming || createRequestTiming_(data || {});
+  var cycle = getActiveOperationalCycle_();
+  if (data && data.operationalCycle && data.operationalCycle !== cycle) {
+    return jsonResponseWithTiming_({ status: 'error', code: 'OPERATIONAL_CYCLE_CHANGED', message: 'El ciclo cambió. Confirma nuevamente tu matrícula.' }, timing);
+  }
   const matricula = String(data && data.matricula ? data.matricula : '').trim().toUpperCase();
 
   if (!matricula) {
     return jsonResponse_({ status: 'error', message: 'Falta la matrícula del alumno' });
   }
+  const selectionId = String(data && data.selectionId ? data.selectionId : buildLegacyGoalSelectionId_(data, matricula)).trim();
+  if (!/^[A-Za-z0-9_-]{8,100}$/.test(selectionId)) {
+    return jsonResponse_({ status: 'error', message: 'El identificador de la selección de metas no es válido' });
+  }
 
-  sheet.appendRow([
-    new Date().toISOString(),
-    matricula,
-    data.nombre || '',
-    data.metaPrioritaria || '',
-    data.metaComplementaria || '',
-    data.tiempo || '',
-    data.obstaculo || '',
-    data.plan || '',
-  ]);
-
-  updateStudentStatus(ss, {
-    matricula: matricula,
-    status: 'Metas Seleccionadas',
-    checkIn: data.checkIn,
+  const lock = LockService.getScriptLock();
+  measureRequestStage_(timing, 'lockWait', function() {
+    lock.waitLock(INTERACTIVE_WRITE_LOCK_TIMEOUT_MS);
   });
+  try {
+    // Do not prime Spreadsheet read caches before waiting for another writer.
+    // Schema, search and matched-row reads belong to the same locked section.
+    var context = measureRequestStage_(timing, 'goalSheet', function() {
+      var sheetContext = getReadOnlySheetContext_(ss, 'GoalSelections');
+      if (!sheetContext || sheetContext.normalizedHeaders.join('|') !== GOAL_SELECTION_HEADERS.map(normalizeHeaderKey_).join('|')) {
+        throw new Error('GoalSelections requiere revisión administrativa de su esquema.');
+      }
+      return sheetContext;
+    });
+    const encounter = requireCurrentStudentEncounter_(ss, data, timing);
+    const sheet = context.sheet;
+    const existing = measureRequestStage_(timing, 'deduplicate', function() {
+      return findGoalSelectionForWrite_(context, selectionId);
+    });
+    if (existing) {
+      if (String(existing.matricula || '').trim().toUpperCase() !== matricula) {
+        return jsonResponseWithTiming_({ status: 'error', message: 'El identificador de metas ya pertenece a otra matrícula' }, timing);
+      }
+      if ((existing.operationalcycle && existing.operationalcycle !== cycle)
+        || !matchesIdempotentPayload_(existing, data, ['metaPrioritaria', 'metaComplementaria', 'tiempo', 'obstaculo', 'plan'])) {
+        return jsonResponseWithTiming_({ status: 'error', code: 'IDEMPOTENCY_CONFLICT', message: 'El envío pendiente tiene otras metas o ciclo. No se guardaron cambios.' }, timing);
+      }
+      if (encounter && encounter.record.goalselectionid && encounter.record.goalselectionid !== selectionId) {
+        throw new Error('Este plan ya está confirmado. Puedes consultarlo al ingresar tu matrícula.');
+      }
+      linkEncounterRecord_(ss, encounter, 12, selectionId);
+      return jsonResponseWithTiming_({ status: 'success', data: { selectionId: selectionId, completedAt: String(existing.timestamp || ''), reused: true } }, timing);
+    }
 
-  return jsonResponse_({ status: 'success' });
+    var priorPlan = latestStudentRecordForClosure_(ss, 'GoalSelections', matricula, cycle);
+    var managedOpen = encounter && encounter.record.source === 'live-encounter-v2' && !encounter.record.goalselectionid;
+    if ((encounter && encounter.record.goalselectionid) || (priorPlan && !managedOpen)) {
+      return jsonResponseWithTiming_({ status: 'error', code: 'PLAN_ALREADY_CONFIRMED',
+        message: 'Este plan ya está confirmado. Puedes consultarlo al ingresar tu matrícula. Para otro encuentro, pide apoyo a tu mentor o mentora.' }, timing);
+    }
+    if (!['metaPrioritaria', 'metaComplementaria', 'tiempo', 'obstaculo', 'plan'].every(function(key) {
+      return typeof data[key] === 'string' && data[key].trim();
+    })) return jsonResponseWithTiming_({ status: 'error', code: 'PLAN_INCOMPLETE',
+      message: 'Completa las metas, el tiempo previsto, el obstáculo y la estrategia antes de confirmar tu plan.' }, timing);
+
+    const completedAt = new Date().toISOString();
+    measureRequestStage_(timing, 'appendGoal', function() { sheet.appendRow([
+      completedAt,
+      matricula,
+      data.nombre || '',
+      data.metaPrioritaria || '',
+      data.metaComplementaria || '',
+      data.tiempo || '',
+      data.obstaculo || '',
+      data.plan || '',
+      cycle,
+      selectionId,
+    ]); });
+
+    linkEncounterRecord_(ss, encounter, 12, selectionId);
+    measureRequestStage_(timing, 'commitGoal', function() { SpreadsheetApp.flush(); });
+
+    invalidateStudentProductSnapshot_(matricula);
+    invalidateProductReadIndexes_(['GoalSelections']);
+
+    return jsonResponseWithTiming_({ status: 'success', data: { selectionId: selectionId, completedAt: completedAt, reused: false } }, timing);
+  } finally {
+    lock.releaseLock();
+  }
 }
 
-function saveMentoringSession(ss, data) {
+function saveMentoringSession(ss, data, requestTiming) {
+  var timing = requestTiming || createRequestTiming_(data || {});
   const sheet = ensureSessionsSheet_(ss);
   const matricula = String(data && data.matricula ? data.matricula : '').trim().toUpperCase();
 
@@ -1285,6 +5267,9 @@ function saveMentoringSession(ss, data) {
   }
 
   const sessionId = String(data.sessionId || '').trim() || buildLegacySessionId_(matricula, data.fechaSesion, data.timestampCreacion);
+  if (!/^[A-Za-z0-9:_-]{8,100}$/.test(sessionId)) {
+    return jsonResponse_({ status: 'error', message: 'El identificador de sesión no es válido.' });
+  }
   const fechaSesion = String(data.fechaSesion || '').trim() || new Date().toISOString().slice(0, 10);
   const timestampCreacion = String(data.timestampCreacion || '').trim() || new Date().toISOString();
   const timestampActualizado = new Date().toISOString();
@@ -1311,30 +5296,46 @@ function saveMentoringSession(ss, data) {
     timestampActualizado,
   ];
 
-  var values = sheet.getDataRange().getValues();
-  var targetRow = 0;
-  for (var i = 1; i < values.length; i++) {
-    var currentSessionId = String(values[i][0] || '').trim();
-    if (currentSessionId === sessionId) {
-      targetRow = i + 1;
-      break;
-    }
-  }
-
-  if (targetRow > 0) {
-    sheet.getRange(targetRow, 1, 1, row.length).setValues([row]);
-  } else {
-    sheet.appendRow(row);
-  }
-
-  return jsonResponse_({
-    status: 'success',
-    data: {
-      sessionId: sessionId,
-      timestampCreacion: timestampCreacion,
-      timestampActualizado: timestampActualizado,
-    },
+  var lock = LockService.getScriptLock();
+  measureRequestStage_(timing, 'lockWait', function() {
+    lock.waitLock(INTERACTIVE_WRITE_LOCK_TIMEOUT_MS);
   });
+  try {
+    var encounter = requireEncounterForWrite_(ss, data, timing);
+    if (encounter && encounter.record.sessionid && encounter.record.sessionid !== sessionId) throw new Error('Este encuentro ya tiene una sesión guardada. Actualiza el registro existente.');
+    var targetRow = 0;
+    var existing = measureRequestStage_(timing, 'deduplicate', function() {
+      return findIndexedUniqueProductRecord_(ss, 'Sesiones', sessionId, timing, 'sessionIdIndex');
+    });
+    if (existing) {
+      if (String(existing.record.matricula || '').trim().toUpperCase() !== matricula) {
+        return jsonResponseWithTiming_({ status: 'error', message: 'El identificador de sesión ya pertenece a otra matrícula.' }, timing);
+      }
+      targetRow = existing.rowNumber;
+    }
+
+    if (targetRow > 0) {
+      sheet.getRange(targetRow, 1, 1, row.length).setValues([row]);
+    } else {
+      sheet.appendRow(row);
+    }
+
+    invalidateStudentProductSnapshot_(matricula);
+    linkEncounterRecord_(ss, encounter, 6, sessionId);
+    invalidateProductReadIndexes_(['Sesiones']);
+
+    return jsonResponseWithTiming_({
+      status: 'success',
+      data: {
+        sessionId: sessionId,
+        timestampCreacion: timestampCreacion,
+        timestampActualizado: timestampActualizado,
+        reused: targetRow > 0,
+      },
+    }, timing);
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 function seedStaffSheet_(sheet) {

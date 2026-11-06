@@ -304,7 +304,7 @@ export default function GoalManager() {
               <TextInput
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Buscar por ID, meta, dimensión o diagnóstico"
+                placeholder="Buscar por ID, meta, dimensión o conexión con el test"
                 className="pl-10"
               />
             </div>
@@ -427,7 +427,7 @@ export default function GoalManager() {
                   <Field label="Cuándo usarla">
                     <TextArea rows={3} value={selectedItem.cuandousarla} onChange={(e) => updateItem(selectedItem.id, 'cuandousarla', e.target.value)} />
                   </Field>
-                  <Field label="Conexión con diagnóstico" hint="Usa tags separados por coma para conectar esta meta con hallazgos de Navi.">
+                  <Field label="Conexión con el test" hint="Usa tags separados por coma para conectar esta meta con los temas identificados en faro.">
                     <TextInput value={selectedItem.conexiondiagnostico} onChange={(e) => updateItem(selectedItem.id, 'conexiondiagnostico', e.target.value)} />
                   </Field>
                   <Field label="Preguntas para afinar" hint="Escribe 2 o 3 preguntas separadas por punto y coma.">

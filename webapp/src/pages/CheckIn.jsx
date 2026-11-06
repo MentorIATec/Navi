@@ -4,62 +4,23 @@ import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { MapPin, UserCheck, ArrowRight } from 'lucide-react';
 import { apiClient } from '../api/client';
-import { fetchAndPersistExistingDiagnostic } from '../utils/diagnosticSession';
+import { resumeEncounter } from '../utils/encounterContinuation';
+import { getCheckInErrorMessage } from '../utils/checkInErrors';
+import { clearSessionContinuation, selectMentorAssistedContinuation } from '../utils/sessionContinuation';
+import { beginJourney, readJourney, assertCurrentJourney } from '../utils/journeyIntegrity';
+import { persistJourneyDiagnostic } from '../utils/journeyDiagnostic';
+import { getCheckInRequestId, applyJourneyTheme } from '../utils/journeyEntry';
 
 export default function CheckIn() {
   const navigate = useNavigate();
-  const [matricula, setMatricula] = useState(localStorage.getItem('navi_matricula') || '');
+  const [matricula, setMatricula] = useState(() => readJourney(sessionStorage)?.matricula || '');
   const [preferredName, setPreferredName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [returningEncounter, setReturningEncounter] = useState(null);
   const [missingRemoteTest, setMissingRemoteTest] = useState(null);
 
   const isValidMatricula = /^A[0-9]{8}$/i.test(matricula.trim());
-
-  const registerPresence = async (student, mentor) => {
-    const normalizedMatricula = matricula.toUpperCase();
-    const storedPreferredName =
-      preferredName.trim() ||
-      student?.nombrepreferido ||
-      student?.preferredName ||
-      '';
-    const resolvedDisplayName =
-      storedPreferredName ||
-      student?.nombre ||
-      student?.name ||
-      '';
-
-    const updatePayload = {
-      matricula: normalizedMatricula,
-      checkIn: 'Si',
-    };
-    if (storedPreferredName) {
-      updatePayload.preferredName = storedPreferredName;
-    }
-    await apiClient.post('updateStudent', updatePayload);
-
-    localStorage.setItem('navi_matricula', normalizedMatricula);
-    localStorage.setItem('navi_checked_in', 'true');
-    localStorage.setItem('navi_session_mode', 'presencial');
-
-    if (resolvedDisplayName) localStorage.setItem('navi_user_name', resolvedDisplayName);
-    if (student?.mentor || student?.nicknamementor) localStorage.setItem('navi_user_mentor', student.mentor || student.nicknamementor);
-    if (student?.community || student?.comunidad) {
-      localStorage.setItem('navi_user_community', student.community || student.comunidad);
-    }
-    if (mentor?.hex) {
-      document.documentElement.style.setProperty('--theme-color', mentor.hex);
-      localStorage.setItem('navi_community_color', mentor.hex);
-    }
-    if (mentor?.slogan) {
-      localStorage.setItem('navi_community_slogan', mentor.slogan);
-    }
-    if (mentor?.nombre || mentor?.name) {
-      localStorage.setItem('navi_mentor_name', mentor.nombre || mentor.name);
-    }
-
-    return resolvedDisplayName;
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -72,63 +33,79 @@ export default function CheckIn() {
     setErrorMessage('');
 
     try {
-      const { student, mentor } = await apiClient.post('findStudent', {
+      const requestId = getCheckInRequestId(sessionStorage, matricula.toUpperCase());
+      const { student, mentor, testResponse, registration, operationalCycle } = await apiClient.post('startStudentCheckIn', {
         matricula: matricula.toUpperCase(),
+        requestId,
+        modality: 'presencial',
+        preferredName: preferredName.trim(),
       });
 
-      const resolvedDisplayName = await registerPresence(student, mentor);
-      localStorage.removeItem('navi_missing_remote_test');
+      const resolvedDisplayName = preferredName.trim() || student?.nombrepreferido || student?.preferredName || student?.nombre || student?.name || '';
+      const journey = beginJourney(sessionStorage, { matricula: student.matricula, operationalCycle,
+        checkInId: registration?.checkInId, entryRequestId: requestId, displayName: resolvedDisplayName,
+        community: student.community || student.comunidad || '', color: mentor?.hex || '', slogan: mentor?.slogan || '',
+        mode: 'presencial', mentorName: mentor?.nombre || mentor?.name || '', mentorWhatsApp: mentor?.whatsappE164 || '' });
+      const hasTest = persistJourneyDiagnostic(sessionStorage, journey, testResponse);
+      clearSessionContinuation(sessionStorage);
+      applyJourneyTheme(document.documentElement.style, journey);
 
-      try {
-        const hasExistingDiagnostic = await fetchAndPersistExistingDiagnostic(
-          apiClient,
-          matricula.toUpperCase()
-        );
-
-        if (hasExistingDiagnostic) {
-          navigate('/pre-test');
+      if (registration?.reused && registration.continuation) {
+        if (registration.continuation.plan) {
+          navigate(resumeEncounter(sessionStorage, journey, registration.continuation));
           return;
         }
-      } catch (err) {
-        console.warn('No se encontraron respuestas previas para esta matrícula durante check-in.', err);
+        setReturningEncounter({ journey, continuation: registration.continuation });
+        return;
       }
 
-      localStorage.setItem('navi_missing_remote_test', 'true');
+      if (hasTest) {
+        navigate('/pre-test');
+        return;
+      }
+
       setMissingRemoteTest({
         name: resolvedDisplayName,
         status: student?.status || 'Pendiente',
       });
     } catch (error) {
       console.error('No se pudo registrar el check-in o consultar el estatus del alumno:', error);
-      setErrorMessage(
-        error?.message === 'Alumno no encontrado'
-          ? 'No encontramos esta matrícula en el registro. Revísala con tu mentor o mentora antes de continuar.'
-          : 'No pudimos registrar tu llegada a la sesión. Verifica tu conexión e intenta nuevamente.'
-      );
+      setErrorMessage(getCheckInErrorMessage(error));
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleTakeDiagnosticNow = () => {
+    clearSessionContinuation(sessionStorage);
     navigate('/test');
   };
 
   const handleContinueWithMentor = () => {
-    navigate('/pre-test');
+    try {
+      const journey = readJourney(sessionStorage);
+      assertCurrentJourney(sessionStorage, journey);
+      if (!selectMentorAssistedContinuation(sessionStorage, journey.matricula, journey.checkInId)) {
+        setErrorMessage('Confirma nuevamente tu matrícula para continuar con tu mentor.');
+        return;
+      }
+      navigate('/pre-test');
+    } catch {
+      setErrorMessage('No pudimos conservar tu elección en este dispositivo. Intenta nuevamente.');
+    }
   };
 
   return (
-    <div className="mx-auto max-w-5xl py-8 sm:py-12">
+    <div className="clarity-checkin mx-auto max-w-5xl py-8 sm:py-12">
       <section className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
-        <div className="shell-panel relative overflow-hidden rounded-[30px] border border-[rgba(210,106,92,0.18)] px-8 py-10 sm:px-10 sm:py-12">
+        <div className="clarity-checkin-hero shell-panel relative overflow-hidden rounded-[18px] border border-[rgba(210,106,92,0.18)] px-8 py-10 sm:px-10 sm:py-12">
           <div
             className="absolute inset-x-0 top-0 h-1"
             style={{ background: 'linear-gradient(90deg, var(--coral-500) 0%, var(--navy-500) 100%)' }}
           />
           <div className="relative max-w-2xl">
             <h1 className="mt-4 font-display text-4xl font-bold tracking-tight text-[var(--ink-900)] sm:text-5xl">
-              Bienvenido a tu sesión de mentoría
+              Comencemos tu sesión de mentoría
             </h1>
             <p className="navi-prose mt-4 max-w-xl text-base sm:text-lg">
               Confirma tu matrícula para registrar tu llegada y continuar con el siguiente paso de la sesión.
@@ -144,11 +121,20 @@ export default function CheckIn() {
               </div>
               <div>
                 <h2 className="font-display text-2xl font-semibold text-[var(--ink-900)]">
-                  Confirma tu matrícula
+                  {returningEncounter ? 'Continuemos' : 'Confirma tu matrícula'}
                 </h2>
               </div>
             </div>
-          <form onSubmit={handleSubmit} className="space-y-6">
+          {returningEncounter ? <div className="space-y-5" role="status">
+            <h3 className="text-xl font-semibold">{returningEncounter.continuation.preTestSummary ? 'Sigamos con tus metas' : 'Cuéntanos cómo llegas hoy'}</h3>
+            <p>{returningEncounter.continuation.preTestSummary ? 'Elige una meta para tu avance académico o profesional y otra para tu bienestar.' : 'Responde dos preguntas sobre cómo te sientes y qué te gustaría conversar en esta sesión.'}</p>
+            <Button className="w-full" onClick={() => {
+              try { navigate(resumeEncounter(sessionStorage, returningEncounter.journey, returningEncounter.continuation)); }
+              catch (error) { setErrorMessage(error.message); }
+            }}>{returningEncounter.continuation.preTestSummary ? 'Elegir mis metas' : 'Responder las preguntas'}</Button>
+            <Button variant="ghost" onClick={() => { setReturningEncounter(null); setMatricula(''); setPreferredName(''); }}>Usar otra matrícula</Button>
+            {errorMessage ? <p role="alert" className="text-red-600">{errorMessage}</p> : null}
+          </div> : <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
               <label htmlFor="matricula" className="text-sm font-semibold text-[var(--ink-700)]">
                 Confirmar Matrícula
@@ -193,6 +179,7 @@ export default function CheckIn() {
                 className="block w-full rounded-[20px] border border-[rgba(15,76,129,0.12)] bg-white/80 p-4 text-[var(--ink-900)] focus:border-[rgba(210,106,92,0.45)] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[rgba(210,106,92,0.12)] transition-all"
                 value={preferredName}
                 onChange={(e) => setPreferredName(e.target.value)}
+                maxLength={80}
               />
               <p className="text-sm text-[var(--ink-700)]">
                 Opcional. Así te llamará tu mentor o mentora.
@@ -211,34 +198,34 @@ export default function CheckIn() {
             </Button>
 
             {missingRemoteTest ? (
-              <div className="rounded-[22px] border border-[rgba(210,106,92,0.20)] bg-[rgba(249,236,232,0.72)] p-5">
+              <div className="rounded-[18px] border border-[rgba(210,106,92,0.20)] bg-[rgba(249,236,232,0.72)] p-5">
                 <p className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--coral-500)]">
-                  Diagnóstico pendiente
+                  Test pendiente
                 </p>
                 <h3 className="mt-3 font-display text-2xl font-semibold text-[var(--ink-900)]">
-                  No encontramos tu diagnóstico previo
+                  No encontramos tu test previo
                 </h3>
                 <p className="mt-3 text-sm leading-7 text-[var(--ink-700)]">
                   {missingRemoteTest.name
                     ? `${missingRemoteTest.name.split(' ')[0]}, `
                     : ''}
-                  para aprovechar mejor la sesión conviene completar primero el diagnóstico remoto. Si hoy no es posible, puedes continuar con apoyo de tu mentor o mentora y definir tus metas desde esta sesión.
+                  para aprovechar mejor la sesión conviene completar primero el test remoto. Si hoy no es posible, puedes continuar con apoyo de tu mentor o mentora y definir tus metas desde esta sesión.
                 </p>
                 <p className="mt-3 text-sm font-medium text-[var(--navy-700)]">
                   Tu llegada ya quedó registrada. Elige cómo quieres continuar.
                 </p>
                 <div className="mt-5 flex flex-col gap-3">
                   <Button type="button" size="lg" className="w-full" onClick={handleTakeDiagnosticNow}>
-                    Responder diagnóstico ahora
+                    Responder el test ahora
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                   <Button type="button" variant="outline" size="lg" className="w-full" onClick={handleContinueWithMentor}>
-                    Continuar con apoyo del mentor
+                    Continuar con acompañamiento
                   </Button>
                 </div>
               </div>
             ) : null}
-          </form>
+          </form>}
           </CardContent>
         </Card>
       </section>

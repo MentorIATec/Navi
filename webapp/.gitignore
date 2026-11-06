@@ -23,3 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 .vercel
+
+# Artefactos locales de staging; pueden contener datos personales y no se versionan.
+outputs/

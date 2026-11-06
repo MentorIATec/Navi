@@ -5,8 +5,8 @@ export const Card = React.forwardRef(({ className, ...props }, ref) => (
   <div
     ref={ref}
     className={cn(
-      "rounded-[26px] border border-white/70 bg-[linear-gradient(180deg,#fbfdff_0%,#f2f6fc_100%)] text-gray-950 shadow-[var(--card-shadow)]",
-      "transition-all duration-300 stage-card-lift",
+      "clarity-card text-[var(--ink-900)]",
+      "stage-card-lift",
       className
     )}
     {...props}

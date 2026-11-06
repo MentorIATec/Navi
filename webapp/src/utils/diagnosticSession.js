@@ -31,6 +31,6 @@ export function persistDiagnosticSession(diagnostic) {
 }
 
 export async function fetchAndPersistExistingDiagnostic(apiClient, matricula) {
-  const response = await apiClient.post('getTestResponse', { matricula });
+  const response = await apiClient.post('getTestResponse', { matricula, cycleScope: 'active' });
   return persistDiagnosticSession(response);
 }

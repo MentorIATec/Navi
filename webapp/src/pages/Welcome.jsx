@@ -4,7 +4,11 @@ import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { ArrowRight, UserCircle } from 'lucide-react';
 import { apiClient } from '../api/client';
-import { fetchAndPersistExistingDiagnostic } from '../utils/diagnosticSession';
+import { resumeEncounter } from '../utils/encounterContinuation';
+import { beginJourney } from '../utils/journeyIntegrity';
+import { persistJourneyDiagnostic } from '../utils/journeyDiagnostic';
+import { applyJourneyTheme } from '../utils/journeyEntry';
+import { clearSessionContinuation } from '../utils/sessionContinuation';
 
 export default function Welcome() {
   const navigate = useNavigate();
@@ -26,12 +30,13 @@ export default function Welcome() {
     setErrorMessage('');
 
     try {
-      const response = await apiClient.post('findStudent', { matricula: matricula.toUpperCase() });
+      const response = await apiClient.post('getStudentEntry', { matricula: matricula.toUpperCase() });
       const student = response?.student;
       const mentor = response?.mentor;
+      const testResponse = response?.testResponse;
 
       if (!student) {
-        setErrorMessage('No encontramos tu matrícula en la base de estudiantes. Si crees que es un error, consulta con tu mentor o con la coordinación de mentoría antes de continuar.');
+        setErrorMessage('No encontramos tu matrícula en la base de estudiantes. Si crees que es un error, consulta con la persona que te acompaña o con la coordinación de mentoría antes de continuar.');
         return;
       }
 
@@ -46,41 +51,29 @@ export default function Welcome() {
         student.name ||
         '';
 
-      localStorage.removeItem('navi_session_mode');
-      localStorage.removeItem('navi_checked_in');
-      localStorage.setItem('navi_matricula', student.matricula || matricula.toUpperCase());
-      localStorage.setItem('navi_user_name', resolvedDisplayName);
-      localStorage.setItem('navi_student_email', student.email || '');
-      localStorage.setItem('navi_user_community', student.community || student.comunidad || '');
-
-      if (mentor?.hex) {
-        document.documentElement.style.setProperty('--theme-color', mentor.hex);
-        localStorage.setItem('navi_community_color', mentor.hex);
-        localStorage.setItem('navi_mentor_name', mentor.nombre || mentor.name || '');
-        if (mentor.slogan) {
-          localStorage.setItem('navi_community_slogan', mentor.slogan);
-        }
-      }
+      const journey = beginJourney(sessionStorage, { matricula: student.matricula, operationalCycle: response.operationalCycle,
+        checkInId: response.continuation?.checkInId || '', displayName: resolvedDisplayName, community: student.community || student.comunidad || '',
+        color: mentor?.hex || '', slogan: mentor?.slogan || '', mode: response.continuation ? 'presencial' : 'remoto',
+        mentorName: mentor?.nombre || mentor?.name || '', mentorWhatsApp: mentor?.whatsappE164 || '' });
+      const hasTest = persistJourneyDiagnostic(sessionStorage, journey, testResponse);
+      clearSessionContinuation(sessionStorage);
+      applyJourneyTheme(document.documentElement.style, journey);
 
       if (preferredName.trim() && preferredName.trim() !== (student.nombrepreferido || student.preferredName || '')) {
-        await apiClient.post('updateStudent', {
+        await apiClient.post('saveStudentPreference', {
           matricula: student.matricula || matricula.toUpperCase(),
           preferredName: preferredName.trim(),
         });
       }
 
-      try {
-        const hasExistingDiagnostic = await fetchAndPersistExistingDiagnostic(
-          apiClient,
-          student.matricula || matricula.toUpperCase()
-        );
+      if (response.continuation) {
+        navigate(resumeEncounter(sessionStorage, journey, response.continuation));
+        return;
+      }
 
-        if (hasExistingDiagnostic) {
-          navigate('/resultados');
-          return;
-        }
-      } catch (responseError) {
-        console.warn('No se encontraron respuestas previas para esta matrícula. Se habilita un diagnóstico nuevo.', responseError);
+      if (hasTest) {
+        navigate('/resultados');
+        return;
       }
 
       navigate('/test');
@@ -93,23 +86,23 @@ export default function Welcome() {
   };
 
   return (
-    <section className="grid min-h-[72vh] items-center gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:gap-12">
-      <div className="relative overflow-hidden rounded-[28px] bg-[linear-gradient(135deg,var(--navy-700)_0%,var(--navy-500)_62%,color-mix(in_srgb,var(--theme-color)_55%,var(--navy-500))_100%)] px-7 py-10 text-white shadow-[0_26px_60px_rgba(16,38,69,0.28)] sm:px-10 sm:py-12">
+    <section className="clarity-welcome grid min-h-[72vh] items-center gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:gap-12">
+      <div className="clarity-welcome-hero relative overflow-hidden rounded-[28px] bg-[var(--surface-raised)] px-7 py-10 text-white  sm:px-10 sm:py-12">
         <div className="absolute -left-10 top-12 h-40 w-40 rounded-full bg-[rgba(210,106,92,0.26)] blur-3xl" />
         <div className="absolute right-0 top-0 h-56 w-56 rounded-full bg-[rgba(255,255,255,0.08)] blur-3xl" />
-        <div className="absolute inset-y-0 right-10 hidden w-px bg-[linear-gradient(180deg,transparent_0%,rgba(255,255,255,0.16)_22%,rgba(255,255,255,0.05)_78%,transparent_100%)] lg:block" />
+        <div className="absolute inset-y-0 right-10 hidden w-px bg-[var(--surface-raised)] lg:block" />
         <div className="absolute bottom-10 right-10 hidden h-40 w-40 rounded-full border border-white/8 lg:block" />
         <div className="absolute bottom-18 right-18 hidden h-24 w-24 rounded-full border border-white/10 lg:block" />
 
         <div className="relative z-10 max-w-xl">
           <p className="mb-4 font-display text-sm font-semibold uppercase tracking-[0.28em] text-white/62">
-            Encuentra tu faro
+            Tu espacio de mentoría
           </p>
           <h1 className="font-display text-5xl font-bold tracking-[-0.05em] text-white sm:text-6xl">
-            Traza una ruta clara para este semestre.
+            Un espacio para pensar en lo que sigue.
           </h1>
           <p className="mt-5 max-w-lg text-lg leading-8 text-white/78">
-            Ordena lo importante y llega mejor preparado a tu mentoría.
+            Explora tu momento actual y los temas que te gustaría conversar en tu mentoría.
           </p>
         </div>
       </div>
@@ -135,7 +128,7 @@ export default function Welcome() {
                   type="text"
                   id="matricula"
                   placeholder="Ej. A01234567"
-                  className="block w-full rounded-[20px] border border-[rgba(15,76,129,0.16)] bg-white/88 p-4 pl-12 text-lg font-medium text-[var(--ink-900)] shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] outline-none transition-all uppercase placeholder:text-[var(--ink-700)] focus:border-[var(--theme-color)] focus:bg-white focus:shadow-[0_0_0_4px_rgba(15,76,129,0.08)]"
+                  className="block w-full rounded-[20px] border border-[rgba(15,76,129,0.16)] bg-white/88 p-4 pl-12 text-lg font-medium text-[var(--ink-900)]  outline-none transition-all uppercase placeholder:text-[var(--ink-700)] focus:border-[var(--theme-color)] focus:bg-white focus:"
                   value={matricula}
                   onChange={(e) => {
                     setMatricula(e.target.value);
@@ -164,7 +157,7 @@ export default function Welcome() {
                 type="text"
                 id="preferredName"
                 placeholder="Nombre de pila o nombre preferido"
-                className="block w-full rounded-[20px] border border-[rgba(15,76,129,0.16)] bg-white/88 p-4 text-lg font-medium text-[var(--ink-900)] shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] outline-none transition-all placeholder:text-[var(--ink-700)] focus:border-[var(--theme-color)] focus:bg-white focus:shadow-[0_0_0_4px_rgba(15,76,129,0.08)]"
+                className="block w-full rounded-[20px] border border-[rgba(15,76,129,0.16)] bg-white/88 p-4 text-lg font-medium text-[var(--ink-900)]  outline-none transition-all placeholder:text-[var(--ink-700)] focus:border-[var(--theme-color)] focus:bg-white focus:"
                 value={preferredName}
                 onChange={(e) => setPreferredName(e.target.value)}
               />
@@ -180,7 +173,7 @@ export default function Welcome() {
               disabled={!isValidMatricula}
               isLoading={isLoading}
             >
-              Comenzar Diagnóstico
+              Continuar
               <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
             </Button>
             <p className="text-xs leading-6 text-[var(--ink-700)]">

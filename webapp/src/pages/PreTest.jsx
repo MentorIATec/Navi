@@ -1,10 +1,13 @@
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { ArrowRight } from 'lucide-react';
 import { apiClient } from '../api/client';
 import { cn } from '../utils/cn';
+import { consumePostPreTestRoute } from '../utils/sessionContinuation';
+import { readJourney, assertCurrentJourney, readConfirmedPlan } from '../utils/journeyIntegrity';
+import { persistJourneyArrival, readJourneyDiagnostic } from '../utils/journeyDiagnostic';
 
 const arrivalOptions = [
   { id: 'clear', label: 'Con energía y ganas de avanzar' },
@@ -43,10 +46,12 @@ function getMicroPreSummary(answers) {
 
 export default function PreTest() {
   const navigate = useNavigate();
-  const isSessionMode = localStorage.getItem('navi_session_mode') === 'presencial';
-  const matricula = localStorage.getItem('navi_matricula');
+  const [journey] = useState(() => readJourney(sessionStorage));
+  const isSessionMode = journey?.mode === 'presencial';
+  const matricula = journey?.matricula;
   const [answers, setAnswers] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const isComplete = useMemo(
     () => Boolean(answers.arrival && answers.intent),
@@ -59,41 +64,44 @@ export default function PreTest() {
 
   const handleContinue = async () => {
     setIsSubmitting(true);
-    const summary = getMicroPreSummary(answers);
-    const textSummary = `${summary.arrival} · ${summary.intent}`;
-    
+    setErrorMessage('');
     try {
-      if (matricula) {
-        // Se mantiene el campo legacy en Sheets, pero el contenido ahora resume
-        // estado de llegada + intención de la sesión.
-        await apiClient.post('updateStudent', {
-          matricula,
-          agenciaCheckIn: textSummary
+      assertCurrentJourney(sessionStorage, journey);
+      const summary = getMicroPreSummary(answers);
+      const textSummary = `${summary.arrival} · ${summary.intent}`;
+      const syncPayload = {
+        matricula,
+        checkInId: journey.checkInId || undefined,
+        preTestSummary: textSummary,
+      };
+
+      const persistAndContinue = () => {
+        persistJourneyArrival(sessionStorage, journey, {
+          ...answers, summary, textSummary,
+          agency: answers.intent,
         });
+        navigate(consumePostPreTestRoute(sessionStorage, {
+          matricula, checkInId: syncPayload.checkInId, missingTest: !readJourneyDiagnostic(sessionStorage, journey),
+        }));
+      };
+
+      try {
+        await apiClient.post('completeCheckInPreTest', syncPayload);
+      } catch (error) {
+        console.error('Error enviando pre-test:', error);
+        if ([401, 403, 409].includes(error.statusCode)) throw error;
       }
+      persistAndContinue();
     } catch (error) {
-      console.error('Error enviando pre-test:', error);
-    } finally {
-      setIsSubmitting(false);
-      localStorage.setItem('micro_pre', JSON.stringify({
-        ...answers,
-        summary,
-        textSummary,
-        // compatibilidad transitoria para sesiones cacheadas con la key anterior
-        agency: answers.intent,
-      }));
-      
-      const missingTest = localStorage.getItem('navi_missing_remote_test');
-      if (missingTest === 'true') {
-        navigate('/test');
-      } else {
-        navigate('/resultados');
-      }
-    }
+      setErrorMessage(error.message || 'No pudimos conservar este momento. Intenta nuevamente.');
+    } finally { setIsSubmitting(false); }
   };
 
+  if (readConfirmedPlan(sessionStorage, journey)) return <Navigate to="/plan-accion" replace />;
+
   return (
-    <div className="mx-auto max-w-4xl py-8 sm:py-12">
+    <div className="clarity-pretest mx-auto max-w-4xl py-8 sm:py-12">
+      {errorMessage && <p role="alert" className="mb-4 text-red-600">{errorMessage}</p>}
       <div className="mb-8 space-y-4">
         <div>
           <p className="navi-eyebrow" style={{ color: isSessionMode ? 'var(--coral-500)' : 'var(--ink-700)' }}>
@@ -109,7 +117,7 @@ export default function PreTest() {
       </div>
 
       <Card className="overflow-hidden border-[rgba(15,76,129,0.12)]">
-        <CardContent className="space-y-8 p-8 sm:p-12">
+        <CardContent className="clarity-pretest-questions space-y-8 p-8 sm:p-12">
           <div className="space-y-4">
             <h3 className="font-display text-2xl font-semibold leading-tight text-[var(--ink-900)] sm:text-[2rem]">
               Hoy llego a esta sesión...
@@ -120,12 +128,13 @@ export default function PreTest() {
                   key={option.id}
                   type="button"
                   onClick={() => handleSelect('arrival', option.id)}
+                  aria-pressed={answers.arrival === option.id}
                   disabled={isSubmitting}
                   className={cn(
-                    'answer-shift stage-card-lift w-full rounded-[22px] border px-5 py-4 text-left transition-all active:scale-[0.99]',
+                    'answer-shift stage-card-lift w-full rounded-[18px] border px-5 py-4 text-left transition-all active:scale-[0.99]',
                     answers.arrival === option.id
-                      ? 'border-[rgba(15,76,129,0.35)] bg-[linear-gradient(180deg,rgba(240,245,252,0.96)_0%,rgba(228,236,247,0.92)_100%)] shadow-[0_16px_38px_rgba(15,76,129,0.12)]'
-                      : 'border-[rgba(15,76,129,0.10)] bg-white/72 hover:border-[rgba(15,76,129,0.22)] hover:bg-white hover:shadow-[0_14px_34px_rgba(17,36,66,0.10)]'
+                      ? 'border-[rgba(15,76,129,0.35)] bg-[var(--surface-raised)] '
+                      : 'border-[rgba(15,76,129,0.10)] bg-white/72 hover:border-[rgba(15,76,129,0.22)] hover:bg-white '
                   )}
                 >
                   <span className="font-medium text-[var(--ink-900)]">{option.label}</span>
@@ -144,12 +153,13 @@ export default function PreTest() {
                   key={option.id}
                   type="button"
                   onClick={() => handleSelect('intent', option.id)}
+                  aria-pressed={answers.intent === option.id}
                   disabled={isSubmitting}
                   className={cn(
-                    'answer-shift stage-card-lift w-full rounded-[22px] border px-5 py-4 text-left transition-all active:scale-[0.99]',
+                    'answer-shift stage-card-lift w-full rounded-[18px] border px-5 py-4 text-left transition-all active:scale-[0.99]',
                     answers.intent === option.id
-                      ? 'border-[rgba(15,76,129,0.35)] bg-[linear-gradient(180deg,rgba(240,245,252,0.96)_0%,rgba(228,236,247,0.92)_100%)] shadow-[0_16px_38px_rgba(15,76,129,0.12)]'
-                      : 'border-[rgba(15,76,129,0.10)] bg-white/72 hover:border-[rgba(15,76,129,0.22)] hover:bg-white hover:shadow-[0_14px_34px_rgba(17,36,66,0.10)]'
+                      ? 'border-[rgba(15,76,129,0.35)] bg-[var(--surface-raised)] '
+                      : 'border-[rgba(15,76,129,0.10)] bg-white/72 hover:border-[rgba(15,76,129,0.22)] hover:bg-white '
                   )}
                 >
                   <span className="font-medium text-[var(--ink-900)]">{option.label}</span>

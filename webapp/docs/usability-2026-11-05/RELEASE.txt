@@ -1,0 +1,48 @@
+FARO-UX-2026.11.05-RC1
+Candidata local integrada. NO publicada en faro-me ni aplicada a Google.
+
+REGLA DE NEGOCIO RB-PLAN-01 (5 de noviembre de 2026)
+El estudiante puede explorar y personalizar ambas metas antes del cierre. El cierre ocurre al pulsar Confirmar mi plan en el paso 5, después de definir la estrategia, y recibir la confirmación del backend para ese mismo SelectionId. No ocurre al completar el campo, llegar al 100% del formulario, copiar la tarjeta o simplemente hacer clic.
+
+Secuencia verificable:
+1. handleNext llama handleConfirm con metas, tiempo, obstáculo, estrategia, matrícula, ciclo y CheckInId.
+2. pendingOperation conserva un identificador estable para el envío. Mientras está pendiente no se fabrica otro intento.
+3. saveGoalSelection valida el ciclo y el encuentro vigente bajo el bloqueo de escritura. Rechaza planes incompletos y sustituciones de planes cerrados, incluso con replacesSelectionId o sin CheckInId.
+4. El backend escribe GoalSelections y vincula CheckIns.GoalSelectionId. SpreadsheetApp.flush se ejecuta después de ambas escrituras y antes de responder con selectionId, completedAt y reused.
+5. acknowledgeOperation exige el mismo identificador, contenido y acuse válido. Sólo entonces se abre /plan-accion.
+6. Si se pierde el acuse, se conserva el envío pendiente y se consulta/reenvía con el mismo ID; no se da por confirmado ni se duplica. Una recuperación desde otra entrada reconstruye el recibo a partir de las filas confirmadas del servidor.
+
+CONSULTA Y APERTURA
+- Tras el cierre, el resumen es de consulta, descarga y copia; sin Editar mis metas, selección de etapa o nuevo test autónomo.
+- Reingresar por / o /check-in recupera el encuentro y su plan dentro del ciclo vigente, incluso otro día/dispositivo o tras expirar el almacenamiento local. No registra otra llegada.
+- Volver a /seleccion-metas, /test, /pre-test o /resultados con un recibo confirmado conduce al resumen. El backend también rechaza escrituras tardías: no depende de ocultar botones.
+- Sólo una persona mentora autenticada, dentro de su cartera vigente, puede iniciar otro encuentro. Se conservan los acuerdos anteriores y se reutiliza el test del ciclo. No es una reapertura anónima del plan anterior.
+- Una corrección posterior se atiende con la persona mentora mediante un nuevo encuentro; no se añadió un editor de planes cerrados ni un permiso general para reabrirlos.
+- Sólo coordinación cambia ACTIVE_OPERATIONAL_CYCLE para habilitar el nuevo ciclo. No hay reinicio por fecha del dispositivo, por transcurso de días, por salir/entrar o por cambiar de etapa en una pestaña antigua. No se borran pruebas o planes anteriores. Si el navegador conserva un requestId del ciclo anterior, el nuevo ciclo usa un CheckInId determinista diferente; no reutiliza la llegada histórica.
+- Un segundo test del mismo ciclo se rechaza; los reintentos del mismo ResponseId siguen permitidos si conservan contenido/ciclo. Cambiar de ciclo no modifica las baterías.
+- La consulta de planes históricos/remotos no inventa vínculos con llegadas. Registros incompletos o con identificadores no recuperables requieren revisión antes de publicarlos como planes confirmados.
+
+ESTADO CRM RB-CRM-01
+El cierre del plan NO confirma documentación CRM ni crea automáticamente la fila de sesión mentora.
+Una llegada sin confirmación CRM guardada se muestra Pendiente CRM, incluso cuando aún no existe fila de Sesiones. Sólo el SessionId vinculado a la llegada vigente y su documentadoCrm guardado permiten CRM documentado. Un histórico documentado sin vínculo suficiente se muestra Estado CRM por confirmar. Copiar el resumen o marcar la casilla sin guardar no confirma documentación; otro encuentro no hereda ese estado.
+
+EDITORIAL CRM RB-CRM-02
+Registro de acompañamiento con faro. Fecha de sesión y estudiante conservados. Durante el encuentro integra la declaración de llegada, las prioridades atribuidas a respuestas del test y las notas literales. Sin notas no se inventa conversación; sin prioridades o sin datos suficientes se distingue cada caso. Fecha del test sólo en la frase de procedencia si está disponible. Sin bloque de antecedentes, revisión de fuentes, persona mentora asignada, puntos medios editoriales, Horizonte o fecha de guardado de metas en el resumen. Se usa Tiempo previsto. Se conservan metas, obstáculo y estrategia completos. Las notas libres no se reescriben.
+
+PERSONALIZACIÓN RB-METAS-01
+Botón visible Personalizar esta meta para prioritaria y complementaria, con restablecimiento y borrador conservado al explorar y volver entre pasos ANTES del cierre. Se conservan dimensiones visibles, ejemplos de pasos y lista continua. Los borradores sin enviar no se prometen sincronizados entre dispositivos.
+
+ALCANCE DE VERIFICACIÓN
+707 pruebas completas del checkout local, lint y build PASS. Las 31 pruebas focalizadas de esta candidata cubren 15 casos de continuidad/cierre/chips y 16 casos editoriales CRM. Los tests históricos conservan sus fuentes congeladas y hashes; no se alteraron sus paquetes sellados.
+Navegador local con Google Apps Script real en VM y hojas ficticias en RAM: personalizar, confirmar, consultar por ambas entradas, bloqueo de ruta de edición, chip Pendiente CRM después del cierre del plan, vista previa sin/con notas y guardado de sesión ficticia. Sin desbordamiento a 1280, 390 y 320 px. La copia mostró confirmación en UI; la lectura del portapapeles de esta repetición no coincidió y no se acredita un nuevo cotejo nativo. La copia exacta con/sin notas estaba validada en la revisión local anterior del mismo formatter; debe repetirse en celulares físicos.
+No se midió latencia de Google ni se acredita una prueba física de dispositivos en esta revisión. Ningún dato real leído/escrito, ningún servicio creado, ningún acceso Neon abierto ni despliegue ejecutado.
+
+PUBLICACIÓN PENDIENTE
+La versión queda en una rama de revisión, sin merge a main ni despliegue. El checkout mantiene los otros frentes fuera del commit. El commit consolida las fuentes runtime aprobadas que aún no estaban en el main remoto (base anterior) y este delta de usabilidad; no incluye bases de estudiantes, descargas, credenciales, .env, artefactos privados, expedientes o el laboratorio de migración.
+Antes de publicar: comprobar los encabezados reales de CheckIns, aplicar coordinadamente interfaz/gateway/Apps Script y preparar reversión de ambos. Única columna aditiva prevista: GoalSelectionId en L; SessionId ya está en F. Sin pestañas nuevas, backfill por fechas ni borrado de filas. Confirmar recuperación de planes históricos completos mediante lecturas autorizadas antes de promover.
+Pendiente validación de este delta en iPhone/Android físicos: cierre/reingreso otro día, otra pestaña/dispositivo, teclado y texto largo, copia nativa CRM, consulta/descarga y nuevo encuentro autorizado. No automatizar ni activar el cambio anual del ciclo en esta entrega.
+
+REPRODUCCIÓN EN LA RAMA
+Desde webapp: npm ci; npm test; npm run lint; npm run build.
+En una copia limpia de la rama, npm test ejecuta las 31 pruebas focalizadas incluidas. Las 707 corresponden al checkout de trabajo, que contiene auditorías históricas de otros frentes no incorporadas a este commit; no atribuir ese total a la rama limpia.
+Revisión UI ficticia: npm run dev -- --config verification/usability.vite.config.mjs (sólo loopback 127.0.0.1:5199, A12345678). El arnés bloquea otras matrículas y no usa conexiones reales.

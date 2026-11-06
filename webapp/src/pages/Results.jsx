@@ -1,37 +1,24 @@
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
+import { readJourney, readPendingSubmission, readConfirmedPlan } from '../utils/journeyIntegrity';
+import { readJourneyDiagnostic, readJourneyArrival } from '../utils/journeyDiagnostic';
 import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { ArrowRight, CalendarDays } from 'lucide-react';
+import { ArrowRight, MessageCircle } from 'lucide-react';
 import { CATEGORY_META, DIAGNOSTIC_BANK } from '../data/diagnosticBank';
+import {
+  buildScoreData,
+  buildWhatsAppMessage,
+  buildWhatsAppUrl,
+  getPriorityAreas,
+  getInitialConversationAreas,
+  getSuggestedConversationAreas,
+  normalizeWhatsAppNumber,
+  toggleConversationTopicSelection,
+} from '../utils/testResults';
 
-const DEFAULT_BOOKING_CONFIG = {
-  mode: 'individual',
-  url: 'https://outlook.office.com/book/RecalculandoRutaMentoraparaevaluartutrayectoria@tecmx.onmicrosoft.com/?ismsaljsauthenabled',
-  cta: 'Agendar mi sesión',
-};
-
-function getScoreData() {
-  const rawPayload = localStorage.getItem('navi_diagnostic_payload');
-  if (!rawPayload) return [];
-
-  try {
-    const payload = JSON.parse(rawPayload);
-    const stage = payload.stage;
-    const answers = payload.answers || {};
-    const questions = payload.questions || DIAGNOSTIC_BANK[stage] || [];
-
-    return questions.map(({ key, category, title }) => ({
-      key,
-      category,
-      title,
-      label: CATEGORY_META[category]?.label || title,
-      recommendation: CATEGORY_META[category]?.recommendation || 'Conviene revisar esta área con más detalle durante la mentoría.',
-      score: Number(answers[key] || 0),
-    }));
-  } catch (error) {
-    console.error('No se pudieron leer las respuestas del diagnóstico:', error);
-    return [];
-  }
+function getScoreData(diagnostic) {
+  return buildScoreData(diagnostic, DIAGNOSTIC_BANK, CATEGORY_META);
 }
 
 function getTone(score) {
@@ -40,26 +27,10 @@ function getTone(score) {
   return 'Con avance sólido';
 }
 
-function getPriorityAreas(scoreData) {
-  return scoreData.filter((item) => item.score > 0 && item.score <= 2);
-}
-
-function getBookingConfig() {
+function getMicroPre(journey) {
   try {
-    const rawConfig = localStorage.getItem('navi_booking_config');
-    if (!rawConfig) return DEFAULT_BOOKING_CONFIG;
-    return { ...DEFAULT_BOOKING_CONFIG, ...JSON.parse(rawConfig) };
-  } catch (error) {
-    console.error('No se pudo leer la configuración de agenda:', error);
-    return DEFAULT_BOOKING_CONFIG;
-  }
-}
-
-function getMicroPre() {
-  try {
-    const raw = localStorage.getItem('micro_pre');
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
+    const parsed = readJourneyArrival(sessionStorage, journey);
+    if (!parsed) return null;
     if (!parsed.intent && parsed.agency) {
       return { ...parsed, intent: parsed.agency };
     }
@@ -107,29 +78,65 @@ function getSessionArrivalCopy(microPre) {
 }
 
 export default function Results() {
+  const [journey] = useState(() => readJourney(sessionStorage));
+  const [diagnostic] = useState(() => readJourneyDiagnostic(sessionStorage, journey));
+  const [hasPendingTest] = useState(() => {
+    if (!journey) return false;
+    try { return Boolean(readPendingSubmission(sessionStorage, journey, 'test')); }
+    catch { return true; }
+  });
+  if (!journey) return <Navigate to="/" replace />;
+  if (readConfirmedPlan(sessionStorage, journey)) return <Navigate to="/plan-accion" replace />;
+  if (hasPendingTest || (!diagnostic && journey.mode !== 'presencial')) return <Navigate to="/test" replace />;
+  return <JourneyResults journey={journey} diagnostic={diagnostic} />;
+}
+
+function JourneyResults({ journey, diagnostic }) {
   const navigate = useNavigate();
-  const scoreData = getScoreData();
-  const isSessionMode = localStorage.getItem('navi_session_mode') === 'presencial';
-  const isMissingRemoteTest = localStorage.getItem('navi_missing_remote_test') === 'true';
-  const bookingConfig = getBookingConfig();
-  const microPre = getMicroPre();
+  const scoreData = getScoreData(diagnostic);
+  const isSessionMode = journey.mode === 'presencial';
+  const isMissingRemoteTest = scoreData.length === 0;
+  const microPre = getMicroPre(journey);
   const sessionArrivalCopy = getSessionArrivalCopy(microPre);
   const priorityAreas = getPriorityAreas(scoreData);
   const priorityCount = priorityAreas.length;
+  const suggestedAreas = getSuggestedConversationAreas(scoreData);
+  const initialConversationAreas = getInitialConversationAreas(priorityAreas, suggestedAreas);
+  const studentName = journey.displayName || '';
+  const mentorName = journey.mentorName || '';
+  const mentorWhatsApp = normalizeWhatsAppNumber(journey.mentorWhatsApp);
+  const [selectedTopicKeys, setSelectedTopicKeys] = useState(() =>
+    initialConversationAreas.map((item) => item.key)
+  );
+  const getSelectedLabels = (keys) => scoreData
+    .filter((item) => keys.includes(item.key))
+    .map((item) => item.label);
+  const createMessage = (keys) => buildWhatsAppMessage({
+    studentName,
+    mentorName,
+    topicLabels: getSelectedLabels(keys),
+  });
+  const whatsAppMessage = createMessage(selectedTopicKeys);
+  const whatsAppUrl = buildWhatsAppUrl(mentorWhatsApp, whatsAppMessage);
+  const canOpenWhatsApp = Boolean(whatsAppUrl && selectedTopicKeys.length > 0);
+
+  const toggleConversationTopic = (key) => {
+    setSelectedTopicKeys(toggleConversationTopicSelection(selectedTopicKeys, key));
+  };
 
   return (
-    <section className="mx-auto max-w-5xl py-4 sm:py-8">
+    <section className="clarity-results mx-auto max-w-5xl py-4 sm:py-8">
       {scoreData.length === 0 && isSessionMode && isMissingRemoteTest ? (
         <Card className="border border-[rgba(210,106,92,0.20)] bg-[rgba(249,236,232,0.72)]">
           <CardContent className="p-7 sm:p-8">
             <p className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--coral-500)]">
-              Diagnóstico pendiente
+              Test pendiente
             </p>
             <h2 className="mt-3 font-display text-3xl font-semibold tracking-tight text-[var(--ink-900)]">
-              Aún no contamos con tu diagnóstico previo
+              Aún no contamos con tu test previo
             </h2>
             <p className="mt-4 max-w-3xl text-base leading-7 text-[var(--ink-700)]">
-              Puedes continuar esta sesión con apoyo de tu mentor o mentora y usar este momento para definir tus metas. Después podrás completar tu diagnóstico para tener una lectura más completa de tu trayectoria.
+              Puedes continuar esta sesión con apoyo de tu mentor o mentora y usar este momento para definir tus metas. Después podrás completar el test para tener una lectura más completa de tu trayectoria.
             </p>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <Button size="lg" onClick={() => navigate('/seleccion-metas')}>
@@ -141,7 +148,7 @@ export default function Results() {
                 variant="outline"
                 onClick={() => navigate('/test')}
               >
-                Responder diagnóstico ahora
+                Responder el test ahora
               </Button>
             </div>
           </CardContent>
@@ -150,13 +157,13 @@ export default function Results() {
         <Card className="border border-[rgba(210,106,92,0.2)] bg-[var(--coral-100)]">
           <CardContent className="p-7">
             <p className="font-medium text-[var(--coral-500)]">
-              No encontramos respuestas guardadas del diagnóstico. {isSessionMode ? 'Asegúrate de haber completado tu diagnóstico remoto antes de continuar con la sesión.' : 'Regresa a contestarlo antes de continuar.'}
+              No encontramos respuestas guardadas del test. {isSessionMode ? 'Asegúrate de haber completado el test remoto antes de continuar con la sesión.' : 'Regresa a contestarlo antes de continuar.'}
             </p>
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-8">
-          <Card className="overflow-hidden">
+          <Card className="clarity-results-summary overflow-hidden">
             <CardContent className="p-10 sm:p-12">
               <p className={isSessionMode ? 'navi-eyebrow' : 'text-center text-sm font-semibold tracking-[0.02em] text-[var(--ink-600)]'}>
                 {isSessionMode ? 'Tu sesión de hoy' : 'faro · ruta guiada de acompañamiento'}
@@ -165,7 +172,7 @@ export default function Results() {
                 {isSessionMode ? (
                   <div className="space-y-4">
                     {sessionArrivalCopy ? (
-                      <div className="rounded-[22px] border border-[rgba(15,76,129,0.10)] bg-[rgba(249,252,255,0.78)] px-5 py-5">
+                      <div className="rounded-[18px] border border-[rgba(15,76,129,0.10)] bg-[var(--surface-raised)] px-5 py-5">
                         <p className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--coral-500)]">
                           Cómo llegas hoy
                         </p>
@@ -177,27 +184,43 @@ export default function Results() {
                   </div>
                 ) : (
                   <>
-                    <div className="font-display text-[96px] font-bold leading-none tracking-[-0.08em] text-[var(--navy-700)] sm:text-[120px]">
-                      {priorityCount}
-                    </div>
-                    <p className="mt-1 text-2xl font-semibold tracking-[-0.03em] text-[var(--navy-600)] sm:text-3xl">
-                      áreas prioritarias para revisar
-                    </p>
-                    {priorityAreas.length > 0 ? (
-                      <div className="mt-4 flex flex-wrap justify-center gap-2">
-                        {priorityAreas.map(({ key, label }) => (
-                          <span
-                            key={key}
-                            className="rounded-full bg-[rgba(15,76,129,0.08)] px-3 py-1.5 text-sm font-medium text-[var(--navy-600)]"
-                          >
-                            {label}
-                          </span>
-                        ))}
-                      </div>
-                    ) : null}
-                    <p className="mt-4 text-lg leading-8 text-[var(--ink-700)]">
-                      La mentoría te ayuda a convertir esto en una ruta clara y accionable.
-                    </p>
+                    {priorityCount > 0 ? (
+                      <>
+                        <div className="font-display text-6xl font-bold leading-none tracking-[-0.06em] text-[var(--navy-700)] sm:text-7xl">
+                          {priorityCount}
+                        </div>
+                        <p className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-[var(--navy-600)] sm:text-3xl">
+                          {priorityCount === 1 ? 'tema para conversar en mentoría' : 'temas para conversar en mentoría'}
+                        </p>
+                        <div className="mt-4 flex flex-wrap justify-center gap-2">
+                          {priorityAreas.map(({ key, label }) => (
+                            <span
+                              key={key}
+                              className="rounded-full bg-[rgba(15,76,129,0.08)] px-3 py-1.5 text-sm font-medium text-[var(--navy-600)]"
+                            >
+                              {label}
+                            </span>
+                          ))}
+                        </div>
+                        <p className="mt-4 text-lg leading-8 text-[var(--ink-700)]">
+                          {priorityCount === 1
+                            ? 'Este tema puede ser un buen punto de partida para tu próxima conversación.'
+                            : 'No necesitas abordar todo a la vez. Enseguida podrás elegir con qué te gustaría empezar.'}
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[var(--coral-500)]">
+                          Tu siguiente conversación
+                        </p>
+                        <h2 className="mt-3 font-display text-3xl font-semibold tracking-[-0.04em] text-[var(--navy-700)] sm:text-4xl">
+                          Tienes una base sólida para seguir avanzando
+                        </h2>
+                        <p className="mx-auto mt-4 max-w-2xl text-lg leading-8 text-[var(--ink-700)]">
+                          Tus respuestas muestran avances en todas las áreas. Conversar sobre lo que quieres fortalecer puede ayudarte a anticipar decisiones y definir el siguiente paso.
+                        </p>
+                      </>
+                    )}
                   </>
                 )}
               </div>
@@ -209,12 +232,64 @@ export default function Results() {
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 ) : (
-                  <a href={bookingConfig.url} target="_blank" rel="noopener noreferrer">
-                    <Button size="lg" className="px-9">
-                      <CalendarDays className="mr-2 h-5 w-5" />
-                      {bookingConfig.cta}
-                    </Button>
-                  </a>
+                  <div className="mx-auto max-w-3xl rounded-[18px] border border-[rgba(15,76,129,0.12)] bg-[var(--surface-raised)] p-5 text-left sm:p-6">
+                    <p className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--navy-500)]">
+                      ¿Con qué te gustaría empezar?
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-[var(--ink-600)]">
+                      Elige uno o dos temas para preparar tu mensaje. Los demás seguirán visibles en tus resultados.
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {scoreData.map(({ key, label }) => {
+                        const isSelected = selectedTopicKeys.includes(key);
+                        const isDisabled = !isSelected && selectedTopicKeys.length >= 2;
+                        return (
+                          <button
+                            key={key}
+                            type="button"
+                            aria-pressed={isSelected}
+                            disabled={isDisabled}
+                            onClick={() => toggleConversationTopic(key)}
+                            className={`rounded-full border px-3 py-2 text-sm font-medium transition-colors ${
+                              isSelected
+                                ? 'border-[var(--navy-500)] bg-[var(--navy-500)] text-white'
+                                : isDisabled
+                                  ? 'cursor-not-allowed border-[rgba(15,76,129,0.08)] bg-[rgba(15,76,129,0.03)] text-[var(--ink-400)]'
+                                  : 'border-[rgba(15,76,129,0.16)] bg-white text-[var(--navy-600)] hover:border-[var(--navy-500)]'
+                            }`}
+                          >
+                            {label}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {mentorWhatsApp ? (
+                      <div className="mt-5">
+                        {canOpenWhatsApp ? (
+                          <a href={whatsAppUrl} target="_blank" rel="noopener noreferrer" className="block sm:inline-block">
+                            <Button size="lg" className="w-full px-7 sm:w-auto">
+                              <MessageCircle className="mr-2 h-5 w-5" />
+                              Escribir por WhatsApp
+                            </Button>
+                          </a>
+                        ) : (
+                          <Button size="lg" className="w-full px-7 sm:w-auto" disabled>
+                            <MessageCircle className="mr-2 h-5 w-5" />
+                            Elige al menos un tema
+                          </Button>
+                        )}
+                        <p className="mt-3 text-sm leading-6 text-[var(--ink-500)]">
+                          Prepararemos el mensaje con los temas que elegiste. Podrás revisarlo o cambiarlo en WhatsApp antes de enviarlo.
+                        </p>
+                      </div>
+                    ) : null}
+                    {!mentorWhatsApp ? (
+                      <p className="mt-3 text-sm text-[var(--ink-500)]">
+                        No encontramos un número de WhatsApp vigente. Puedes responder al correo con el que recibiste el test para contactar a tu mentor o mentora.
+                      </p>
+                    ) : null}
+                  </div>
                 )}
 
                 {isSessionMode ? (
@@ -257,7 +332,7 @@ export default function Results() {
                             className="h-full rounded-full"
                             style={{
                               width: `${percentage}%`,
-                              background: 'linear-gradient(90deg, var(--coral-500) 0%, var(--navy-500) 100%)'
+                              background: 'var(--coral-500)'
                             }}
                           />
                         </div>

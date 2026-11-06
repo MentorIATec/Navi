@@ -1,0 +1,585 @@
+[
+  {
+    "id": "CAR002",
+    "before": {
+      "MetaBase": "Definir 2 posibles áreas de especialización para mi carrera en 5 semanas.",
+      "PasosBase": "Agendar cita con mi Director de Carrera esta semana; Investigar planes de estudio de posgrado; Platicar con 2 estudiantes de semestres más avanzados sobre sus intereses.",
+      "IndicadorLogro": "Tiene dos opciones de especialización nombradas y un criterio claro para compararlas.",
+      "CuandoUsarla": "Aplica para estudiantes en exploración o enfoque profesional que necesitan claridad sobre su ruta académica o laboral dentro del Tec.",
+      "PreguntasParaAfinar": "¿Qué opción necesitas aclarar primero? | ¿Con quién te conviene hablar esta semana? | ¿Qué evidencia te ayudaría a decidir con más seguridad?"
+    },
+    "previous": [
+      {
+        "MetaBase": "Comparar las carreras que me interesan y los criterios para elegir durante 5 semanas.",
+        "CuandoUsarla": "Aplica para estudiantes en exploración o enfoque profesional que necesitan claridad sobre su ruta académica o laboral dentro del Tec.",
+        "PreguntasParaAfinar": "¿Qué opción necesitas aclarar primero? | ¿Con quién te conviene hablar esta semana? | ¿Qué evidencia te ayudaría a decidir con más seguridad?"
+      }
+    ]
+  },
+  {
+    "id": "CAR006",
+    "before": {
+      "MetaBase": "Investigar 3 empresas top en mi sector y sus procesos de reclutamiento.",
+      "ConexionDiagnostico": "claridad_carrera"
+    }
+  },
+  {
+    "id": "ACA001",
+    "before": {
+      "MetaBase": "Subir mi promedio 0.5 puntos en una materia específica este parcial.",
+      "PasosBase": "Agendar asesoría con el profesor esta semana; Formar un grupo de estudio y reunirse 2 veces/semana; Re-hacer los ejercicios con errores del último examen/tarea",
+      "IndicadorLogro": "Cuenta con una meta de calificación definida y evidencia de acciones semanales para acercarse a ella.",
+      "CuandoUsarla": "Aplica para estudiantes que ya identifican una fricción concreta en su desempeño y necesitan una meta académica más accionable que aspiracional.",
+      "PreguntasParaAfinar": "¿En qué materia o clase te urge más avanzar? | ¿Qué obstáculo concreto te está frenando hoy? | ¿Qué cambio semanal sí podrías sostener este periodo?"
+    },
+    "previous": [
+      {
+        "MetaBase": "Definir una meta de calificación para una materia y revisar mi avance este parcial.",
+        "PasosBase": "Agendar asesoría con el profesor esta semana; Formar un grupo de estudio y reunirse 2 veces/semana; Re-hacer los ejercicios con errores del último examen/tarea",
+        "IndicadorLogro": "Puede mostrar la meta acordada y un registro de acciones y resultados en esa materia.",
+        "CuandoUsarla": "Aplica para estudiantes que ya identifican una fricción concreta en su desempeño y necesitan una meta académica más accionable que aspiracional.",
+        "PreguntasParaAfinar": "¿En qué materia o clase te urge más avanzar? | ¿Qué obstáculo concreto te está frenando hoy? | ¿Qué cambio semanal sí podrías sostener este periodo?"
+      }
+    ]
+  },
+  {
+    "id": "ACA005",
+    "before": {
+      "MetaBase": "Reducir mi tiempo de estudio un 15% usando la técnica Pomodoro.",
+      "PasosBase": "Descargar una app de Pomodoro (ej. Forest) hoy; Estudiar en bloques de 25 min con 5 de descanso; Identificar y eliminar una distracción principal.",
+      "HorizonteSugerido": "4 a 6 semanas",
+      "IndicadorLogro": "Puede mostrar una evidencia concreta de avance y nombrar al menos una acción sostenida relacionada con la meta.",
+      "CuandoUsarla": "Aplica para estudiantes que ya identifican una fricción concreta en su desempeño y necesitan una meta académica más accionable que aspiracional.",
+      "PreguntasParaAfinar": "¿En qué materia o clase te urge más avanzar? | ¿Qué obstáculo concreto te está frenando hoy? | ¿Qué cambio semanal sí podrías sostener este periodo?"
+    },
+    "previous": [
+      {
+        "MetaBase": "Probar bloques de estudio con pausas y revisar qué me ayuda a comprender mejor durante 4 semanas.",
+        "PasosBase": "Descargar una app de Pomodoro (ej. Forest) hoy; Estudiar en bloques de 25 min con 5 de descanso; Identificar y eliminar una distracción principal.",
+        "IndicadorLogro": "Registra los bloques realizados y qué ajustes le ayudaron a comprender o resolver sus tareas.",
+        "CuandoUsarla": "Aplica para estudiantes que ya identifican una fricción concreta en su desempeño y necesitan una meta académica más accionable que aspiracional.",
+        "PreguntasParaAfinar": "¿En qué materia o clase te urge más avanzar? | ¿Qué obstáculo concreto te está frenando hoy? | ¿Qué cambio semanal sí podrías sostener este periodo?"
+      }
+    ]
+  },
+  {
+    "id": "PRA001",
+    "before": {
+      "MetaBase": "Crear un CV de alto impacto y un perfil de LinkedIn en 2 semanas.",
+      "PasosBase": "Tomar una foto profesional esta semana; Usar una plantilla de CV aprobada por el Tec; Pedir a 3 personas que revisen mi CV y LinkedIn.",
+      "IndicadorLogro": "Tiene CV y perfil actualizados y listos para compartir en procesos reales.",
+      "CuandoUsarla": "Aplica para estudiantes que quieren activar su perfil profesional y necesitan pasos visibles para acercarse a prácticas, reclutamiento o experiencia aplicada.",
+      "PreguntasParaAfinar": "¿Qué tipo de experiencia quieres conseguir primero? | ¿Qué material necesitas tener listo para aplicar? | ¿Qué paso te acercaría más esta misma semana?"
+    },
+    "previous": [
+      {
+        "MetaBase": "Preparar mi CV y actualizar mi perfil de LinkedIn en 2 semanas.",
+        "PasosBase": "Elegir las experiencias y habilidades relevantes; Actualizar CV y perfil de LinkedIn; Pedir una revisión y aplicar los ajustes que resulten útiles.",
+        "IndicadorLogro": "Cuenta con un CV revisado y un perfil actualizado que puede compartir.",
+        "CuandoUsarla": "Cuando necesita preparar o revisar sus materiales antes de iniciar postulaciones.",
+        "PreguntasParaAfinar": "¿Qué tipo de experiencia quieres conseguir primero? | ¿Qué material necesitas tener listo para aplicar? | ¿Qué paso te acercaría más esta misma semana?"
+      }
+    ]
+  },
+  {
+    "id": "PRA002",
+    "before": {
+      "MetaBase": "Aplicar a 5 vacantes de prácticas profesionales en 3 semanas.",
+      "PasosBase": "Activar alertas de empleo en LinkedIn y la bolsa de trabajo Tec; Adaptar mi CV para cada aplicación; Enviar la primera aplicación esta semana.",
+      "IndicadorLogro": "Envió las aplicaciones comprometidas y puede mostrar evidencia de seguimiento.",
+      "CuandoUsarla": "Aplica para estudiantes que quieren activar su perfil profesional y necesitan pasos visibles para acercarse a prácticas, reclutamiento o experiencia aplicada."
+    }
+  },
+  {
+    "id": "INT001",
+    "before": {
+      "MetaBase": "Leer 1 libro no académico en 5 semanas.",
+      "CuandoUsarla": "Aplica para estudiantes que ya identifican una fricción concreta en su desempeño y necesitan una meta académica más accionable que aspiracional.",
+      "ConexionDiagnostico": "desempeno_academico",
+      "PreguntasParaAfinar": "¿En qué materia o clase te urge más avanzar? | ¿Qué obstáculo concreto te está frenando hoy? | ¿Qué cambio semanal sí podrías sostener este periodo?"
+    }
+  },
+  {
+    "id": "INT002",
+    "before": {
+      "MetaBase": "Escuchar 3 episodios de un podcast sobre un tema nuevo para mí cada semana.",
+      "CuandoUsarla": "Aplica para estudiantes que ya identifican una fricción concreta en su desempeño y necesitan una meta académica más accionable que aspiracional.",
+      "ConexionDiagnostico": "desempeno_academico",
+      "PreguntasParaAfinar": "¿En qué materia o clase te urge más avanzar? | ¿Qué obstáculo concreto te está frenando hoy? | ¿Qué cambio semanal sí podrías sostener este periodo?"
+    }
+  },
+  {
+    "id": "INT003",
+    "before": {
+      "MetaBase": "Ver una charla TED a la semana y escribir 3 ideas clave que me dejó.",
+      "CuandoUsarla": "Aplica para estudiantes que ya identifican una fricción concreta en su desempeño y necesitan una meta académica más accionable que aspiracional.",
+      "ConexionDiagnostico": "desempeno_academico",
+      "PreguntasParaAfinar": "¿En qué materia o clase te urge más avanzar? | ¿Qué obstáculo concreto te está frenando hoy? | ¿Qué cambio semanal sí podrías sostener este periodo?"
+    }
+  },
+  {
+    "id": "INT004",
+    "before": {
+      "MetaBase": "Aprender 5 conceptos básicos sobre Inteligencia Artificial Generativa.",
+      "CuandoUsarla": "Aplica para estudiantes que ya identifican una fricción concreta en su desempeño y necesitan una meta académica más accionable que aspiracional.",
+      "ConexionDiagnostico": "desempeno_academico",
+      "PreguntasParaAfinar": "¿En qué materia o clase te urge más avanzar? | ¿Qué obstáculo concreto te está frenando hoy? | ¿Qué cambio semanal sí podrías sostener este periodo?"
+    }
+  },
+  {
+    "id": "INT005",
+    "before": {
+      "MetaBase": "Visitar un museo o exposición cultural (virtual o presencial) en 3 semanas.",
+      "CuandoUsarla": "Aplica para estudiantes que ya identifican una fricción concreta en su desempeño y necesitan una meta académica más accionable que aspiracional.",
+      "ConexionDiagnostico": "desempeno_academico",
+      "PreguntasParaAfinar": "¿En qué materia o clase te urge más avanzar? | ¿Qué obstáculo concreto te está frenando hoy? | ¿Qué cambio semanal sí podrías sostener este periodo?"
+    }
+  },
+  {
+    "id": "SEED051",
+    "before": {
+      "TemaOperativo": "bienestar cotidiano",
+      "Dimension": "espiritual",
+      "Etapa": "enfoque",
+      "MetaBase": "Documentar mi trayectoria para Premio LiFE con 50+ horas de evidencias en 6 semanas",
+      "PasosBase": "Revisar requisitos de Premio LiFE esta semana;Crear carpeta digital con evidencias;Documentar actividades de voluntariado;Recopilar cartas de recomendación;Redactar ensayo de aplicación",
+      "IndicadorLogro": "Puede mostrar una evidencia concreta de avance y nombrar al menos una acción sostenida relacionada con la meta.",
+      "CuandoUsarla": "Aplica para estudiantes que necesitan recuperar energía, estabilidad o autocuidado mediante hábitos observables y sostenibles.",
+      "PreguntasParaAfinar": "¿Qué hábito o práctica te daría más estabilidad hoy? | ¿En qué momento del día o de la semana sí podrías sostenerlo? | ¿Qué señal te mostraría que vas avanzando?"
+    },
+    "previous": [
+      {
+        "TemaOperativo": "bienestar cotidiano",
+        "Dimension": "espiritual",
+        "Etapa": "enfoque",
+        "MetaBase": "Documentar mi trayectoria para Premio LiFE con 50+ horas de evidencias en 6 semanas",
+        "PasosBase": "Revisar requisitos de Premio LiFE esta semana;Crear carpeta digital con evidencias;Documentar actividades de voluntariado;Recopilar cartas de recomendación;Redactar ensayo de aplicación",
+        "IndicadorLogro": "Puede mostrar una evidencia concreta de avance y nombrar al menos una acción sostenida relacionada con la meta.",
+        "CuandoUsarla": "Aplica para estudiantes que necesitan recuperar energía, estabilidad o autocuidado mediante hábitos observables y sostenibles.",
+        "PreguntasParaAfinar": "¿Qué hábito o práctica te daría más estabilidad hoy? | ¿En qué momento del día o de la semana sí podrías sostenerlo? | ¿Qué señal te mostraría que vas avanzando?",
+        "Activa": "No"
+      }
+    ],
+    "restore": true
+  },
+  {
+    "id": "SEED052",
+    "before": {
+      "MetaBase": "Completar 100 horas de Servicio Social Comunitario este semestre",
+      "Activa": "Si"
+    }
+  },
+  {
+    "id": "SEED054",
+    "before": {
+      "MetaBase": "Asistir semanalmente a Punto Blanco para mindfulness y reflexión",
+      "PasosBase": "Ubicar Punto Blanco en campus;Revisar horario de actividades;Apartar 1 hora semanal fija;Llevar diario de reflexiones",
+      "IndicadorLogro": "Sostuvo la práctica durante el periodo definido y puede nombrar su rutina y aprendizajes.",
+      "CuandoUsarla": "Aplica para estudiantes que necesitan recuperar energía, estabilidad o autocuidado mediante hábitos observables y sostenibles.",
+      "NivelDificultad": "media",
+      "PreguntasParaAfinar": "¿Qué hábito o práctica te daría más estabilidad hoy? | ¿En qué momento del día o de la semana sí podrías sostenerlo? | ¿Qué señal te mostraría que vas avanzando?"
+    },
+    "previous": [
+      {
+        "MetaBase": "Asistir semanalmente a Punto Blanco para mindfulness y reflexión",
+        "PasosBase": "Ubicar Punto Blanco en campus;Revisar horario de actividades;Apartar 1 hora semanal fija;Llevar diario de reflexiones",
+        "IndicadorLogro": "Sostuvo la práctica durante el periodo definido y puede nombrar su rutina y aprendizajes.",
+        "CuandoUsarla": "Aplica para estudiantes que necesitan recuperar energía, estabilidad o autocuidado mediante hábitos observables y sostenibles.",
+        "NivelDificultad": "media",
+        "PreguntasParaAfinar": "¿Qué hábito o práctica te daría más estabilidad hoy? | ¿En qué momento del día o de la semana sí podrías sostenerlo? | ¿Qué señal te mostraría que vas avanzando?",
+        "Activa": "No"
+      }
+    ],
+    "restore": true
+  },
+  {
+    "id": "SEED057",
+    "before": {
+      "MetaBase": "Aplicar a 15 prácticas TOP para Semestre Tec en 4 semanas",
+      "PasosBase": "Identificar 10 empresas objetivo;Personalizar CV para cada industria;Enviar 4 aplicaciones semanales;Dar seguimiento cada 5 días",
+      "IndicadorLogro": "Tiene una decisión documentada o un plan comparado con criterios claros para avanzar.",
+      "CuandoUsarla": "Aplica para estudiantes que tienen trámites o requisitos críticos de avance y necesitan ordenar fechas, documentos o certificaciones."
+    }
+  },
+  {
+    "id": "SEED058",
+    "before": {
+      "TemaOperativo": "practicas",
+      "Etapa": "enfoque",
+      "MetaBase": "Participar en Semana de Consultoras del campus",
+      "PasosBase": "Investigar consultoras participantes;Preparar caso de estudio;Practicar con compañeros;Aplicar a 3 firmas mínimo",
+      "IndicadorLogro": "Puede mostrar una evidencia concreta de avance y nombrar al menos una acción sostenida relacionada con la meta.",
+      "CuandoUsarla": "Aplica para estudiantes que quieren activar su perfil profesional y necesitan pasos visibles para acercarse a prácticas, reclutamiento o experiencia aplicada.",
+      "NivelDificultad": "media",
+      "ConexionDiagnostico": "plan_practicas",
+      "PreguntasParaAfinar": "¿Qué tipo de experiencia quieres conseguir primero? | ¿Qué material necesitas tener listo para aplicar? | ¿Qué paso te acercaría más esta misma semana?"
+    },
+    "previous": [
+      {
+        "TemaOperativo": "practicas",
+        "Etapa": "enfoque",
+        "MetaBase": "Participar en Semana de Consultoras del campus",
+        "PasosBase": "Investigar consultoras participantes;Preparar caso de estudio;Practicar con compañeros;Aplicar a 3 firmas mínimo",
+        "IndicadorLogro": "Puede mostrar una evidencia concreta de avance y nombrar al menos una acción sostenida relacionada con la meta.",
+        "CuandoUsarla": "Aplica para estudiantes que quieren activar su perfil profesional y necesitan pasos visibles para acercarse a prácticas, reclutamiento o experiencia aplicada.",
+        "NivelDificultad": "media",
+        "ConexionDiagnostico": "plan_practicas",
+        "PreguntasParaAfinar": "¿Qué tipo de experiencia quieres conseguir primero? | ¿Qué material necesitas tener listo para aplicar? | ¿Qué paso te acercaría más esta misma semana?",
+        "Activa": "No"
+      }
+    ],
+    "restore": true
+  },
+  {
+    "id": "SEED060",
+    "before": {
+      "TemaOperativo": "practicas",
+      "Etapa": "enfoque",
+      "MetaBase": "Asistir a EmpleaTec y conseguir 5 entrevistas",
+      "PasosBase": "Registrarse al evento;Investigar empresas participantes;Preparar elevator pitch;Llevar 20 CVs impresos;Dar seguimiento post-evento",
+      "IndicadorLogro": "Puede mostrar una evidencia concreta de avance y nombrar al menos una acción sostenida relacionada con la meta.",
+      "CuandoUsarla": "Aplica para estudiantes que quieren activar su perfil profesional y necesitan pasos visibles para acercarse a prácticas, reclutamiento o experiencia aplicada.",
+      "NivelDificultad": "alta",
+      "ConexionDiagnostico": "plan_practicas",
+      "PreguntasParaAfinar": "¿Qué tipo de experiencia quieres conseguir primero? | ¿Qué material necesitas tener listo para aplicar? | ¿Qué paso te acercaría más esta misma semana?"
+    },
+    "previous": [
+      {
+        "TemaOperativo": "practicas",
+        "Etapa": "enfoque",
+        "MetaBase": "Asistir a EmpleaTec y conseguir 5 entrevistas",
+        "PasosBase": "Registrarse al evento;Investigar empresas participantes;Preparar elevator pitch;Llevar 20 CVs impresos;Dar seguimiento post-evento",
+        "IndicadorLogro": "Puede mostrar una evidencia concreta de avance y nombrar al menos una acción sostenida relacionada con la meta.",
+        "CuandoUsarla": "Aplica para estudiantes que quieren activar su perfil profesional y necesitan pasos visibles para acercarse a prácticas, reclutamiento o experiencia aplicada.",
+        "NivelDificultad": "alta",
+        "ConexionDiagnostico": "plan_practicas",
+        "PreguntasParaAfinar": "¿Qué tipo de experiencia quieres conseguir primero? | ¿Qué material necesitas tener listo para aplicar? | ¿Qué paso te acercaría más esta misma semana?",
+        "Activa": "No"
+      }
+    ],
+    "restore": true
+  },
+  {
+    "id": "SEED062",
+    "before": {
+      "MetaBase": "Explorar clase LiFE de arte/cultura nueva este periodo",
+      "CuandoUsarla": "Aplica para estudiantes que ya identifican una fricción concreta en su desempeño y necesitan una meta académica más accionable que aspiracional.",
+      "ConexionDiagnostico": "desempeno_academico",
+      "PreguntasParaAfinar": "¿En qué materia o clase te urge más avanzar? | ¿Qué obstáculo concreto te está frenando hoy? | ¿Qué cambio semanal sí podrías sostener este periodo?"
+    }
+  },
+  {
+    "id": "SEED063",
+    "before": {
+      "MetaBase": "Certificar idioma para intercambio en 8 semanas",
+      "Activa": "Si"
+    }
+  },
+  {
+    "id": "SEED064",
+    "before": {
+      "MetaBase": "Liderar equipo en reto de Unidad de Formación",
+      "CuandoUsarla": "Aplica para estudiantes que ya identifican una fricción concreta en su desempeño y necesitan una meta académica más accionable que aspiracional.",
+      "ConexionDiagnostico": "desempeno_academico"
+    }
+  },
+  {
+    "id": "SEED065",
+    "before": {
+      "MetaBase": "Completar micro-credencial digital del Tec",
+      "CuandoUsarla": "Aplica para estudiantes que ya identifican una fricción concreta en su desempeño y necesitan una meta académica más accionable que aspiracional.",
+      "ConexionDiagnostico": "desempeno_academico"
+    }
+  },
+  {
+    "id": "SEED066",
+    "before": {
+      "MetaBase": "Participar como ponente en congreso o evento estudiantil",
+      "CuandoUsarla": "Aplica para estudiantes que ya identifican una fricción concreta en su desempeño y necesitan una meta académica más accionable que aspiracional.",
+      "ConexionDiagnostico": "desempeno_academico"
+    }
+  },
+  {
+    "id": "SEED073",
+    "before": {
+      "MetaBase": "Caminar 30 minutos diarios por el campus entre clases",
+      "PasosBase": "Identificar rutas en campus;Llegar temprano para caminar;Usar descansos entre clases;Invitar compañeros",
+      "ConexionDiagnostico": "desempeno_academico"
+    },
+    "previous": [
+      {
+        "MetaBase": "Caminar 30 minutos diarios por el campus entre clases",
+        "PasosBase": "Identificar rutas en campus;Llegar temprano para caminar;Usar descansos entre clases;Invitar compañeros"
+      },
+      {
+        "MetaBase": "Caminar 30 minutos diarios por el campus entre clases",
+        "PasosBase": "Identificar rutas en campus;Llegar temprano para caminar;Usar descansos entre clases;Invitar compañeros"
+      },
+      {
+        "MetaBase": "Caminar 30 minutos diarios por el campus entre clases",
+        "PasosBase": "Identificar rutas en campus;Llegar temprano para caminar;Usar descansos entre clases;Invitar compañeros"
+      }
+    ]
+  },
+  {
+    "id": "SEED085",
+    "before": {
+      "TemaOperativo": "academico",
+      "MetaBase": "Contactar 15 estudiantes que realizaron opciones de interés",
+      "PasosBase": "Buscar contactos en LinkedIn;Agendar coffee chats virtuales;Preparar preguntas específicas;Documentar aprendizajes",
+      "IndicadorLogro": "Puede mostrar una evidencia concreta de avance y nombrar al menos una acción sostenida relacionada con la meta.",
+      "CuandoUsarla": "Aplica para estudiantes que ya identifican una fricción concreta en su desempeño y necesitan una meta académica más accionable que aspiracional.",
+      "ConexionDiagnostico": "desempeno_academico",
+      "PreguntasParaAfinar": "¿En qué materia o clase te urge más avanzar? | ¿Qué obstáculo concreto te está frenando hoy? | ¿Qué cambio semanal sí podrías sostener este periodo?"
+    },
+    "previous": [
+      {
+        "MetaBase": "Conversar con estudiantes que hayan cursado las opciones de Semestre Tec que me interesan.",
+        "PasosBase": "Buscar contactos en LinkedIn;Agendar coffee chats virtuales;Preparar preguntas específicas;Documentar aprendizajes",
+        "IndicadorLogro": "Registra lo que aprendió sobre sus opciones y cómo influye en su decisión.",
+        "CuandoUsarla": "Cuando está contrastando opciones de Semestre Tec y necesita conocer experiencias concretas.",
+        "PreguntasParaAfinar": "¿En qué materia o clase te urge más avanzar? | ¿Qué obstáculo concreto te está frenando hoy? | ¿Qué cambio semanal sí podrías sostener este periodo?"
+      }
+    ]
+  },
+  {
+    "id": "SEED087",
+    "before": {
+      "MetaBase": "Completar 200 horas de servicio social antes del próximo periodo",
+      "Activa": "Si"
+    }
+  },
+  {
+    "id": "SEED088",
+    "before": {
+      "TemaOperativo": "carrera",
+      "Etapa": "multietapa",
+      "MetaBase": "Registrarme en proyecto intensivo de verano/invierno",
+      "PasosBase": "Consultar catálogo de proyectos;Contactar organizaciones;Completar registro antes del deadline;Preparar documentación",
+      "IndicadorLogro": "Puede mostrar una evidencia concreta de avance y nombrar al menos una acción sostenida relacionada con la meta.",
+      "CuandoUsarla": "Aplica para estudiantes en exploración o enfoque profesional que necesitan claridad sobre su ruta académica o laboral dentro del Tec.",
+      "ConexionDiagnostico": "claridad_carrera",
+      "PreguntasParaAfinar": "¿Qué opción necesitas aclarar primero? | ¿Con quién te conviene hablar esta semana? | ¿Qué evidencia te ayudaría a decidir con más seguridad?"
+    },
+    "previous": [
+      {
+        "TemaOperativo": "carrera",
+        "Etapa": "multietapa",
+        "MetaBase": "Registrarme en proyecto intensivo de verano/invierno",
+        "PasosBase": "Consultar catálogo de proyectos;Contactar organizaciones;Completar registro antes del deadline;Preparar documentación",
+        "IndicadorLogro": "Puede mostrar una evidencia concreta de avance y nombrar al menos una acción sostenida relacionada con la meta.",
+        "CuandoUsarla": "Aplica para estudiantes en exploración o enfoque profesional que necesitan claridad sobre su ruta académica o laboral dentro del Tec.",
+        "ConexionDiagnostico": "claridad_carrera",
+        "PreguntasParaAfinar": "¿Qué opción necesitas aclarar primero? | ¿Con quién te conviene hablar esta semana? | ¿Qué evidencia te ayudaría a decidir con más seguridad?",
+        "Activa": "No"
+      }
+    ],
+    "restore": true
+  },
+  {
+    "id": "SEED089",
+    "before": {
+      "MetaBase": "Desarrollar portfolio profesional online en 3 semanas",
+      "PasosBase": "Elegir plataforma (GitHub/Behance/Web);Documentar 5 mejores proyectos;Redactar descripciones de impacto;Compartir con reclutadores",
+      "IndicadorLogro": "Puede mostrar una evidencia concreta de avance y nombrar al menos una acción sostenida relacionada con la meta.",
+      "CuandoUsarla": "Aplica para estudiantes en exploración o enfoque profesional que necesitan claridad sobre su ruta académica o laboral dentro del Tec.",
+      "PreguntasParaAfinar": "¿Qué opción necesitas aclarar primero? | ¿Con quién te conviene hablar esta semana? | ¿Qué evidencia te ayudaría a decidir con más seguridad?"
+    },
+    "previous": [
+      {
+        "MetaBase": "Organizar un portafolio profesional con proyectos relevantes durante 3 semanas.",
+        "PasosBase": "Elegir plataforma (GitHub/Behance/Web);Documentar 5 mejores proyectos;Redactar descripciones de impacto;Compartir con reclutadores",
+        "IndicadorLogro": "Puede mostrar una evidencia concreta de avance y nombrar al menos una acción sostenida relacionada con la meta.",
+        "CuandoUsarla": "Aplica para estudiantes en exploración o enfoque profesional que necesitan claridad sobre su ruta académica o laboral dentro del Tec.",
+        "PreguntasParaAfinar": "¿Qué opción necesitas aclarar primero? | ¿Con quién te conviene hablar esta semana? | ¿Qué evidencia te ayudaría a decidir con más seguridad?"
+      }
+    ]
+  },
+  {
+    "id": "SEED090",
+    "before": {
+      "TemaOperativo": "carrera",
+      "MetaBase": "Preparar para reclutamiento de empresas top-tier en 8 semanas",
+      "PasosBase": "Practicar 50 problemas de coding/cases;Agendar 5 mock interviews;Investigar cultura empresarial;Conectar con empleados en LinkedIn",
+      "IndicadorLogro": "Puede mostrar una evidencia concreta de avance y nombrar al menos una acción sostenida relacionada con la meta.",
+      "CuandoUsarla": "Aplica para estudiantes en exploración o enfoque profesional que necesitan claridad sobre su ruta académica o laboral dentro del Tec.",
+      "ConexionDiagnostico": "claridad_carrera"
+    }
+  },
+  {
+    "id": "SEED091",
+    "before": {
+      "MetaBase": "Obtener TOEFL 100+ o IELTS 7+ para intercambio en 6 semanas",
+      "Activa": "Si"
+    }
+  },
+  {
+    "id": "SEED094",
+    "before": {
+      "TemaOperativo": "requisitos de egreso",
+      "Etapa": "enfoque",
+      "MetaBase": "Alcanzar nivel B2 en francés/alemán para intercambio europeo",
+      "PasosBase": "Inscribirse a curso intensivo;Practicar 1 hora diaria con apps;Sesiones conversación 2x semana;Ver contenido en idioma target",
+      "HorizonteSugerido": "4 a 6 semanas",
+      "IndicadorLogro": "Puede mostrar una evidencia concreta de avance y nombrar al menos una acción sostenida relacionada con la meta.",
+      "CuandoUsarla": "Aplica para estudiantes que tienen trámites o requisitos críticos de avance y necesitan ordenar fechas, documentos o certificaciones.",
+      "NivelDificultad": "alta",
+      "ConexionDiagnostico": "certificacion_idioma",
+      "PreguntasParaAfinar": "¿Qué requisito necesitas aclarar o mover primero? | ¿Qué fecha límite no puedes perder de vista? | ¿Qué evidencia te confirmará que ya vas encaminado/a?"
+    },
+    "previous": [
+      {
+        "TemaOperativo": "requisitos de egreso",
+        "Etapa": "enfoque",
+        "MetaBase": "Alcanzar nivel B2 en francés/alemán para intercambio europeo",
+        "PasosBase": "Inscribirse a curso intensivo;Practicar 1 hora diaria con apps;Sesiones conversación 2x semana;Ver contenido en idioma target",
+        "HorizonteSugerido": "4 a 6 semanas",
+        "IndicadorLogro": "Puede mostrar una evidencia concreta de avance y nombrar al menos una acción sostenida relacionada con la meta.",
+        "CuandoUsarla": "Aplica para estudiantes que tienen trámites o requisitos críticos de avance y necesitan ordenar fechas, documentos o certificaciones.",
+        "NivelDificultad": "alta",
+        "ConexionDiagnostico": "certificacion_idioma",
+        "PreguntasParaAfinar": "¿Qué requisito necesitas aclarar o mover primero? | ¿Qué fecha límite no puedes perder de vista? | ¿Qué evidencia te confirmará que ya vas encaminado/a?",
+        "Activa": "No"
+      }
+    ],
+    "restore": true
+  },
+  {
+    "id": "SEED095",
+    "before": {
+      "TemaOperativo": "academico",
+      "Etapa": "enfoque",
+      "MetaBase": "Preparar certificación de inglés técnico/negocios en 5 semanas",
+      "PasosBase": "Inscribirse a TOEIC o Cambridge Business;Completar libro preparación;Unirse a grupo de estudio;Practicar speaking diario",
+      "HorizonteSugerido": "5 semanas",
+      "IndicadorLogro": "Puede mostrar una evidencia concreta de avance y nombrar al menos una acción sostenida relacionada con la meta.",
+      "CuandoUsarla": "Aplica para estudiantes que ya identifican una fricción concreta en su desempeño y necesitan una meta académica más accionable que aspiracional.",
+      "NivelDificultad": "alta",
+      "ConexionDiagnostico": "desempeno_academico",
+      "PreguntasParaAfinar": "¿En qué materia o clase te urge más avanzar? | ¿Qué obstáculo concreto te está frenando hoy? | ¿Qué cambio semanal sí podrías sostener este periodo?"
+    },
+    "previous": [
+      {
+        "TemaOperativo": "academico",
+        "Etapa": "enfoque",
+        "MetaBase": "Preparar certificación de inglés técnico/negocios en 5 semanas",
+        "PasosBase": "Inscribirse a TOEIC o Cambridge Business;Completar libro preparación;Unirse a grupo de estudio;Practicar speaking diario",
+        "HorizonteSugerido": "5 semanas",
+        "IndicadorLogro": "Puede mostrar una evidencia concreta de avance y nombrar al menos una acción sostenida relacionada con la meta.",
+        "CuandoUsarla": "Exploración voluntaria según interés, preparación y disponibilidad confirmada; no inferir su pertinencia a partir de insatisfacción con las calificaciones.",
+        "NivelDificultad": "alta",
+        "PreguntasParaAfinar": "¿En qué materia o clase te urge más avanzar? | ¿Qué obstáculo concreto te está frenando hoy? | ¿Qué cambio semanal sí podrías sostener este periodo?",
+        "Activa": "No"
+      }
+    ],
+    "restore": true
+  },
+  {
+    "id": "SEED097",
+    "before": {
+      "MetaBase": "Construir una ruta de decisión de carrera con 3 metas claras antes de cerrar el año académico.",
+      "PasosBase": "Definir hoy los 3 hitos que necesito cerrar; Agendar una revisión mensual con mentor o director; Documentar al final de cada mes qué decisión avancé y cuál sigue pendiente.",
+      "IndicadorLogro": "Puede nombrar tres hitos cumplidos o en curso y explicar cómo cada uno fortaleció su claridad de carrera."
+    }
+  },
+  {
+    "id": "SEED099",
+    "before": {
+      "MetaBase": "Consolidar mi búsqueda de empleo/prácticas con CV, portafolio y al menos 5 postulaciones antes de terminar el semestre.",
+      "PasosBase": "Actualizar CV esta semana; Elegir 5 vacantes objetivo antes de fin de mes; Enviar postulaciones y registrar seguimiento cada semana.",
+      "IndicadorLogro": "Cuenta con materiales listos y evidencia de postulaciones enviadas o procesos de práctica activados."
+    }
+  },
+  {
+    "id": "SEED100",
+    "before": {
+      "Etapa": "multietapa",
+      "MetaBase": "Avanzar mi servicio social con entregables mensuales hasta completar las horas requeridas."
+    }
+  },
+  {
+    "id": "SEED103",
+    "before": null
+  },
+  {
+    "id": "SEED104",
+    "before": null
+  },
+  {
+    "id": "SEED105",
+    "before": null
+  },
+  {
+    "id": "SEED106",
+    "before": null,
+    "previous": [
+      {
+        "MetaBase": "Revisar una evaluación reciente e identificar qué temas necesito reforzar durante 2 semanas.",
+        "PasosBase": "Elegir una evaluación o entrega reciente; Identificar dudas y errores; Consultar las dudas y practicar los temas elegidos; Revisar qué puedo resolver al finalizar las dos semanas.",
+        "IndicadorLogro": "Identifica temas y dudas concretas, y conserva ejemplos de práctica para revisar su comprensión.",
+        "CuandoUsarla": "Cuando quiere mejorar su desempeño y todavía necesita identificar qué reforzar; no presupone una causa ni un método de estudio único.",
+        "PreguntasParaAfinar": "¿Qué evaluación o entrega te ayudaría a ubicar tus dudas? | ¿Qué tema quieres revisar primero?"
+      }
+    ]
+  },
+  {
+    "id": "SEED072",
+    "before": {
+      "MetaBase": "Completar programa de Wellness/Nutrición de 8 semanas",
+      "Activa": "Si"
+    },
+    "previous": [
+      {
+        "MetaBase": "Completar programa de Wellness/Nutrición de 8 semanas",
+        "Activa": "Si"
+      },
+      {
+        "MetaBase": "Completar programa de Wellness/Nutrición de 8 semanas",
+        "Activa": "Si"
+      }
+    ],
+    "retiredTexts": [
+      "Completar programa de Wellness/Nutrición de 8 semanas",
+      "Completar programa WellnessTec de 8 semanas",
+      "Completar programa WellnessTec de 8 semanas."
+    ]
+  },
+  {
+    "id": "FIS002",
+    "before": {
+      "MetaBase": "Asistir a 3 clases deportivas diferentes en LiFE para encontrar una que me guste.",
+      "PasosBase": "Revisar el horario de clases deportivas esta semana; Invitar a un amigo a ir conmigo a la primera clase; Evaluar cada clase del 1 al 10 después de asistir."
+    },
+    "previous": [
+      {
+        "MetaBase": "Asistir a 3 clases deportivas diferentes en LiFE para encontrar una que me guste.",
+        "PasosBase": "Revisar el horario de clases deportivas esta semana; Invitar a un amigo a ir conmigo a la primera clase; Evaluar cada clase del 1 al 10 después de asistir."
+      },
+      {
+        "MetaBase": "Asistir a 3 clases deportivas diferentes en LiFE para encontrar una que me guste.",
+        "PasosBase": "Revisar el horario de clases deportivas esta semana; Invitar a un amigo a ir conmigo a la primera clase; Evaluar cada clase del 1 al 10 después de asistir."
+      },
+      {
+        "MetaBase": "Asistir a 3 clases deportivas diferentes en LiFE para encontrar una que me guste.",
+        "PasosBase": "Revisar el horario de clases deportivas esta semana; Invitar a un amigo a ir conmigo a la primera clase; Evaluar cada clase del 1 al 10 después de asistir."
+      }
+    ]
+  },
+  {
+    "id": "SEED067",
+    "before": {
+      "MetaBase": "Ser staff activo en sociedad estudiantil por un semestre"
+    },
+    "previous": [
+      {
+        "MetaBase": "Ser staff activo en sociedad estudiantil por un semestre"
+      },
+      {
+        "MetaBase": "Ser staff activo en sociedad estudiantil por un semestre"
+      },
+      {
+        "MetaBase": "Ser staff activo en sociedad estudiantil por un semestre"
+      }
+    ]
+  }
+]
